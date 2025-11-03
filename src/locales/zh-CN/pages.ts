@@ -68,4 +68,7 @@ export default {
   'pages.searchTable.tenThousand': '万',
   'pages.searchTable.batchDeletion': '批量删除',
   'pages.searchTable.batchApproval': '批量审批',
+  // 创建或更新此文件，添加页面标题和内容
+  'pages.admin.newSubPage.title': '新二级管理页',
+  'pages.admin.newSubPage.content': '这是一个新添加的管理员子页面。',
 };
