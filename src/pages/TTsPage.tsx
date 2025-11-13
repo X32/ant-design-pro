@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PageContainer, Tabs, Card, Input, Select, Slider, Button, Space, Tooltip } from 'antd';
+import { Tabs, Card, Input, Select, Slider, Button, Space, Tooltip } from 'antd';
 import { AudioOutlined, InfoCircleOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { theme } from 'antd';
 
@@ -39,7 +39,8 @@ const TTsPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="文本转语音">
+    <div style={{ padding: '24px' }}>
+      <h1 style={{ marginBottom: '24px' }}>文本转语音</h1>
       <Tabs activeKey="1" style={tabStyle}>
         <Tabs.TabPane tab="编辑文字" key="1" />
         <Tabs.TabPane tab="插入停顿" key="2" />
@@ -113,7 +114,7 @@ const TTsPage: React.FC = () => {
             >
               <Option value="default">默认</Option>
               <Option value="formal">正式</Option>
-              <Option value="casual"> casual</Option>
+              <Option value="casual">casual</Option>
               <Option value="emotional">情感化</Option>
             </Select>
           </div>
@@ -190,7 +191,7 @@ const TTsPage: React.FC = () => {
           </div>
         </Card>
       </div>
-    </PageContainer>
+    </div>
   );
 };
 

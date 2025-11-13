@@ -18,6 +18,10 @@ const TestIndex: React.FC = () => {
   const handleTestClick1 = () => {
     history.push('/testShowPaqe');
   };
+  
+  const handleTestClick2 = () => {
+    history.push('/TTsTestPage');
+  };
 
   // 关闭模态框
   const handleModalClose = () => {
@@ -34,6 +38,9 @@ const TestIndex: React.FC = () => {
       </Button>
        <Button type="default" onClick={handleTestClick1}>
         测试按钮1
+      </Button>
+       <Button type="default" onClick={handleTestClick2}>
+        测试按钮2
       </Button>
       <Modal
         title="提示"
