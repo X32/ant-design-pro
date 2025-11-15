@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Input, Select, Space, Pagination, message, Checkbox } from 'antd';
+import { Table, Button, Input, Select, Space, Pagination, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useIntl } from 'umi';
 
 const { Option } = Select;
 
@@ -14,40 +13,39 @@ const mockRoles = [
 ];
 
 const UserRoleManager: React.FC = () => {
-  const intl = useIntl();
   const [roles, setRoles] = useState(mockRoles);
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // 国际化文本
-  const intlMessages = {
-    title: intl.formatMessage({ id: 'menu.manager.userRole' }),
-    search: intl.formatMessage({ id: 'common.search' }),
-    reset: intl.formatMessage({ id: 'common.reset' }),
-    add: intl.formatMessage({ id: 'common.add' }),
-    delete: intl.formatMessage({ id: 'common.delete' }),
-    enable: intl.formatMessage({ id: 'common.enable' }),
-    disable: intl.formatMessage({ id: 'common.disable' }),
-    assignFunction: intl.formatMessage({ id: 'userRole.assignFunction' }),
-    assignButton: intl.formatMessage({ id: '' }),
-    edit: intl.formatMessage({ id: 'common.edit' }),
-    id: intl.formatMessage({ id: 'common.id' }),
-    roleName: intl.formatMessage({ id: 'userRole.roleName' }),
-    dataType: intl.formatMessage({ id: 'userRole.dataType' }),
-    priceShield: intl.formatMessage({ id: 'userRole.priceShield' }),
-    remark: intl.formatMessage({ id: 'common.remark' }),
-    sort: intl.formatMessage({ id: 'common.sort' }),
-    status: intl.formatMessage({ id: 'common.status' }),
-    operation: intl.formatMessage({ id: 'common.operation' }),
+  // 中文文本配置
+  const messages = {
+    title: '用户角色管理',
+    search: '搜索',
+    reset: '重置',
+    add: '添加',
+    delete: '删除',
+    enable: '启用',
+    disable: '禁用',
+    assignFunction: '分配功能',
+    assignButton: '分配按钮',
+    edit: '编辑',
+    id: 'ID',
+    roleName: '角色名称',
+    dataType: '数据类型',
+    priceShield: '价格屏蔽',
+    remark: '备注',
+    sort: '排序',
+    status: '状态',
+    operation: '操作',
   };
 
   // 表格列配置
   const columns = [
     {
       title: (
-        <Checkbox
+        <Input.Checkbox
           onChange={(e) => {
             if (e.target.checked) {
               setSelectedRows(roles.map((role) => role.id));
@@ -59,7 +57,7 @@ const UserRoleManager: React.FC = () => {
       ),
       key: 'selection',
       render: (text: any, record: any) => (
-        <Checkbox
+        <Input.Checkbox
           checked={selectedRows.includes(record.id)}
           onChange={(e) => {
             if (e.target.checked) {
@@ -71,29 +69,29 @@ const UserRoleManager: React.FC = () => {
         />
       ),
     },
-    { title: intlMessages.id, dataIndex: 'id', key: 'id' },
-    { title: intlMessages.roleName, dataIndex: 'name', key: 'name' },
-    { title: intlMessages.dataType, dataIndex: 'dataType', key: 'dataType' },
-    { title: intlMessages.priceShield, dataIndex: 'priceShield', key: 'priceShield' },
-    { title: intlMessages.remark, dataIndex: 'remark', key: 'remark' },
-    { title: intlMessages.sort, dataIndex: 'sort', key: 'sort' },
-    { title: intlMessages.status, dataIndex: 'status', key: 'status' },
+    { title: messages.id, dataIndex: 'id', key: 'id' },
+    { title: messages.roleName, dataIndex: 'name', key: 'name' },
+    { title: messages.dataType, dataIndex: 'dataType', key: 'dataType' },
+    { title: messages.priceShield, dataIndex: 'priceShield', key: 'priceShield' },
+    { title: messages.remark, dataIndex: 'remark', key: 'remark' },
+    { title: messages.sort, dataIndex: 'sort', key: 'sort' },
+    { title: messages.status, dataIndex: 'status', key: 'status' },
     {
-      title: intlMessages.operation,
+      title: messages.operation,
       key: 'operation',
       render: (text: any, record: any) => (
         <Space size='middle'>
           <Button type='link' icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            {intlMessages.edit}
+            {messages.edit}
           </Button>
           <Button type='link' danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>
-            {intlMessages.delete}
+            {messages.delete}
           </Button>
           <Button type='link' onClick={() => handleAssignFunction(record)}>
-            {intlMessages.assignFunction}
+            {messages.assignFunction}
           </Button>
           <Button type='link' onClick={() => handleAssignButton(record)}>
-            {intlMessages.assignButton}
+            {messages.assignButton}
           </Button>
         </Space>
       ),
@@ -177,12 +175,12 @@ const UserRoleManager: React.FC = () => {
 
   return (
     <div>
-      <h1>{intlMessages.title}</h1>
+      <h1>{messages.title}</h1>
 
       {/* 搜索功能区 */}
       <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
         <Input
-          placeholder={intlMessages.search}
+          placeholder={messages.search}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           prefix={<SearchOutlined />}
@@ -190,30 +188,30 @@ const UserRoleManager: React.FC = () => {
         />
 
         <Button type='primary' onClick={handleSearch} icon={<SearchOutlined />}>
-          {intlMessages.search}
+          {messages.search}
         </Button>
 
         <Button onClick={handleReset} icon={<ReloadOutlined />}>
-          {intlMessages.reset}
+          {messages.reset}
         </Button>
       </div>
 
       {/* 列表上方操作按钮 */}
       <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
         <Button type='primary' onClick={handleAdd} icon={<PlusOutlined />}>
-          {intlMessages.add}
+          {messages.add}
         </Button>
 
         <Button danger onClick={handleBatchDelete} disabled={selectedRows.length === 0}>
-          {intlMessages.delete}
+          {messages.delete}
         </Button>
 
         <Button type='default' onClick={handleBatchEnable} disabled={selectedRows.length === 0}>
-          {intlMessages.enable}
+          {messages.enable}
         </Button>
 
         <Button type='default' onClick={handleBatchDisable} disabled={selectedRows.length === 0}>
-          {intlMessages.disable}
+          {messages.disable}
         </Button>
       </div>
 
