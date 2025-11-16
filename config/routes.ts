@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @name umi 的路由配置
  * @description 只支持 path,component,routes,redirect,wrappers,name,icon 的配置
  * @param path  path 只支持两种占位符配置，第一种是动态参数 :id 的形式，第二种是 * 通配符，通配符只能出现路由字符串的最后。
@@ -12,6 +12,8 @@
  */
 export default [
   { path: '/user', layout: false, routes: [{ name: 'login', path: '/user/login', component: './user/login' }] },
+  // 设置根路径重定向到testIndex，作为首页
+  { path: '/', redirect: '/testIndex' },
   { path: '/welcome', name: 'welcome', icon: 'smile', component: './Welcome' },
   { path: '/admin', name: 'admin', icon: 'crown', access: 'canAdmin', routes: [{ path: '/admin', redirect: '/admin/sub-page' }, { path: '/admin/sub-page', name: 'sub-page', component: './Admin' }] },
   { name: 'list.table-list', icon: 'table', path: '/list', component: './table-list' },
@@ -20,4 +22,5 @@ export default [
   { path: '/testShowPaqe', component: './testShowPaqe', layout: false }, // 修正组件路径以匹配实际文件名
   { path: '/TTsTestPage', component: './TTsTestPage', layout: false }, // 修正组件路径以匹配实际文件名
   { path: '/testIndex', component: './testIndex', layout: false },
+  { path: '/tts-mobile', component: './tts_mobile', layout: false },
 ];

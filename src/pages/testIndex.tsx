@@ -17,10 +17,14 @@ const TestIndex: React.FC = () => {
   };
   const handleTestClick1 = () => {
     history.push('/testShowPaqe');
+
   };
   
   const handleTestClick2 = () => {
     history.push('/TTsTestPage');
+  };
+  const handleTestClick3 = () => {
+    history.push('/tts_mobile');
   };
 
   // 关闭模态框
@@ -31,20 +35,23 @@ const TestIndex: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
       <Button type="primary" onClick={handleLoginClick}>
-        进入登录页面
+        进入登录页面 login
       </Button>
       <Button type="default" onClick={handleTestClick}>
-        测试按钮
+        测试按钮 ttspage
       </Button>
        <Button type="default" onClick={handleTestClick1}>
-        测试按钮1
+        测试按钮1 testshowpage
       </Button>
        <Button type="default" onClick={handleTestClick2}>
-        测试按钮2
+        测试按钮2 ttstestpage
+      </Button>
+       <Button type="default" onClick={handleTestClick3}>
+        测试按钮3 ttsmobile 
       </Button>
       <Modal
         title="提示"
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={handleModalClose}
         footer={[
           <Button key="ok" type="primary" onClick={handleModalClose}>
