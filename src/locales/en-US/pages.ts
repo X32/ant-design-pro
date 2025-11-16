@@ -27,6 +27,11 @@ export default {
   'pages.welcome.link': 'Welcome',
   'pages.welcome.alertMessage':
     'Faster and stronger heavy-duty components have been released.',
+  'pages.tts.mobile.title': 'Text to Speech',
+  'pages.tts.mobile.register': 'Register',
+  'pages.tts.mobile.input.placeholder': 'Enter Chinese or English',
+  'pages.tts.mobile.generate': 'Generate',
+  'pages.tts.mobile.settings': 'Settings',
   'pages.404.subTitle': 'Sorry, the page you visited does not exist.',
   'pages.404.buttonText': 'Back Home',
   'pages.admin.subPage.title': 'This page can only be viewed by Admin',
@@ -73,4 +78,12 @@ export default {
   'pages.searchTable.tenThousand': '0000',
   'pages.searchTable.batchDeletion': 'batch deletion',
   'pages.searchTable.batchApproval': 'batch approval',
+  // 创建或更新此文件，添加页面标题和内容
+  'pages.admin.newSubPage.title': 'New Admin Sub Page',
+  'pages.admin.newSubPage.content': 'This is a newly added admin sub page.',
+  'userRole.assignFunction': 'Assign Function',
+  'userRole.assignButton': 'Assign Button',
+  'userRole.roleName': 'Role Name',
+  'userRole.dataType': 'Data Type',
+  'userRole.priceShield': 'Price Shield',
 };
