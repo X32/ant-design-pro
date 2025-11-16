@@ -40,10 +40,10 @@ export async function getInitialState(): Promise<{
     }
     return undefined;
   };
-  // 如果不是登录页面，执行
+  // 如果不是登录页面且不是testIndex页面，执行
   const { location } = history;
   if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
+    ![loginPath, '/user/register', '/user/register-result', '/testIndex'].includes(
       location.pathname,
     )
   ) {
@@ -83,8 +83,8 @@ export const layout: RunTimeLayoutConfig = ({
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
-      // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
+      // 如果没有登录，且不是登录页面和testIndex页面，重定向到 login
+      if (!initialState?.currentUser && ![loginPath, '/testIndex'].includes(location.pathname)) {
         history.push(loginPath);
       }
     },

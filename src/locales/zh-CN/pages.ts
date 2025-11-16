@@ -26,6 +26,11 @@ export default {
   'pages.login.registerAccount': '注册账户',
   'pages.welcome.link': '欢迎使用',
   'pages.welcome.alertMessage': '更快更强的重型组件，已经发布。',
+  'pages.tts.mobile.title': '文字转语音',
+  'pages.tts.mobile.register': '注册',
+  'pages.tts.mobile.input.placeholder': '输入中英文',
+  'pages.tts.mobile.generate': '生成',
+  'pages.tts.mobile.settings': '设置',
   'pages.404.subTitle': '抱歉，您访问的页面不存在。',
   'pages.404.buttonText': '返回首页',
   'pages.admin.subPage.title': ' 这个页面只有 admin 权限才能查看',
@@ -77,12 +82,7 @@ export default {
   'userRole.roleName': '角色名称',
   'userRole.dataType': '数据类型',
   'userRole.priceShield': '价格屏蔽',
-  // 用户角色管理相关文本
-  'userRole.assignFunction': '分配功能',
-  'userRole.assignButton': '分配按钮',
-  'userRole.roleName': '角色名称',
-  'userRole.dataType': '数据类型',
-  'userRole.priceShield': '价格屏蔽',
+  
   // 通用文本
   'common.search': '搜索',
   'common.reset': '重置',

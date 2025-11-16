@@ -27,6 +27,11 @@ export default {
   'pages.welcome.link': 'Welcome',
   'pages.welcome.alertMessage':
     'Faster and stronger heavy-duty components have been released.',
+  'pages.tts.mobile.title': 'Text to Speech',
+  'pages.tts.mobile.register': 'Register',
+  'pages.tts.mobile.input.placeholder': 'Enter Chinese or English',
+  'pages.tts.mobile.generate': 'Generate',
+  'pages.tts.mobile.settings': 'Settings',
   'pages.404.subTitle': 'Sorry, the page you visited does not exist.',
   'pages.404.buttonText': 'Back Home',
   'pages.admin.subPage.title': 'This page can only be viewed by Admin',
