@@ -1,5 +1,5 @@
 import { useIntl } from '@umijs/max';
-import { Button, message, notification } from 'antd';
+import { Button, notification, App } from 'antd';
 import defaultSettings from '../config/defaultSettings';
 
 const { pwa } = defaultSettings;
@@ -23,6 +23,7 @@ const clearCache = () => {
 if (pwa) {
   // Notify user if offline now
   window.addEventListener('sw.offline', () => {
+    const { message } = App.useApp();
     message.warning(useIntl().formatMessage({ id: 'app.pwa.offline' }));
   });
 
