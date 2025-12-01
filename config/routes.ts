@@ -29,6 +29,12 @@ export default [
     component: './Welcome',
   },
   {
+    path: '/test-index',
+    name: 'testIndex',
+    icon: 'smile',
+    component: './testIndex',
+  },
+  {
     path: '/admin',
     name: 'admin',
     icon: 'crown',
@@ -53,7 +59,7 @@ export default [
   },
   {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/test-index',
   },
   {
     component: '404',
