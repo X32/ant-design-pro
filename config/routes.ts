@@ -66,6 +66,12 @@ export default [
     component: './spokenPages',
   },
   {
+    name: 'audio-recorder-08',
+    icon: 'audio',
+    path: '/audio-recorder-08',
+    component: './AudioRecorder08/demo',
+  },
+  {
     component: '404',
     layout: false,
     path: './*',

@@ -48,5 +48,7 @@ export default {
   'menu.editor': '图形编辑器',
   'menu.editor.flow': '流程编辑器',
   'menu.editor.mind': '脑图编辑器',
+  'menu.spoken-practice': '口语练习',
+  'menu.audio-recorder-08': '录音组件08',
   'menu.editor.koni': '拓扑编辑器',
 };
