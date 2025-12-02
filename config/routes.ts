@@ -59,13 +59,19 @@ export default [
     path: '/tts-mobile-pro',
     component: './tts_mobile_pro',
   },
-  {
+  { 
     name: 'spoken-practice',
     icon: 'mic',
     path: '/spoken-practice',
     component: './spokenPages',
   },
-  {
+  { 
+    name: 'audio-recorder',
+    icon: 'audio',
+    path: '/audio-recorder',
+    component: './AudioRecorder01/Example',
+  },
+  { 
     component: '404',
     layout: false,
     path: './*',
