@@ -55,10 +55,7 @@ export default [
     path: '/',
     redirect: '/welcome',
   },
-  {
-    path: '/tts-mobile-pro',
-    component: './tts_mobile_pro',
-  },
+
   {
     path: '/spoken-practice',
     name: 'spoken-practice',
