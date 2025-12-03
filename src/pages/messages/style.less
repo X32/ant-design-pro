@@ -1,0 +1,102 @@
+.layout {
+  min-height: 100vh;
+}
+
+.header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 24px;
+  height: auto;
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.searchForm,
+.filterForm {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.actionButtons {
+  align-self: flex-end;
+}
+
+.content {
+  padding: 24px;
+  background: #f5f5f5;
+  flex: 1;
+  overflow: hidden;
+}
+
+.contentItem {
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+.contentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sequence {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.contentText {
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .content {
+    padding: 16px;
+  }
+  
+  .searchForm,
+  .filterForm {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .content {
+    padding: 12px;
+  }
+  
+  .searchForm,
+  .filterForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .actionButtons {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+}

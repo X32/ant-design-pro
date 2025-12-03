@@ -65,5 +65,5 @@ export default [
     path: '/spoken-practice',
     component: './spokenPages',
   },
-  {    component: '404',    layout: false,    path: './*',  },
+  {    name: 'messages',    icon: 'message',    path: '/messages',    component: './messages',  },  {    component: '404',    layout: false,    path: './*',  },
 ];
