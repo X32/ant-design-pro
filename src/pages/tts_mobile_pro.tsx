@@ -47,7 +47,7 @@ const TTSMobilePro: React.FC = () => {
     } else {
       // 播放
       audio.play().catch(err => {
-        message.error('音频播放失败：' + err.message);
+        message.error(`音频播放失败：${err.message}`);
       });
       // 启动进度动画
       const updateProgress = () => {
@@ -103,7 +103,7 @@ const TTSMobilePro: React.FC = () => {
       setInputText(''); // 清空输入框
       message.success('语音生成成功');
     } catch (error) {
-      message.error('语音生成失败：' + (error as Error).message);
+      message.error(`语音生成失败：${(error as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,9 @@ const TTSMobilePro: React.FC = () => {
           }}
           src={item.audioUrl}
           onEnded={() => handleAudioEnded(item.id)}
-        />
+        >
+          <track kind="captions" src="" />
+        </audio>
       </div>
 
       {/* 文本内容 */}
