@@ -458,7 +458,7 @@ const MessagesManagement: React.FC = () => {
             编辑
           </Button>
           <Popconfirm
-            title="确定要删除这个会话吗？"
+            title="确定要删除这个会话吗？666"
             onConfirm={() => handleDeleteSession(record.id)}
             okText="确定"
             cancelText="取消"
@@ -580,7 +580,7 @@ const MessagesManagement: React.FC = () => {
             编辑
           </Button>
           <Popconfirm
-            title="确定要删除这条消息吗？"
+            title="确定要删除这条消息吗？88"
             onConfirm={() => handleDeleteMessage(record.id)}
             okText="确定"
             cancelText="取消"
@@ -787,14 +787,21 @@ const MessagesManagement: React.FC = () => {
                 >
                   添加内容
                 </Button>
-                <Button 
-                  danger 
-                  icon={<DeleteOutlined />} 
-                  size="small"
-                  onClick={() => handleDeleteMessage(selectedMessage.id)}
+                {/*添加二次确认删除逻辑*/}
+                <Popconfirm
+                  title="确定要删除这个消息吗？"
+                  onConfirm={() => handleDeleteMessage(selectedMessage.id)}
+                  okText="确定"
+                  cancelText="取消"
                 >
-                  删除消息
-                </Button>
+                  <Button 
+                    danger 
+                    icon={<DeleteOutlined />} 
+                    size="small"
+                  >
+                    删除消息 01
+                  </Button>
+                </Popconfirm>
               </div>
             )}
           </div>
@@ -852,8 +859,8 @@ const MessagesManagement: React.FC = () => {
                               编辑
                             </Button>
                             <Popconfirm
-                              title="确定要删除这个内容吗？"
-                              onConfirm={() => handleDeleteContent(content.id)}
+                              title="确定要删除这个内容吗？666"
+                              onConfirm={() => handleDeleteMessage(selectedMessage.id)}
                               okText="确定"
                               cancelText="取消"
                             >
