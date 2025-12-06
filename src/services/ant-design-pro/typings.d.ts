@@ -98,4 +98,48 @@ declare namespace API {
     description?: string;
     type?: NoticeIconItemType;
   };
+
+  /** 对话列表项 */
+  type ConversationListItem = {
+    conversation_id?: number;
+    user_id?: number;
+    title?: string;
+    status?: number;
+    create_time?: string;
+    update_time?: string;
+  };
+
+  /** 对话列表响应 */
+  type ConversationList = {
+    conversations?: ConversationListItem[];
+    /** 列表的内容总数 */
+    total?: number;
+    page?: number;
+    page_size?: number;
+  };
+
+  /** 消息内容 */
+  type ContentTypeItem = {
+    content_id?: number;
+    message_id?: number;
+    content_type?: string;
+    text?: string;
+    seq?: number;
+  };
+
+  /** 消息 */
+  type Message = {
+    message_id?: number;
+    conversation_id?: number;
+    role?: string;
+    seq?: number;
+    create_time?: string;
+    contents?: ContentTypeItem[];
+  };
+
+  /** 会话详情响应 */
+  type ConversationDetail = {
+    conversation?: ConversationListItem;
+    messages?: Message[];
+  };
 }

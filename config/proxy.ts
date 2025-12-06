@@ -17,6 +17,24 @@ const getCurrentPort = () => {
 export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调整
   dev: {
+    // localhost:8001/api/v1/conversations/ -> http://localhost:9019/api/v1/conversations/
+    '/api/v1/conversations/**': {
+      // 要代理的地址 - 指向实际的后端服务器
+      target: 'http://localhost:9019',
+      // 配置了这个可以从 http 代理到 https
+      // 依赖 origin 的功能可能需要这个，比如 cookie
+      changeOrigin: true,
+    },
+    // localhost:8001/api/v1/ -> http://localhost:9019/api/v1/
+    '/api/v1/': {
+      // 要代理的地址 - 指向实际的后端服务器
+      target: 'http://localhost:9019',
+      // 配置了这个可以从 http 代理到 https
+      // 依赖 origin 的功能可能需要这个，比如 cookie
+      changeOrigin: true,
+      // 路径重写：将 /api/v1/ 前缀保留，确保后端收到正确的路径
+      pathRewrite: { '^/api/v1': '/api/v1' },
+    },
     // localhost:8001/api/** -> http://localhost:8001/api/
     '/api/': {
       // 要代理的地址 - 指向开发服务器自身

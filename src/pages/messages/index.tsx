@@ -3,6 +3,7 @@ import { Input, Select, DatePicker, Button, Table, Pagination, Space, Tag, Modal
 import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import { Session, Message, MessageContent, SessionStatus, MessageRole, MessageType, SearchParams, FilterParams, PaginationParams } from './types';
 import { mockApi } from './mockData';
+import { getConversationList, getConversationDetail, deleteMessage } from '@/services/ant-design-pro/api';
 import './index.less';
 
 const { Option } = Select;
@@ -25,6 +26,10 @@ const MessagesManagement: React.FC = () => {
   const [totalSessions, setTotalSessions] = useState<number>(0);
   const [totalMessages, setTotalMessages] = useState<number>(0);
   
+  // 加载状态使用 ref 避免依赖项变化
+  const isFetchingSessionsRef = React.useRef<boolean>(false);
+  const isFetchingMessagesRef = React.useRef<boolean>(false);
+  
   // 选中状态
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -38,79 +43,206 @@ const MessagesManagement: React.FC = () => {
   
   // 获取会话列表
   const fetchSessions = useCallback(async () => {
+    // 防止重复调用
+    if (isFetchingSessionsRef.current) return;
+    
+    isFetchingSessionsRef.current = true;
+    
     try {
-      const { data, total } = await mockApi.getSessions({
-        search: searchParams.sessionTitle || searchParams.userId,
-        filter: {
-          status: filterParams.status,
-          startDate: filterParams.startDate,
-          endDate: filterParams.endDate
-        },
-        page: sessionPagination.page,
-        pageSize: sessionPagination.pageSize
-      });
-      setSessions(data);
-      setTotalSessions(total);
+      // 使用新的接口获取对话列表
+      const response = await getConversationList({ user_id: 1 });
       
-      // 如果没有选中会话，默认选中第一个
-      if (!selectedSession && data.length > 0) {
-        setSelectedSession(data[0]);
+      // 根据实际接口返回格式处理数据
+      if (response.conversations) {
+        // 将API返回的数据转换为组件所需的Session类型
+        const convertedSessions = response.conversations.map(item => ({
+          id: item.conversation_id?.toString() ?? '',
+          userId: item.user_id?.toString() ?? '1',
+          title: item.title || '未命名对话',
+          messageCount: 0, // 接口返回数据中没有消息数字段
+          updatedAt: item.update_time || new Date().toISOString(),
+          status: item.status === 1 ? SessionStatus.ACTIVE : SessionStatus.DELETED
+        }));
+        
+        setSessions(convertedSessions);
+        setTotalSessions(response.total || convertedSessions.length);
+        
+        // 只在成功时显示提示
+        message.success('获取对话列表成功');
+      } else {
+        throw new Error('API返回数据格式错误');
       }
     } catch (error) {
-      message.error('获取会话列表失败');
+      console.error('获取对话列表失败:', error);
+      
+      // 失败时可以回退到模拟数据
+      try {
+        const { data, total } = await mockApi.getSessions({
+          search: searchParams.sessionTitle || searchParams.userId,
+          filter: {
+            status: filterParams.status,
+            startDate: filterParams.startDate,
+            endDate: filterParams.endDate
+          },
+          page: sessionPagination.page,
+          pageSize: sessionPagination.pageSize
+        });
+        setSessions(data);
+        setTotalSessions(total);
+      } catch (mockError) {
+        console.error('回退到模拟数据也失败:', mockError);
+        // 只有当模拟数据也失败时才显示错误提示
+        message.error('获取对话列表失败');
+      }
+    } finally {
+      isFetchingSessionsRef.current = false;
     }
-  }, [searchParams, filterParams, sessionPagination, selectedSession]);
+  }, [searchParams, filterParams, sessionPagination]);
   
   // 获取消息列表
   const fetchMessages = useCallback(async (sessionId: string) => {
+    // 防止重复调用
+    if (isFetchingMessagesRef.current) return;
+    
+    // 验证sessionId是否为有效数字
+    const conversationId = parseInt(sessionId);
+    if (isNaN(conversationId)) {
+      console.error('无效的会话ID:', sessionId);
+      isFetchingMessagesRef.current = false;
+      return;
+    }
+    
+    isFetchingMessagesRef.current = true;
+    
     try {
-      const { data, total } = await mockApi.getMessages(sessionId, {
-        search: searchParams.messageContent,
-        filter: {
-          role: filterParams.role
-        },
-        page: messagePagination.page,
-        pageSize: messagePagination.pageSize
+      // 使用新的接口获取会话详情和消息列表
+      const response = await getConversationDetail({ 
+        conversation_id: conversationId, 
+        user_id: 1 
       });
-      setMessages(data);
-      setTotalMessages(total);
       
-      // 如果没有选中消息，默认选中第一个
-      if (!selectedMessage && data.length > 0) {
-        setSelectedMessage(data[0]);
+      // 根据实际接口返回格式处理数据
+      if (response.messages) {
+        // 将API返回的数据转换为组件所需的Message类型
+        const convertedMessages = response.messages.map(item => ({
+          id: item.message_id?.toString() ?? '',
+          sessionId: item.conversation_id?.toString() ?? '',
+          role: (item.role || 'user') as MessageRole,
+          sequence: item.seq ?? 0,
+          type: MessageType.TEXT, // 默认类型为文本
+          preview: item.contents?.[0]?.text?.substring(0, 100) || '', // 取第一条内容的前100个字符作为预览
+          createdAt: item.create_time || new Date().toISOString(),
+          contents: item.contents?.map(content => ({
+            id: content.content_id?.toString() ?? '',
+            messageId: content.message_id?.toString() ?? '',
+            type: (content.content_type || 'text') as MessageType,
+            content: content.text || '',
+            sequence: content.seq ?? 0,
+            createdAt: item.create_time || new Date().toISOString() // 使用消息的创建时间作为内容的创建时间
+          })) || [] // 新增：消息内容列表
+        }));
+        
+        setMessages(convertedMessages);
+        setTotalMessages(convertedMessages.length);
+        
+        // 如果没有选中消息，默认选中第一个
+        // 注意：这里不能依赖selectedMessage，否则会导致循环调用
+        if (convertedMessages.length > 0) {
+          setSelectedMessage(prev => prev || convertedMessages[0]);
+        }
+        
+        // 只在成功时显示提示
+        message.success('获取消息列表成功');
+      } else {
+        throw new Error('API返回数据格式错误');
       }
     } catch (error) {
-      message.error('获取消息列表失败');
+      console.error('获取消息列表失败:', error);
+      
+      // 失败时可以回退到模拟数据
+      try {
+        const { data, total } = await mockApi.getMessages(sessionId, {
+          search: searchParams.messageContent,
+          filter: { 
+            role: filterParams.role 
+          },
+          page: messagePagination.page,
+          pageSize: messagePagination.pageSize
+        });
+        setMessages(data);
+        setTotalMessages(total);
+        
+        if (!selectedMessage && data.length > 0) {
+          setSelectedMessage(data[0]);
+        }
+      } catch (mockError) {
+        console.error('回退到模拟数据也失败:', mockError);
+        // 只有当模拟数据也失败时才显示错误提示
+        message.error('获取消息列表失败');
+      }
+    } finally {
+      isFetchingMessagesRef.current = false;
     }
-  }, [searchParams, filterParams, messagePagination, selectedMessage]);
+  }, [searchParams, filterParams, messagePagination]); // 移除selectedMessage依赖，避免循环调用
   
   // 获取消息内容
   const fetchMessageContents = useCallback(async (messageId: string) => {
     try {
-      const contents = await mockApi.getMessageContents(messageId);
-      setMessageContents(contents);
+      // 找到选中的消息
+      const selectedMessageItem = messages.find(message => message.id === messageId);
+      if (selectedMessageItem) {
+        // 直接从messages状态中获取消息内容，不需要再次调用API
+        setMessageContents(selectedMessageItem.contents || []);
+        message.success('获取消息内容成功');
+      } else {
+        setMessageContents([]);
+      }
     } catch (error) {
+      console.error('获取消息内容失败:', error);
       message.error('获取消息内容失败');
+      
+      // 失败时可以回退到模拟数据
+      try {
+        const contents = await mockApi.getMessageContents(messageId);
+        setMessageContents(contents);
+      } catch (mockError) {
+        console.error('回退到模拟数据也失败:', mockError);
+      }
     }
-  }, []);
+  }, [messages]);
   
   // 初始化数据
   useEffect(() => {
     fetchSessions();
-  }, [fetchSessions]);
+  }, [fetchSessions]); // 只在fetchSessions函数变化时调用
+  
+  // 使用ref来跟踪上一个会话ID，避免不必要的重复调用
+  const prevSessionIdRef = React.useRef<string | null>(null);
   
   // 会话选中变化
   useEffect(() => {
-    if (selectedSession) {
-      setMessagePagination({ page: 1, pageSize: 10 });
-      fetchMessages(selectedSession.id);
+    if (selectedSession && selectedSession.id && !isNaN(Number(selectedSession.id))) {
+      // 只有当会话ID真正变化时才调用fetchMessages
+      if (selectedSession.id !== prevSessionIdRef.current) {
+        setMessagePagination({ page: 1, pageSize: 10 });
+        fetchMessages(selectedSession.id);
+        prevSessionIdRef.current = selectedSession.id;
+      }
     } else {
       setMessages([]);
       setTotalMessages(0);
       setSelectedMessage(null);
       setMessageContents([]);
+      prevSessionIdRef.current = null;
     }
   }, [selectedSession, fetchMessages]);
+
+  // 会话列表变化时，如果没有选中会话，默认选中第一个
+  useEffect(() => {
+    if (sessions.length > 0 && !selectedSession) {
+      setSelectedSession(sessions[0]);
+    }
+  }, [sessions, selectedSession]);
   
   // 消息选中变化
   useEffect(() => {
@@ -177,23 +309,6 @@ const MessagesManagement: React.FC = () => {
     }
   };
   
-  // 删除消息
-  const handleDeleteMessage = async (messageId: string) => {
-    try {
-      await mockApi.deleteMessage(messageId);
-      message.success('消息删除成功');
-      if (selectedSession) {
-        fetchMessages(selectedSession.id);
-      }
-      
-      // 如果删除的是当前选中的消息，清除选中状态
-      if (selectedMessage?.id === messageId) {
-        setSelectedMessage(null);
-      }
-    } catch (error) {
-      message.error('删除消息失败');
-    }
-  };
   
   // 删除消息内容
   const handleDeleteContent = async (contentId: string) => {
@@ -205,6 +320,25 @@ const MessagesManagement: React.FC = () => {
       }
     } catch (error) {
       message.error('删除内容失败');
+    }
+  };
+  
+  // 删除消息
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+        await deleteMessage({
+        message_id: parseInt(messageId),
+        user_id: 1, // 这里假设用户ID为1，实际应该从登录状态获取
+      });
+      message.success('消息删除成功');
+      // 刷新消息列表
+       if (selectedSession) {
+        fetchMessages(selectedSession.id);
+      }
+      // 清除选中的消息
+      setSelectedMessage(null);
+    } catch (error) {
+      message.error('删除消息失败');
     }
   };
   
@@ -644,14 +778,24 @@ const MessagesManagement: React.FC = () => {
           <div className="detail-header">
             <span>内容详情</span>
             {selectedMessage && (
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />} 
-                size="small"
-                onClick={handleAddContent}
-              >
-                添加内容
-              </Button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />} 
+                  size="small"
+                  onClick={handleAddContent}
+                >
+                  添加内容
+                </Button>
+                <Button 
+                  danger 
+                  icon={<DeleteOutlined />} 
+                  size="small"
+                  onClick={() => handleDeleteMessage(selectedMessage.id)}
+                >
+                  删除消息
+                </Button>
+              </div>
             )}
           </div>
           <div className="detail-content">

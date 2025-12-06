@@ -92,3 +92,72 @@ export async function removeRule(options?: { [key: string]: any }) {
     },
   });
 }
+
+/** 获取对话列表 GET /api/v1/conversations/list */
+export async function getConversationList(
+  params: {
+    // query
+    /** 用户ID */
+    user_id: number;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<API.ConversationList>('/api/v1/conversations/list', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取会话详情 GET /conversations/{conversation_id} */
+export async function getConversationDetail(
+  params: {
+    // path
+    /** 会话ID */
+    conversation_id: number;
+    // query
+    /** 用户ID */
+    user_id: number;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<API.ConversationDetail>(`/api/v1/conversations/${params.conversation_id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: {
+      user_id: params.user_id,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 删除消息 DELETE /conversations/messages/{message_id} */
+export async function deleteMessage(
+  params: {
+    // path
+    /** 消息ID */
+    message_id: number;
+    // query
+    /** 用户ID */
+    user_id: number;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<void>(`/api/v1/conversations/messages/${params.message_id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: {
+      user_id: params.user_id,
+    },
+    ...(options || {}),
+  });
+}

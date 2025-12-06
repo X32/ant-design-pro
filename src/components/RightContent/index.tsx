@@ -7,7 +7,11 @@ export const SelectLang: React.FC = () => {
   return (
     <UmiSelectLang
       style={{
-        padding: 4,
+        display: 'inline-flex',
+        alignItems: 'center',
+        height: '48px',
+        padding: '0 8px',
+        fontSize: '16px',
       }}
     />
   );
@@ -21,10 +25,15 @@ export const Question: React.FC = () => {
       rel="noreferrer"
       style={{
         display: 'inline-flex',
-        padding: '4px',
-        fontSize: '18px',
+        alignItems: 'center',
+        height: '48px',
+        padding: '0 8px',
+        fontSize: '16px',
         color: 'inherit',
+        textDecoration: 'none',
       }}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e6f7ff'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
     >
       <QuestionCircleOutlined />
     </a>

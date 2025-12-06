@@ -38,6 +38,7 @@ export interface Message {
   type: MessageType;
   preview: string;
   createdAt: string;
+  contents?: MessageContent[]; // 新增：消息内容列表
 }
 
 // 消息内容表结构
