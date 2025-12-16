@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>简单测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            border: 1px solid #e8e8e8;
+            border-radius: 2px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .title {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #40a9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">简单测试页面</div>
+    <div class="card">
+        <p>这是一个完全独立的 HTML 测试页面，用于验证基本功能。</p>
+        <p>如果您能看到这个页面，说明：</p>
+        <p>1. 服务器正在运行</p>
+        <p>2. 静态文件服务正常</p>
+        <button class="button" onclick="alert('按钮点击正常')">点击测试</button>
+    </div>
+    <div class="card">
+        <p>当前时间：<span id="time"></span></p>
+    </div>
+    
+    <script>
+        document.getElementById('time').innerText = new Date().toLocaleString();
+        console.log('简单测试页面已加载');
+    </script>
+</body>
+</html>

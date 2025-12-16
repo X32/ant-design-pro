@@ -42,11 +42,18 @@ export async function getInitialState(): Promise<{
   };
   // 如果不是登录页面，执行
   const { location } = history;
-  if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
-    )
-  ) {
+  // 为测试路由添加白名单，允许未登录访问
+  const testRoutes = [
+    loginPath, 
+    '/user/register', 
+    '/user/register-result',
+    '/test-page',
+    // '/audio-recorder-test',
+    // '/audio',
+    // '/audio-recorder'
+  ];
+  
+  if (!testRoutes.includes(location.pathname)) {
     const currentUser = await fetchUserInfo();
     return {
       fetchUserInfo,
@@ -83,8 +90,18 @@ export const layout: RunTimeLayoutConfig = ({
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
-      // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
+      // 为测试路由添加白名单，允许未登录访问
+      const testRoutes = [
+        loginPath, 
+        '/user/register', 
+        '/user/register-result',
+        '/test-page',
+        '/audio-recorder-test',
+        '/audio',
+        '/audio-recorder'
+      ];
+      // 如果没有登录且路径不在白名单中，重定向到 login
+      if (!initialState?.currentUser && !testRoutes.includes(location.pathname)) {
         history.push(loginPath);
       }
     },

@@ -38,3 +38,7 @@ screenshot
 .firebase
 
 build
+
+# Prevent JS files from being generated in locales
+/src/locales/**/*.js
+!/src/locales/**/*.d.ts

@@ -43,6 +43,14 @@ export default {
       // 依赖 origin 的功能可能需要这个，比如 cookie
       changeOrigin: true,
     },
+    // 将ws://localhost:8001/ws?userId=1&conversationId=1代理到ws://localhost:9001
+    '/ws': {
+      target: 'ws://localhost:9001',
+      ws: true,
+      changeOrigin: true,
+      // 保留原始路径和查询参数
+      pathRewrite: { '^/ws': '' }
+    }
   },
   /**
    * @name 详细的代理配置

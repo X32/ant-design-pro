@@ -10,6 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {

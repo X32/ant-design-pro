@@ -71,5 +71,10 @@ export default [
     path: '/messages',
     component: './messages',
   },
-  {    component: '404',    layout: false,    path: './*',  },
+ {    name: 'audio-recorder',    icon: 'audio',    path: '/audio-recorder',    component: './AudioRecorder06/Example',  }, 
+  {
+    component: './404',
+    layout: false,
+    path: '/*',
+  },
 ];

@@ -161,3 +161,43 @@ export async function deleteMessage(
     ...(options || {}),
   });
 }
+
+/** 创建消息 POST /conversations/{conversation_id}/messages */
+export async function createMessage(
+  params: {
+    // path
+    /** 会话ID */
+    conversation_id: number;
+    // query
+    /** 用户ID */
+    user_id: number;
+  },
+  body: {
+    /** 消息角色 */
+    role: 'user' | 'assistant' | 'examiner';
+    /** 消息序号 */
+    seq: number;
+    /** 消息内容列表 */
+    contents: Array<{
+      /** 内容类型 */
+      content_type: string;
+      /** 文本内容 */
+      text: string;
+      /** 内容序号 */
+      seq: number;
+    }>;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<any>(`/api/v1/conversations/${params.conversation_id}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: {
+      user_id: params.user_id,
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
