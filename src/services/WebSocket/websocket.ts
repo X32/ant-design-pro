@@ -14,24 +14,37 @@ class WebSocketService {
   private lastConnectionUrl = '';
   private userId = 0;
   private conversationId = 0;
+  
+  // 认证相关
+  private isAuthenticated = false;
+  private authToken: string | null = null;
+  private workflowType = 'fce_part1';
+  private authTimeout: NodeJS.Timeout | null = null;
+  private readonly AUTH_TIMEOUT_MS = 5000; // 认证超时时间
 
   constructor() {
     // 直接连接到目标WebSocket服务器，不使用代理
-    this.url = 'ws://localhost:9001/ws';
+    this.url = 'ws://localhost:9000/ws';
   }
 
-  connect(userId: number, conversationId: number) {
+  connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1') {
     // 存储连接参数，用于重试
     this.userId = userId;
     this.conversationId = conversationId;
+    this.authToken = token || null;
+    this.workflowType = workflowType;
+    
+    // 重置认证状态
+    this.isAuthenticated = false;
     
     // 构建完整的URL，包含必要的查询参数
     // 使用相对路径，确保通过代理服务器访问
     const connectionUrl = `${this.url}?userId=${userId}&conversationId=${conversationId}`;
     this.lastConnectionUrl = connectionUrl;
     
-    // 清除之前的重试计时器
+    // 清除之前的重试计时器和认证超时
     this.clearRetryTimer();
+    this.clearAuthTimeout();
     
     // 使用原生WebSocket API，使用相对路径确保通过代理
     // 注意：在浏览器环境中，使用相对路径时会自动使用与页面相同的协议和主机
@@ -39,12 +52,19 @@ class WebSocketService {
 
     // 设置连接事件处理
     this.socket.onopen = () => {
-      console.log('WebSocket 连接已建立');
-      // 连接成功，重置重试计数
-      this.retryCount = 0;
-      this.isRetrying = false;
-      // 触发用户注册的connect事件
-      this.triggerEvent('connect');
+      console.log('WebSocket 连接已建立，准备发送认证消息');
+      
+      // 连接建立后立即发送认证消息
+      this.sendAuthMessage();
+      
+      // 设置认证超时
+      this.authTimeout = setTimeout(() => {
+        if (!this.isAuthenticated) {
+          console.error('认证超时，关闭连接');
+          this.triggerEvent('auth_timeout');
+          this.disconnect();
+        }
+      }, this.AUTH_TIMEOUT_MS);
     };
 
     this.socket.onclose = (event) => {
@@ -63,9 +83,53 @@ class WebSocketService {
     this.socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        
+        // 处理认证响应
+        if (data.type === 'auth_success') {
+          console.log('✅ 认证成功:', data.message);
+          console.log('👤 用户信息:', data.user);
+          
+          // 清除认证超时
+          this.clearAuthTimeout();
+          
+          // 设置认证状态
+          this.isAuthenticated = true;
+          
+          // 连接成功，重置重试计数
+          this.retryCount = 0;
+          this.isRetrying = false;
+          
+          // 触发认证成功事件
+          this.triggerEvent('auth_success', data);
+          // 触发connect事件
+          this.triggerEvent('connect', data);
+          
+          return;
+        }
+        
+        if (data.type === 'auth_failed' || data.type === 'auth_error') {
+          console.error('❌ 认证失败:', data.message);
+          
+          // 清除认证超时
+          this.clearAuthTimeout();
+          
+          // 触发认证失败事件
+          this.triggerEvent('auth_failed', data);
+          
+          // 关闭连接
+          this.disconnect();
+          return;
+        }
+        
+        // 未认证时不处理其他消息
+        if (!this.isAuthenticated) {
+          console.warn('收到消息但未认证，忽略消息');
+          return;
+        }
+        
         // 假设服务器消息格式为 { type: 'message_type', data: {...} }
         if (data.type && this.eventHandlers[data.type]) {
-          this.triggerEvent(data.type, data.data);
+          this.triggerEvent(data.type, data.data || data);
         } else {
           // 默认触发receive_message事件
           this.triggerEvent('receive_message', data);
@@ -73,7 +137,9 @@ class WebSocketService {
       } catch (error) {
         console.error('解析WebSocket消息失败:', error);
         // 直接将原始消息传递给receive_message事件
-        this.triggerEvent('receive_message', event.data);
+        if (this.isAuthenticated) {
+          this.triggerEvent('receive_message', event.data);
+        }
       }
     };
 
@@ -94,8 +160,39 @@ class WebSocketService {
     };
   }
 
+  // 发送认证消息
+  private sendAuthMessage() {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket未连接，无法发送认证消息');
+      return false;
+    }
+    
+    const authMessage = {
+      type: 'auth',
+      token: this.authToken || '',
+      workflow_type: this.workflowType
+    };
+    
+    console.log('发送认证消息:', authMessage);
+    this.socket.send(JSON.stringify(authMessage));
+    return true;
+  }
+  
+  // 清除认证超时
+  private clearAuthTimeout() {
+    if (this.authTimeout) {
+      clearTimeout(this.authTimeout);
+      this.authTimeout = null;
+    }
+  }
+  
   // 发送消息
   send(data: any) {
+    if (!this.isAuthenticated) {
+      console.error('未认证，无法发送消息');
+      return false;
+    }
+    
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       const message = typeof data === 'string' ? data : JSON.stringify(data);
       this.socket.send(message);
@@ -107,9 +204,11 @@ class WebSocketService {
 
   // 断开连接
   disconnect() {
-    // 清除重试计时器
+    // 清除重试计时器和认证超时
     this.clearRetryTimer();
+    this.clearAuthTimeout();
     this.isRetrying = false;
+    this.isAuthenticated = false;
     
     if (this.socket) {
       this.socket.close();
@@ -146,7 +245,7 @@ class WebSocketService {
     this.retryTimer = setTimeout(() => {
       if (this.isRetrying) {
         console.log(`执行第 ${this.retryCount} 次重连...`);
-        this.connect(this.userId, this.conversationId);
+        this.connect(this.userId, this.conversationId, this.authToken || undefined, this.workflowType);
       }
     }, currentInterval);
   }
@@ -205,7 +304,12 @@ class WebSocketService {
 
   // 检查连接状态
   isConnected(): boolean {
-    return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+    return this.socket !== null && this.socket.readyState === WebSocket.OPEN && this.isAuthenticated;
+  }
+  
+  // 获取认证状态
+  getAuthStatus(): boolean {
+    return this.isAuthenticated;
   }
 }
 

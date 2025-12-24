@@ -18,6 +18,7 @@ import {
   SelectLang,
   useIntl,
   useModel,
+  history,
 } from '@umijs/max';
 import { Alert, App, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
@@ -26,6 +27,7 @@ import { flushSync } from 'react-dom';
 import { Footer } from '@/components';
 import { login } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
+import { TOKEN_KEY, USER_ID_KEY } from '@/config/apiConfig';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => {
@@ -133,28 +135,70 @@ const Login: React.FC = () => {
   const handleSubmit = async (values: API.LoginParams) => {
     try {
       // 登录
-      const msg = await login({ ...values, type });
-      if (msg.status === 'ok') {
-        const defaultLoginSuccessMessage = intl.formatMessage({
+      const result = await login({ ...values, type });
+      
+      // 新接口格式判断
+      if (result.success && result.data) {
+        const { access_token, user } = result.data;
+        
+        // 保存token到localStorage
+        if (access_token) {
+          localStorage.setItem(TOKEN_KEY, access_token);
+        }
+        
+        // 保存用户ID到localStorage
+        if (user && user.id) {
+          localStorage.setItem(USER_ID_KEY, user.id.toString());
+        }
+        
+        const defaultLoginSuccessMessage = result.message || intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
         });
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
+        
+        // 获取用户信息并更新到state
+        if (user) {
+          flushSync(() => {
+            setInitialState((s) => ({
+              ...s,
+              currentUser: {
+                ...user,
+                name: user.email?.split('@')[0] || 'User',
+                userid: user.id?.toString(),
+                access: user.is_superuser ? 'admin' : 'user',
+              },
+            }));
+          });
+        }
+        
+        // 使用 history.push 进行跳转，避免页面刷新
         const urlParams = new URL(window.location.href).searchParams;
-        window.location.href = urlParams.get('redirect') || '/';
+        const redirect = urlParams.get('redirect');
+        
+        // 跳转到重定向页面或默认首页
+        setTimeout(() => {
+          history.push(redirect || '/welcome');
+        }, 100);
+        
         return;
       }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
-      setUserLoginState(msg);
-    } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
+      
+      // 处理错误情况
+      const errorMessage = result.error || intl.formatMessage({
         id: 'pages.login.failure',
         defaultMessage: '登录失败，请重试！',
       });
-      console.log(error);
+      message.error(errorMessage);
+      setUserLoginState({ status: 'error', type });
+    } catch (error: any) {
+      const defaultLoginFailureMessage = error?.message || intl.formatMessage({
+        id: 'pages.login.failure',
+        defaultMessage: '登录失败，请重试！',
+      });
+      console.error(error);
       message.error(defaultLoginFailureMessage);
+      setUserLoginState({ status: 'error', type });
     }
   };
   const { status, type: loginType } = userLoginState;
@@ -228,29 +272,38 @@ const Login: React.FC = () => {
             <LoginMessage
               content={intl.formatMessage({
                 id: 'pages.login.accountLogin.errorMessage',
-                defaultMessage: '账户或密码错误(admin/ant.design)',
+                defaultMessage: '邮箱或密码错误',
               })}
             />
           )}
           {type === 'account' && (
             <>
               <ProFormText
-                name="username"
+                name="email"
                 fieldProps={{
                   size: 'large',
                   prefix: <UserOutlined />,
                 }}
                 placeholder={intl.formatMessage({
-                  id: 'pages.login.username.placeholder',
-                  defaultMessage: '用户名: admin or user',
+                  id: 'pages.login.email.placeholder',
+                  defaultMessage: '邮箱: user@example.com',
                 })}
                 rules={[
                   {
                     required: true,
                     message: (
                       <FormattedMessage
-                        id="pages.login.username.required"
-                        defaultMessage="请输入用户名!"
+                        id="pages.login.email.required"
+                        defaultMessage="请输入邮箱！"
+                      />
+                    ),
+                  },
+                  {
+                    type: 'email',
+                    message: (
+                      <FormattedMessage
+                        id="pages.login.email.invalid"
+                        defaultMessage="邮箱格式不正确！"
                       />
                     ),
                   },

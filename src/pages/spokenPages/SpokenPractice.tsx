@@ -10,11 +10,13 @@ import {
 
 // 导入所需的Ant Design组件
 import { Avatar, Button, Input, Layout, Progress, Space } from 'antd';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from '@umijs/max'; // 导入useSearchParams用于获取URL参数
 
 // 导入AudioRecorder06组件
 import AudioRecorder from '@/pages/AudioRecorder06/AudioRecorder';
-import { getConversationDetail, createMessage } from '@/services/ant-design-pro/api'; // 导入API函数
+import { getConversationDetail, createMessage, uploadAudioWithTranscription, getTranscriptionStatus } from '@/services/ant-design-pro/api'; // 导入API函数
+import { TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig'; // 导入Token键名常量
 import './SpokenPractice.less'; // 导入样式文件
 
 // 内联样式，用于WebSocket连接状态指示器
@@ -56,6 +58,8 @@ interface Message {
   timestamp: string;    // 发送时间戳
   audioFilePath?: string; // 音频文件路径（语音消息专用）
   messageType?: 'text' | 'voice'; // 消息类型
+  transcriptionText?: string; // 转写文本（语音消息专用）
+  transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
 }
 
 
@@ -65,6 +69,9 @@ interface Message {
  * 提供文本对话、语音录制和口语评分功能
  */
 const SpokenPractice: React.FC = () => {
+  // 获取URL参数
+  const [searchParams] = useSearchParams();
+  
   // 对话区域的引用，用于滚动到最新消息
   const conversationEndRef = useRef<HTMLDivElement>(null);
   // 会话消息列表状态管理
@@ -95,6 +102,7 @@ const SpokenPractice: React.FC = () => {
   
   // WebSocket连接状态管理
     const [isConnected, setIsConnected] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [socket, setSocket] = useState<any>(null);
     // WebSocket重试状态管理
     const [retryStatus, setRetryStatus] = useState<{
@@ -111,9 +119,41 @@ const SpokenPractice: React.FC = () => {
       maxRetriesReached: false,
     });
     
-    // 会话ID和用户ID（在实际应用中这些值应该从props或上下文中获取）
-    const conversationId = 1;
-    const userId = 1;
+    /**
+     * 获取或生成会话ID
+     * 优先级: URL参数 > localStorage > 生成新ID
+     */
+    const getOrCreateConversationId = (): number => {
+      // 1. 尝试从URL参数获取
+      const urlConversationId = searchParams.get('conversationId');
+      if (urlConversationId) {
+        const id = parseInt(urlConversationId, 10);
+        if (!isNaN(id) && id > 0) {
+          // 保存到localStorage
+          localStorage.setItem(CONVERSATION_ID_KEY, id.toString());
+          return id;
+        }
+      }
+      
+      // 2. 尝试从localStorage获取
+      const storedId = localStorage.getItem(CONVERSATION_ID_KEY);
+      if (storedId) {
+        const id = parseInt(storedId, 10);
+        if (!isNaN(id) && id > 0) {
+          return id;
+        }
+      }
+            
+      // 3. 生成新的会话ID（使用时间戳确保唯一性）
+      const newId = Date.now();
+      localStorage.setItem(CONVERSATION_ID_KEY, newId.toString());
+      console.log('生成新的会话ID:', newId);
+      return newId;
+    };
+    
+    // 会话ID和用户ID（从localStorage获取用户ID）
+    const conversationId = getOrCreateConversationId();
+    const userId = parseInt(localStorage.getItem(USER_ID_KEY) || '1', 10);
     
     // 用于生成唯一消息ID的计数器
     const [messageIdCounter, setMessageIdCounter] = useState(0);
@@ -141,14 +181,27 @@ const SpokenPractice: React.FC = () => {
       let wsSocket: any = null;
       
       try {
-        // 连接WebSocket
-        wsSocket = webSocketService.connect(userId, conversationId);
+        // 从localStorage获取token
+        const token = localStorage.getItem(TOKEN_KEY);
+        
+        if (!token) {
+          console.error('未找到认证Token，请先登录');
+          return;
+        }
+        
+        console.log('使用Token连接WebSocket:', token);
+        
+        // 连接WebSocket，传入token和workflow_type
+        wsSocket = webSocketService.connect(userId, conversationId, token, 'fce_part1');
         setSocket(wsSocket);
         
-        // 监听连接事件
-        wsSocket.on('connect', () => {
-          console.log('WebSocket 连接成功');
+        // 监听认证成功事件
+        wsSocket.on('auth_success', (data: any) => {
+          console.log('✅ WebSocket 认证成功');
+          console.log('👤 用户信息:', data.user);
           setIsConnected(true);
+          setIsAuthenticated(true);
+          
           // 重置重试状态
           setRetryStatus(prev => ({
             ...prev,
@@ -158,13 +211,52 @@ const SpokenPractice: React.FC = () => {
           }));
         });
         
+        // 监听认证失败事件
+        wsSocket.on('auth_failed', (data: any) => {
+          console.error('❌ WebSocket 认证失败:', data.message);
+          setIsConnected(false);
+          setIsAuthenticated(false);
+          
+          // 清理消息列表
+          setMessages([]);
+          
+          // 可以显示错误提示给用户
+          // message.error('认证失败，请重新登录');
+          
+          // 刷新页面
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000); // 延迟1秒刷新，让用户看到错误信息
+        });
+        
+        // 监听认证超时事件
+        wsSocket.on('auth_timeout', () => {
+          console.error('❌ WebSocket 认证超时');
+          setIsConnected(false);
+          setIsAuthenticated(false);
+          
+          // 清理消息列表
+          setMessages([]);
+          
+          // 刷新页面
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000); // 延迟1秒刷新
+        });
+        
         // 监听断开连接事件
         wsSocket.on('disconnect', () => {
-          console.log('WebSocket 连接断开');
+          console.log('WebSocket 连接断开，清理消息并刷新页面');
           setIsConnected(false);
-          if (!retryStatus.isRetrying && !retryStatus.maxRetriesReached) {
-            setRetryStatus(prev => ({ ...prev, isRetrying: false }));
-          }
+          setIsAuthenticated(false);
+          
+          // 清理消息列表
+          setMessages([]);
+          
+          // 刷新页面
+          setTimeout(() => {
+            window.location.reload();
+          }, 500); // 延迟500ms刷新，确保状态已更新
         });
         
         // 监听重试事件
@@ -370,15 +462,170 @@ const SpokenPractice: React.FC = () => {
   };
 
   /**
-   * 处理录音完成
-   * 接收录音文件路径并更新状态
+   * 将WebM格式的音频转换为WAV格式
    */
-  const handleRecordFinish = (filePath: string) => {
+  const convertWebMToWav = async (webmBlob: Blob): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const audioContext = new AudioContext();
+      const fileReader = new FileReader();
+
+      fileReader.onload = async (event) => {
+        try {
+          const arrayBuffer = event.target?.result as ArrayBuffer;
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          
+          // 创建WAV文件头
+          const length = audioBuffer.length * audioBuffer.numberOfChannels * 2;
+          const buffer = new ArrayBuffer(44 + length);
+          const view = new DataView(buffer);
+          const sampleRate = audioBuffer.sampleRate;
+          const numChannels = audioBuffer.numberOfChannels;
+
+          // WAV文件头
+          const writeString = (offset: number, string: string) => {
+            for (let i = 0; i < string.length; i++) {
+              view.setUint8(offset + i, string.charCodeAt(i));
+            }
+          };
+
+          // RIFF标识符
+          writeString(0, 'RIFF');
+          view.setUint32(4, 36 + length, true);
+          writeString(8, 'WAVE');
+          
+          // fmt子块
+          writeString(12, 'fmt ');
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true);
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * numChannels * 2, true);
+          view.setUint16(32, numChannels * 2, true);
+          view.setUint16(34, 16, true);
+          
+          // data子块
+          writeString(36, 'data');
+          view.setUint32(40, length, true);
+
+          // 音频数据
+          let offset = 44;
+          for (let channel = 0; channel < numChannels; channel++) {
+            const channelData = audioBuffer.getChannelData(channel);
+            for (let i = 0; i < audioBuffer.length; i++) {
+              const sample = Math.max(-1, Math.min(1, channelData[i]));
+              view.setInt16(offset, sample * 0x7FFF, true);
+              offset += 2;
+            }
+          }
+
+          const wavBlob = new Blob([buffer], { type: 'audio/wav' });
+          resolve(wavBlob);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      fileReader.onerror = () => reject(new Error('读取音频文件失败'));
+      fileReader.readAsArrayBuffer(webmBlob);
+    });
+  };
+
+  /**
+   * 上传音频文件到服务器并转写为文字
+   */
+  const uploadAudioToServer = async (audioBlob: Blob, filename: string) => {
+    try {
+      // 转换为WAV格式
+      const wavBlob = await convertWebMToWav(audioBlob);
+      
+      // 从localStorage获取token
+      const token = localStorage.getItem(TOKEN_KEY);
+      
+      if (!token) {
+        console.error('未找到认证Token，请先登录');
+        throw new Error('未找到认证Token，请先登录');
+      }
+      
+      // 使用API服务层上传文件并开始转写，传入userId和token
+      const uploadResult = await uploadAudioWithTranscription(
+        wavBlob, 
+        filename, 
+        'en',
+        userId,
+        token
+      );
+      
+      if (uploadResult.success) {
+        console.log('文件上传成功:', uploadResult);
+        console.log('任务ID:', uploadResult.task_id);
+        
+        // 返回结果，包含 task_id 用于后续查询
+        return {
+          success: true,
+          task_id: uploadResult.task_id,
+          filePath: uploadResult.file_path,
+          message: uploadResult.message,
+        };
+      } else {
+        throw new Error(uploadResult.message || '上传失败');
+      }
+    } catch (error) {
+      console.error('上传失败:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * 轮询查询转写状态
+   */
+  const pollTranscriptionStatus = async (taskId: string, maxAttempts: number = 30, interval: number = 2000): Promise<string | null> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const statusResult = await getTranscriptionStatus(taskId);
+        
+        console.log(`转写状态查询 (${i + 1}/${maxAttempts}):`, statusResult.status);
+        
+        if (statusResult.status === 'DONE') {
+          if (statusResult.result && statusResult.result.success) {
+            console.log('转写成功:', statusResult.result.text);
+            return statusResult.result.text;
+          } else {
+            console.error('转写失败:', statusResult.result?.error);
+            return null;
+          }
+        } else if (statusResult.status === 'FAILED') {
+          console.error('转写任务失败:', statusResult.error);
+          return null;
+        }
+        
+        // 如果还在处理中，等待一段时间后再查询
+        if (i < maxAttempts - 1) {
+          await new Promise(resolve => setTimeout(resolve, interval));
+        }
+      } catch (error) {
+        console.error('查询转写状态失败:', error);
+        // 继续重试
+        if (i < maxAttempts - 1) {
+          await new Promise(resolve => setTimeout(resolve, interval));
+        }
+      }
+    }
+    
+    console.warn('转写状态查询超时');
+    return null;
+  };
+
+  /**
+   * 处理录音完成
+   * 接收录音文件路径和音频Blob数据，并上传到服务器
+   */
+  const handleRecordFinish = async (filePath: string, audioBlob: Blob) => {
     setRecordedFile(filePath);
     setIsRecording(false);
-    //打印filePath
+    
     console.log('录音文件路径:', filePath);
-    // 创建语音消息
+    
+    // 创建语音消息（本地播放用）
     const newMessageId = Date.now() + Math.floor(Math.random() * 1000);
     const newMessage: Message = {
       id: newMessageId,
@@ -390,22 +637,92 @@ const SpokenPractice: React.FC = () => {
       }),
       audioFilePath: filePath,
       messageType: 'voice',
+      transcriptionStatus: 'pending',
+      transcriptionText: '转写中...',
     };
     setMessages(prevMessages => [...prevMessages, newMessage]);
 
-    // 模拟AI分析回复和评分
-    // setTimeout(() => {
-    //   const aiMessage: Message = {
-    //     id: Date.now() + Math.floor(Math.random() * 1000),
-    //     content: '你的发音很清晰！让我给你详细的评分反馈。',
-    //     sender: 'ai',
-    //     timestamp: new Date().toLocaleTimeString([], {
-    //       hour: '2-digit',
-    //       minute: '2-digit',
-    //     }),
-    //   };
-    //   setMessages(prevMessages => [...prevMessages, aiMessage]);
-    // }, 1500);
+    try {
+      // 生成文件名
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `recording_${timestamp}.wav`;
+      
+      // 上传音频文件到服务器
+      const uploadResult = await uploadAudioToServer(audioBlob, filename);
+      
+      // 如果上传成功，更新消息的音频文件路径
+      if (uploadResult && uploadResult.filePath) {
+        // 注意：不更新audioFilePath，因为服务器返回的路径可能不是可直接访问的URL
+        // 保持使用本地Blob URL进行播放
+        console.log('音频上传成功，服务器路径:', uploadResult.filePath);
+        console.log('保持使用本地Blob URL进行播放:', filePath);
+        
+        // 开始轮询转写状态
+        if (uploadResult.task_id) {
+          console.log('开始查询转写状态，任务ID:', uploadResult.task_id);
+          
+          // 轮询查询转写结果
+          const transcriptionText = await pollTranscriptionStatus(uploadResult.task_id);
+          
+          if (transcriptionText) {
+            // 转写成功，更新消息的转写文本
+            setMessages(prevMessages => 
+              prevMessages.map(msg => 
+                msg.id === newMessageId 
+                  ? { 
+                      ...msg, 
+                      transcriptionText: transcriptionText,
+                      transcriptionStatus: 'done' as const
+                    } 
+                  : msg
+              )
+            );
+            
+            // 可以将转写结果通过WebSocket发送给服务器
+            if (isConnected && socket) {
+              try {
+                socket.send(JSON.stringify({
+                  'type': 'answer',
+                  conversation_id: conversationId,
+                  'content': transcriptionText,
+                  round_num: 1,
+                }));
+                console.log('已将转写结果通过WebSocket发送');
+              } catch (error) {
+                console.error('WebSocket发送转写结果失败:', error);
+              }
+            }
+          } else {
+            // 转写失败，更新状态
+            setMessages(prevMessages => 
+              prevMessages.map(msg => 
+                msg.id === newMessageId 
+                  ? { 
+                      ...msg, 
+                      transcriptionText: '转写失败',
+                      transcriptionStatus: 'failed' as const
+                    } 
+                  : msg
+              )
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('音频上传失败:', error);
+      // 即使上传失败，消息仍然保留，只是使用本地路径播放
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          msg.id === newMessageId 
+            ? { 
+                ...msg, 
+                transcriptionText: '上传失败',
+                transcriptionStatus: 'failed' as const
+              } 
+            : msg
+        )
+      );
+    }
   };
 
   /**
@@ -437,27 +754,55 @@ const SpokenPractice: React.FC = () => {
       audioElement.currentTime = 0;
     }
     
+    // 检查音频路径是否为本地Blob URL或者服务器URL
+    let audioSrc = message.audioFilePath;
+    
+    // 如果是服务器路径，确保使用完整URL
+    if (!audioSrc.startsWith('blob:') && !audioSrc.startsWith('http')) {
+      // 假设服务器返回的是相对路径，需要添加基础URL
+      console.warn('音频路径不是完整URL，跳过播放:', audioSrc);
+      return;
+    }
+    
+    console.log('开始播放音频:', audioSrc);
+    
     // 创建新的音频对象
-    const audio = new Audio(message.audioFilePath);
+    const audio = new Audio();
+    audio.src = audioSrc;
+    audio.preload = 'auto';
+    
     setAudioElement(audio);
     setPlayingMessageId(message.id);
+    
+    // 监听音频加载事件
+    audio.onloadedmetadata = () => {
+      console.log('音频元数据加载成功');
+    };
+    
+    audio.oncanplaythrough = () => {
+      console.log('音频可以播放');
+    };
     
     // 播放音频
     audio.play().catch(error => {
       console.error('音频播放失败:', error);
+      console.error('音频源:', audioSrc);
       setPlayingMessageId(null);
       setAudioElement(null);
     });
     
     // 音频播放结束时的处理
     audio.onended = () => {
+      console.log('音频播放结束');
       setPlayingMessageId(null);
       setAudioElement(null);
     };
     
     // 音频播放错误时的处理
-    audio.onerror = () => {
-      console.error('音频播放出错');
+    audio.onerror = (e) => {
+      console.error('音频播放出错:', e);
+      console.error('错误类型:', audio.error?.code, audio.error?.message);
+      console.error('音频源:', audioSrc);
       setPlayingMessageId(null);
       setAudioElement(null);
     };
@@ -540,6 +885,23 @@ const SpokenPractice: React.FC = () => {
                     {playingMessageId === message.id ? '暂停' : '播放'}
                   </Button>
                   <span className="voice-message-text">语音消息</span>
+                  {/* 显示转写文本 */}
+                  {message.transcriptionText && (
+                    <div style={{ 
+                      marginTop: '8px', 
+                      padding: '8px', 
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      lineHeight: '1.5',
+                      color: message.transcriptionStatus === 'failed' ? '#ff4d4f' : '#ffffff'
+                    }}>
+                      {message.transcriptionStatus === 'pending' && '🔄 '}
+                      {message.transcriptionStatus === 'done' && '✅ '}
+                      {message.transcriptionStatus === 'failed' && '❌ '}
+                      {message.transcriptionText}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="message-content">{message.content}</p>
@@ -586,21 +948,30 @@ const SpokenPractice: React.FC = () => {
               type="primary"
               onClick={handleSendMessage}
               className="send-button"
-              loading={!isConnected}
-              title={isConnected ? '发送消息' : '正在连接WebSocket...'}
+              loading={!isConnected || !isAuthenticated}
+              disabled={!isConnected || !isAuthenticated}
+              title={
+                !isConnected 
+                  ? '正在连接WebSocket...'
+                  : !isAuthenticated
+                    ? '正在认证...'
+                    : '发送消息'
+              }
             />
           </Space>
           {/* WebSocket连接状态指示器 */}
           <div style={styles.connectionStatus}>
-            <span style={{...styles.statusIndicator, ...(isConnected ? styles.connected : styles.disconnected)}}></span>
+            <span style={{...styles.statusIndicator, ...(isConnected && isAuthenticated ? styles.connected : styles.disconnected)}}></span>
             <span style={styles.statusText}>
-              {isConnected 
-                ? 'WebSocket已连接'
-                : retryStatus.isRetrying
-                  ? `连接中... (${retryStatus.attempt}/${retryStatus.maxRetries})`
-                  : retryStatus.maxRetriesReached
-                    ? '连接失败，已达到最大重试次数'
-                    : 'WebSocket未连接'
+              {isConnected && isAuthenticated
+                ? 'WebSocket已连接并认证'
+                : isConnected && !isAuthenticated
+                  ? '正在认证...'
+                  : retryStatus.isRetrying
+                    ? `连接中... (${retryStatus.attempt}/${retryStatus.maxRetries})`
+                    : retryStatus.maxRetriesReached
+                      ? '连接失败，已达到最大重试次数'
+                      : 'WebSocket未连接'
               }
             </span>
             {retryStatus.maxRetriesReached && (

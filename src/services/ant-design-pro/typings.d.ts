@@ -3,6 +3,7 @@
 
 declare namespace API {
   type CurrentUser = {
+    id?: number;
     name?: string;
     avatar?: string;
     userid?: string;
@@ -15,6 +16,10 @@ declare namespace API {
     unreadCount?: number;
     country?: string;
     access?: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    created_at?: string;
+    updated_at?: string;
     geographic?: {
       province?: { label?: string; key?: string };
       city?: { label?: string; key?: string };
@@ -24,6 +29,15 @@ declare namespace API {
   };
 
   type LoginResult = {
+    success?: boolean;
+    message?: string;
+    data?: {
+      user?: CurrentUser;
+      access_token?: string;
+      token_type?: string;
+    };
+    error?: string;
+    // 兼容旧格式
     status?: string;
     type?: string;
     currentAuthority?: string;
@@ -62,8 +76,10 @@ declare namespace API {
   };
 
   type LoginParams = {
-    username?: string;
+    email?: string;
     password?: string;
+    // 兼容旧格式
+    username?: string;
     autoLogin?: boolean;
     type?: string;
   };
@@ -141,5 +157,36 @@ declare namespace API {
   type ConversationDetail = {
     conversation?: ConversationListItem;
     messages?: Message[];
+  };
+
+  /** 音频上传响应 */
+  type AudioUploadResponse = {
+    success: boolean;
+    message: string;
+    task_id: string;
+    original_filename: string;
+    saved_filename: string;
+    file_size: number;
+    file_path: string;
+    language: string;
+  };
+
+  /** 转写结果 */
+  type TranscriptionResult = {
+    text: string;
+    language: string;
+    success: boolean;
+    error: string | null;
+  };
+
+  /** 转写状态响应 */
+  type TranscriptionStatusResponse = {
+    success: boolean;
+    task_id: string;
+    status: 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED';
+    result: TranscriptionResult | null;
+    error: string | null;
+    original_filename: string;
+    file_path: string;
   };
 }

@@ -1,6 +1,51 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from '@umijs/max';
+import { API_ENDPOINTS, TOKEN_KEY } from '@/config/apiConfig';
+
+// 创建自定义请求实例以支持FormData
+const formDataRequest = async (url: string, body: FormData, options?: { [key: string]: any }) => {
+  return request(url, {
+    method: 'POST',
+    headers: {
+      // 不设置Content-Type，让浏览器自动设置multipart/form-data
+      ...(options?.headers || {}), // 合并自定义headers
+    },
+    data: body,
+    timeout: 45000, // 增加超时时间到45秒
+    ...(options || {}),
+  });
+};
+
+// 带重试机制的请求函数
+const retryRequest = async (fn: Function, maxRetries: number = 2, delay: number = 1000) => {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      // 只对特定错误类型进行重试
+      if (error.name === 'TimeoutError' || 
+          error.message?.includes('timeout') || 
+          error.response?.status === 504 ||
+          error.message?.includes('None response')) {
+        lastError = error;
+        // 如果不是最后一次尝试，则等待后重试
+        if (i < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+          console.log(`请求失败，正在进行第${i + 1}次重试...`);
+        }
+      } else {
+        // 其他错误类型直接抛出
+        throw error;
+      }
+    }
+  }
+  
+  // 所有重试都失败后，抛出最后一次的错误
+  throw lastError || new Error('请求失败');
+};
 
 /** 获取当前的用户 GET /api/currentUser */
 export async function currentUser(options?: { [key: string]: any }) {
@@ -20,14 +65,20 @@ export async function outLogin(options?: { [key: string]: any }) {
   });
 }
 
-/** 登录接口 POST /api/login/account */
+/** 登录接口 POST /api/auth/login */
 export async function login(body: API.LoginParams, options?: { [key: string]: any }) {
-  return request<API.LoginResult>('/api/login/account', {
+  // 将username转换为email以兼容旧表单
+  const loginData = {
+    email: body.email || body.username,
+    password: body.password,
+  };
+  
+  return request<API.LoginResult>(API_ENDPOINTS.LOGIN, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    data: body,
+    data: loginData,
     ...(options || {}),
   });
 }
@@ -200,4 +251,128 @@ export async function createMessage(
     data: body,
     ...(options || {}),
   });
+}
+
+/** 上传音频文件并转写为文字 POST /api/upload_audio */
+export async function uploadAudioWithTranscription(
+  audioBlob: Blob,
+  filename: string = 'recording.wav',
+  language: 'auto' | 'zh' | 'en' = 'auto',
+  userId?: number | string,
+  token?: string,
+  options?: { [key: string]: any },
+) {
+  const formData = new FormData();
+  formData.append('file', audioBlob, filename);
+  
+  // 构建URL，添加language参数
+  const url = `${API_ENDPOINTS.UPLOAD_AUDIO}?language=${language}`;
+  
+  // 构建自定义headers，添加用户认证信息
+  const customHeaders: Record<string, string> = {};
+  if (userId) {
+    customHeaders['X-User-ID'] = String(userId);
+  }
+  if (token) {
+    customHeaders['X-Token'] = token;
+  }
+  
+  try {
+    // 使用带重试机制的请求函数，传入自定义headers
+    const response = await retryRequest(
+      () => formDataRequest(url, formData, { 
+        ...options, 
+        headers: {
+          ...customHeaders,
+          ...(options?.headers || {})
+        }
+      }), 
+      2, 
+      1000
+    );
+    return response;
+  } catch (error: any) {
+    // 增强错误处理和用户友好的提示
+    if (error.name === 'TimeoutError' || error.message?.includes('timeout')) {
+      throw new Error('音频上传超时，请检查网络连接或稍后重试');
+    }
+    if (error.response?.status === 504) {
+      throw new Error('网关超时，上传服务器暂时无法访问');
+    }
+    if (error.message?.includes('None response')) {
+      throw new Error('未收到服务器响应，请确认上传服务器是否正常运行');
+    }
+    if (error.response?.status === 401) {
+      throw new Error('认证失败，请检查token是否有效');
+    }
+    if (error.response?.status >= 500) {
+      throw new Error('服务器内部错误，请稍后重试');
+    }
+    throw new Error(error.message || '音频上传失败，请重试');
+  }
+}
+
+/** 查询转写状态 GET /api/transcription_status */
+export async function getTranscriptionStatus(
+  taskId: string,
+  options?: { [key: string]: any },
+) {
+  return request<API.TranscriptionStatusResponse>(`${API_ENDPOINTS.TRANSCRIPTION_STATUS}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: {
+      task_id: taskId,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 上传音频文件 POST /api/upload */
+export async function uploadAudioFile(
+  audioBlob: Blob,
+  filename: string = 'recording.wav',
+  uploadUrl: string = '/api/upload',
+  token?: string,
+  options?: { [key: string]: any },
+) {
+  const formData = new FormData();
+  formData.append('file', audioBlob, filename);
+  
+  // 强制使用正确的上传地址，绕过代理冲突
+  let url = '/api/upload';
+  if (uploadUrl.includes('http')) {
+    url = uploadUrl; // 如果提供了完整URL，则使用它
+  }
+  
+  if (token) {
+    const separator = url.includes('?') ? '&' : '?';
+    url += `${separator}token=${token}`;
+  }
+  
+  try {
+    // 使用带重试机制的请求函数
+    const response = await retryRequest(() => formDataRequest(url, formData, options), 2, 1000);
+    return response;
+  } catch (error: any) {
+    // 增强错误处理和用户友好的提示
+    if (error.name === 'TimeoutError' || error.message?.includes('timeout')) {
+      throw new Error('音频上传超时，请检查网络连接或稍后重试');
+    }
+    if (error.response?.status === 504) {
+      throw new Error('网关超时，上传服务器暂时无法访问');
+    }
+    if (error.message?.includes('None response')) {
+      throw new Error('未收到服务器响应，请确认上传服务器是否正常运行');
+    }
+    // 添加更多错误类型处理
+    if (error.response?.status === 401) {
+      throw new Error('认证失败，请检查token是否有效');
+    }
+    if (error.response?.status >= 500) {
+      throw new Error('服务器内部错误，请稍后重试');
+    }
+    throw new Error(error.message || '音频上传失败，请重试');
+  }
 }

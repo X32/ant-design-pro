@@ -1,0 +1,40 @@
+/**
+ * API配置
+ */
+
+const isDev = process.env.NODE_ENV === 'development';
+
+// API基础地址
+// 开发环境使用代理，直接使用相对路径
+// 生产环境使用实际的API地址
+export const API_BASE_URL = isDev ? '' : 'https://your-production-api.com';
+
+// API端点
+export const API_ENDPOINTS = {
+  // 认证相关 - 开发环境通过proxy代理到 http://localhost:9003
+  LOGIN: `${API_BASE_URL}/api/auth/login`,
+  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+  REGISTER: `${API_BASE_URL}/api/auth/register`,
+  CURRENT_USER: `${API_BASE_URL}/api/auth/me`,
+  
+  // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
+  UPLOAD_AUDIO: `${API_BASE_URL}/api/upload_audio`,
+  TRANSCRIPTION_STATUS: `${API_BASE_URL}/api/transcription_status`,
+  
+  // 其他端点可以在这里添加
+};
+
+// Token配置
+export const TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
+export const USER_ID_KEY = 'user_id';
+export const CONVERSATION_ID_KEY = 'current_conversation_id';
+
+export default {
+  API_BASE_URL,
+  API_ENDPOINTS,
+  TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  USER_ID_KEY,
+  CONVERSATION_ID_KEY,
+};

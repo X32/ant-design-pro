@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Modal, message } from 'antd';
-import { AudioOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { Button, Modal, message, Upload } from 'antd';
+import { AudioOutlined, CloseOutlined, CheckOutlined, UploadOutlined } from '@ant-design/icons';
+// 注意：上传功能已移至使用录音组件的页面
 import './index.less';
 
 interface AudioSegment {
@@ -10,7 +11,7 @@ interface AudioSegment {
 
 interface AudioRecorderProps {
   maxDuration?: number; // 最大录音时长，默认60秒
-  onFinish?: (filePath: string) => void; // 录音完成回调
+  onFinish?: (filePath: string, audioBlob: Blob) => void; // 录音完成回调，返回文件路径和Blob数据
   onCancel?: () => void; // 取消录音回调
   modalMode?: boolean; // 是否为弹框模式
   triggerButton?: React.ReactNode; // 弹框模式下的触发按钮
@@ -30,11 +31,87 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
 
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+
+
+  // 将AudioBuffer转换为WAV格式的Blob
+  const audioBufferToWav = (audioBuffer: AudioBuffer): Blob => {
+    const length = audioBuffer.length * audioBuffer.numberOfChannels * 2;
+    const buffer = new ArrayBuffer(44 + length);
+    const view = new DataView(buffer);
+    const sampleRate = audioBuffer.sampleRate;
+    const numChannels = audioBuffer.numberOfChannels;
+
+    // WAV文件头
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    // RIFF标识符
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length, true);
+    writeString(8, 'WAVE');
+    
+    // fmt子块
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, 16, true);
+    
+    // data子块
+    writeString(36, 'data');
+    view.setUint32(40, length, true);
+
+    // 音频数据
+    let offset = 44;
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = audioBuffer.getChannelData(channel);
+      for (let i = 0; i < audioBuffer.length; i++) {
+        const sample = Math.max(-1, Math.min(1, channelData[i]));
+        view.setInt16(offset, sample * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+
+    return new Blob([buffer], { type: 'audio/wav' });
+  };
+
+  // 将WebM格式的音频转换为WAV格式（供外部使用）
+  const convertWebMToWav = async (webmBlob: Blob): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const audioContext = new AudioContext();
+      const fileReader = new FileReader();
+
+      fileReader.onload = async (event) => {
+        try {
+          const arrayBuffer = event.target?.result as ArrayBuffer;
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          
+          // 创建WAV文件
+          const wavBlob = audioBufferToWav(audioBuffer);
+          resolve(wavBlob);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      fileReader.onerror = () => reject(new Error('读取音频文件失败'));
+      fileReader.readAsArrayBuffer(webmBlob);
+    });
+  };
 
   // 请求麦克风权限
   const requestMicrophonePermission = async () => {
@@ -123,34 +200,43 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     mediaRecorderRef.current.onstop = () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const newSegment: AudioSegment = { blob: audioBlob, duration };
-      setSegments((prev) => [...prev, newSegment]);
+      const updatedSegments = [...segments, newSegment];
+      
+      setSegments(updatedSegments);
       setTotalDuration((prev) => prev + duration);
       setCurrentDuration(0);
+      
+      // 自动完成录音，传入最新的录音分段
+      setTimeout(() => mergeSegments(updatedSegments), 100);
     };
   };
 
   // 合并所有录音分段
-  const mergeSegments = async () => {
-    if (segments.length === 0) {
+  const mergeSegments = async (segmentsToMerge?: AudioSegment[]) => {
+    // 使用传入的分段或当前segments状态
+    const segmentsData = segmentsToMerge || segments;
+    
+    if (segmentsData.length === 0) {
       showMessage('warning', '没有录音数据');
       return;
     }
 
     try {
       // 创建一个新的Blob，包含所有分段的数据
-      const allBlobs = segments.map((segment) => segment.blob);
+      const allBlobs = segmentsData.map((segment) => segment.blob);
       const mergedBlob = new Blob(allBlobs, { type: 'audio/webm' });
 
       // 创建一个临时URL
       const url = URL.createObjectURL(mergedBlob);
+      setAudioUrl(url);
 
-      // 调用完成回调
+      // 调用完成回调，同时传递URL和Blob数据
       if (onFinish) {
-        onFinish(url);
+        onFinish(url, mergedBlob);
       }
 
       showMessage('success', '录音完成');
-      resetRecorder();
+      // 移除resetRecorder调用，避免重置audioUrl
 
       // 如果是弹框模式，关闭弹框
       if (modalMode) {
@@ -160,6 +246,16 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       console.error('合并录音分段失败:', error);
       showMessage('error', '合并录音失败，请重试');
     }
+  };
+
+  // 处理上传按钮点击 - 由于上传功能已移至父组件，此函数已废弃
+  const handleUpload = () => {
+    if (!audioUrl) {
+      showMessage('warning', '请先完成录音');
+      return;
+    }
+    
+    showMessage('info', '请通过父组件进行音频上传');
   };
 
   // 清空所有录音数据
@@ -182,6 +278,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     setSegments([]);
     setCurrentDuration(0);
     setTotalDuration(0);
+    setAudioUrl(null);
     clearInterval(timerRef.current!);
 
     // 停止所有轨道
@@ -291,7 +388,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         <Button
           type="primary"
           icon={<CheckOutlined />}
-          onClick={mergeSegments}
+          onClick={() => mergeSegments()}
           disabled={!hasData}
         >
           完成录音
@@ -308,6 +405,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         {renderRecordButton()}
         {renderProgressBar()}
         {renderActionButtons()}
+        {audioUrl && (
+          <div style={{ marginTop: 16 }}>
+            <audio controls src={audioUrl} style={{ width: '100%' }} />
+          </div>
+        )}
       </div>
     );
   };
