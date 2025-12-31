@@ -18,23 +18,28 @@ export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调整
   dev: {
     // 认证服务代理 - 最高优先级
+    '/api/oral/**': {
+      target: 'http://localhost:9002',
+      changeOrigin: true,
+    },
+    // 认证服务代理 - 最高优先级
     '/api/auth/**': {
-      target: 'http://localhost:9003',
+      target: 'http://localhost:9002',
       changeOrigin: true,
     },
     // 音频上传服务代理 - 移到最前面，确保优先级高于通用的/api/代理
     '/api/upload': {
-      target: 'http://127.0.0.1:9001',
+      target: 'http://127.0.0.1:9002',
       changeOrigin: true,
     },
     // 音频上传和转写服务代理
     '/api/upload_audio': {
-      target: 'http://127.0.0.1:9001',
+      target: 'http://127.0.0.1:9002',
       changeOrigin: true,
     },
     // 转写状态查询服务代理
     '/api/transcription_status': {
-      target: 'http://127.0.0.1:9001',
+      target: 'http://127.0.0.1:9002',
       changeOrigin: true,
     },
     // localhost:8001/api/v1/conversations/ -> http://localhost:9019/api/v1/conversations/
@@ -74,7 +79,7 @@ export default {
     },
     // 将ws://localhost:8001/ws?userId=1&conversationId=1代理到ws://localhost:9001
     '/ws': {
-      target: 'ws://localhost:9000',
+      target: 'ws://localhost:9001',
       ws: true,
       changeOrigin: true,
       // 保留原始路径和查询参数

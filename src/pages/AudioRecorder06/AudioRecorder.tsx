@@ -236,7 +236,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       }
 
       showMessage('success', '录音完成');
-      // 移除resetRecorder调用，避免重置audioUrl
+      
+      // 在下一个事件循环中重置录音器状态，确保父组件有时间处理数据
+      setTimeout(() => {
+        resetRecorder();
+      }, 0);
 
       // 如果是弹框模式，关闭弹框
       if (modalMode) {
@@ -279,6 +283,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     setCurrentDuration(0);
     setTotalDuration(0);
     setAudioUrl(null);
+    setPermissionGranted(null);
     clearInterval(timerRef.current!);
 
     // 停止所有轨道
@@ -289,7 +294,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
-    setPermissionGranted(null);
   };
 
   // 显示提示消息

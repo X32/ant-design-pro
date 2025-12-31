@@ -376,3 +376,411 @@ export async function uploadAudioFile(
     throw new Error(error.message || '音频上传失败，请重试');
   }
 }
+
+// ==================== 口语分类管理 API ====================
+
+/**
+ * 口语分类接口类型定义
+ */
+export interface OralCategory {
+  /** 分类ID */
+  id: number;
+  /** 分类名称 */
+  name: string;
+  /** 父级分类ID，0表示根分类 */
+  parent_id: number;
+  /** 分类层级 1/2/3 */
+  level: number;
+  /** 排序值 */
+  sort: number;
+  /** 子分类列表 */
+  children?: OralCategory[];
+  /** 创建时间 */
+  create_time?: string;
+  /** 更新时间 */
+  update_time?: string;
+}
+
+/**
+ * 口语分类树 API 响应接口
+ */
+export interface OralCategoryTreeResponse {
+  /** 请求是否成功 */
+  success: boolean;
+  /** 分类树数据 */
+  data: OralCategory[];
+  /** 数据总数 */
+  total?: number;
+}
+
+/**
+ * 口语分类列表 API 响应接口
+ */
+export interface OralCategoryListResponse {
+  /** 请求是否成功 */
+  success: boolean;
+  /** 分类列表数据 */
+  data: OralCategory[];
+  /** 数据总数 */
+  total?: number;
+}
+
+/**
+ * 创建分类请求体
+ */
+export interface CreateCategoryParams {
+  /** 分类名称 */
+  name: string;
+  /** 父级分类ID，0表示根分类 */
+  parent_id: number;
+  /** 排序值 */
+  sort: number;
+}
+
+/**
+ * 更新分类请求体
+ */
+export interface UpdateCategoryParams {
+  /** 分类名称（可选） */
+  name?: string;
+  /** 排序值（可选） */
+  sort?: number;
+}
+
+/**
+ * 获取分类列表查询参数
+ */
+export interface GetCategoriesParams {
+  /** 分类层级 1/2/3（可选） */
+  level?: number;
+  /** 父级分类ID（可选） */
+  parent_id?: number;
+}
+
+/**
+ * 创建口语分类
+ * POST /api/oral/categories
+ */
+export async function createOralCategory(
+  params: CreateCategoryParams,
+  options?: { [key: string]: any },
+) {
+  // 从localStorage获取token
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralCategory>(API_ENDPOINTS.ORAL_CATEGORIES, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取口语分类列表
+ * GET /api/oral/categories
+ */
+export async function getOralCategories(
+  params?: GetCategoriesParams,
+  options?: { [key: string]: any },
+) {
+  // 从localStorage获取token
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralCategoryListResponse>(API_ENDPOINTS.ORAL_CATEGORIES, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    params: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取口语分类树
+ * GET /api/oral/categories/tree
+ */
+export async function getOralCategoriesTree(
+  options?: { [key: string]: any },
+) {
+  // 从localStorage获取token
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralCategoryTreeResponse>(API_ENDPOINTS.ORAL_CATEGORIES_TREE, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新口语分类
+ * PUT /api/oral/categories/{category_id}
+ */
+export async function updateOralCategory(
+  categoryId: number,
+  params: UpdateCategoryParams,
+  options?: { [key: string]: any },
+) {
+  // 从localStorage获取token
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralCategory>(`${API_ENDPOINTS.ORAL_CATEGORIES}/${categoryId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除口语分类
+ * DELETE /api/oral/categories/{category_id}
+ * 注意：若存在子分类或关联练习题，将返回 400，无法删除
+ */
+export async function deleteOralCategory(
+  categoryId: number,
+  options?: { [key: string]: any },
+) {
+  // 从LocalStorage获取token
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<void>(`${API_ENDPOINTS.ORAL_CATEGORIES}/${categoryId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+// ==================== 练习题管理相关 API ====================
+
+/**
+ * 练习题接口
+ * 对应 API 返回的练习题数据结构
+ */
+export interface OralExercise {
+  id: number;
+  category_id: number;
+  title: string;
+  content: string;
+  difficulty: number;
+  is_active: number;
+  create_time?: string;
+  update_time?: string;
+}
+
+/**
+ * 练习题列表响应
+ */
+export interface OralExerciseListResponse {
+  success: boolean;
+  data: OralExercise[];
+  total?: number;
+}
+
+/**
+ * 练习题详情响应
+ */
+export interface OralExerciseDetailResponse {
+  success: boolean;
+  data: OralExercise;
+}
+
+/**
+ * 创建练习题请求参数
+ */
+export interface CreateOralExerciseParams {
+  category_id: number;
+  title: string;
+  content: string;
+  difficulty?: number;
+  is_active?: number;
+}
+
+/**
+ * 更新练习题请求参数
+ * PUT /api/oral/exercises/{exercise_id}
+ */
+export interface UpdateOralExerciseParams {
+  category_id?: number;
+  title?: string;
+  content?: string;
+  difficulty?: number;
+  is_active?: number;
+}
+
+/**
+ * 获取练习题列表查询参数
+ * GET /api/oral/exercises
+ */
+export interface GetOralExercisesParams {
+  /** 分类ID（必填，三级分类ID） */
+  category_id: number;
+  /** 是否仅返回启用题目，默认 true */
+  only_active?: boolean;
+}
+
+/**
+ * 获取练习题列表
+ * GET /api/oral/exercises
+ */
+export async function getOralExercises(
+  params?: GetOralExercisesParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralExerciseListResponse>(API_ENDPOINTS.ORAL_EXERCISES, {
+    method: 'GET',
+    params: params,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取练习题详情
+ * GET /api/oral/exercises/{exercise_id}
+ */
+export async function getOralExerciseDetail(
+  exerciseId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralExerciseDetailResponse>(`${API_ENDPOINTS.ORAL_EXERCISES}/${exerciseId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建练习题
+ * POST /api/oral/exercises
+ */
+export async function createOralExercise(
+  params: CreateOralExerciseParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralExerciseDetailResponse>(API_ENDPOINTS.ORAL_EXERCISES, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新练习题
+ * PUT /api/oral/exercises/{exercise_id}
+ */
+export async function updateOralExercise(
+  exerciseId: number,
+  params: UpdateOralExerciseParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralExerciseDetailResponse>(`${API_ENDPOINTS.ORAL_EXERCISES}/${exerciseId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除练习题
+ * DELETE /api/oral/exercises/{exercise_id}
+ */
+export async function deleteOralExercise(
+  exerciseId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<void>(`${API_ENDPOINTS.ORAL_EXERCISES}/${exerciseId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 搜索练习题查询参数
+ */
+export interface SearchOralExercisesParams {
+  /** 标题关键词（必填），支持模糊搜索 */
+  title: string;
+  /** 分类ID（可选），限定在某分类下搜索 */
+  category_id?: number;
+  /** 是否仅返回启用题目，默认 true */
+  only_active?: boolean;
+  /** 页码，默认 1 */
+  page?: number;
+  /** 每页数量，默认 20，最大 100 */
+  page_size?: number;
+}
+
+/**
+ * 搜索练习题响应
+ */
+export interface SearchOralExercisesResponse {
+  success: boolean;
+  message?: string;
+  data: OralExercise[];
+  total: number;
+}
+
+/**
+ * 搜索练习题（按标题关键词）
+ * GET /api/oral/exercises/search
+ */
+export async function searchOralExercises(
+  params: SearchOralExercisesParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<SearchOralExercisesResponse>(API_ENDPOINTS.ORAL_EXERCISES_SEARCH, {
+    method: 'GET',
+    params: params,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}

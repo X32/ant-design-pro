@@ -18,8 +18,16 @@ export const API_ENDPOINTS = {
   CURRENT_USER: `${API_BASE_URL}/api/auth/me`,
   
   // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
-  UPLOAD_AUDIO: `${API_BASE_URL}/api/upload_audio`,
-  TRANSCRIPTION_STATUS: `${API_BASE_URL}/api/transcription_status`,
+  UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
+  TRANSCRIPTION_STATUS: `${API_BASE_URL}/api/upload/transcription_status`,
+  
+  // 口语分类管理相关
+  ORAL_CATEGORIES: `${API_BASE_URL}/api/oral/categories`,
+  ORAL_CATEGORIES_TREE: `${API_BASE_URL}/api/oral/categories/tree`,
+  
+  // 练习题管理相关
+  ORAL_EXERCISES: `${API_BASE_URL}/api/oral/exercises`,
+  ORAL_EXERCISES_SEARCH: `${API_BASE_URL}/api/oral/exercises/search`,
   
   // 其他端点可以在这里添加
 };

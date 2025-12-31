@@ -24,7 +24,7 @@ class WebSocketService {
 
   constructor() {
     // 直接连接到目标WebSocket服务器，不使用代理
-    this.url = 'ws://localhost:9000/ws';
+    this.url = 'ws://localhost:9001/ws';
   }
 
   connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1') {

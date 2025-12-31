@@ -73,6 +73,18 @@ export default [
   },
  {    name: 'audio-recorder',    icon: 'audio',    path: '/audio-recorder',    component: './AudioRecorder06/Example',  }, 
   {
+    name: 'topics',
+    icon: 'appstore',
+    path: '/topics',
+    component: './topics',
+  },
+  {
+    name: 'exercises',
+    icon: 'book',
+    path: '/exercises',
+    component: './exercises',
+  },
+  {
     component: './404',
     layout: false,
     path: '/*',
