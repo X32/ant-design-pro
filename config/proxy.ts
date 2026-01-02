@@ -32,11 +32,6 @@ export default {
       target: 'http://127.0.0.1:9002',
       changeOrigin: true,
     },
-    // 音频上传和转写服务代理
-    '/api/upload_audio': {
-      target: 'http://127.0.0.1:9002',
-      changeOrigin: true,
-    },
     // 转写状态查询服务代理
     '/api/transcription_status': {
       target: 'http://127.0.0.1:9002',

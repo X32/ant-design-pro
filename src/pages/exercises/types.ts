@@ -51,6 +51,8 @@ export interface Exercise {
   title: string;
   /** 题目内容/问题 */
   content: string;
+  /** 图片URL */
+  image_url?: string;
   /** 难度等级 1-5 */
   difficulty: number;
   /** 是否启用：1-启用，0-禁用 */
@@ -139,6 +141,8 @@ export interface CreateExerciseParams {
   title: string;
   /** 题目内容 */
   content: string;
+  /** 图片URL */
+  image_url?: string;
   /** 难度等级 */
   difficulty?: number;
   /** 是否启用 */
@@ -156,6 +160,8 @@ export interface UpdateExerciseParams {
   title?: string;
   /** 题目内容 */
   content?: string;
+  /** 图片URL */
+  image_url?: string;
   /** 难度等级 */
   difficulty?: number;
   /** 是否启用 */
@@ -216,6 +222,8 @@ export interface ExerciseFormData {
   title: string;
   /** 题目内容 */
   content: string;
+  /** 图片URL */
+  image_url?: string;
   /** 难度等级 */
   difficulty: number;
   /** 是否启用 */

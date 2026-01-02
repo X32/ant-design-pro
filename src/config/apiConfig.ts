@@ -15,7 +15,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/auth/login`,
   LOGOUT: `${API_BASE_URL}/api/auth/logout`,
   REGISTER: `${API_BASE_URL}/api/auth/register`,
-  CURRENT_USER: `${API_BASE_URL}/api/auth/me`,
+  CURRENT_USER: `${API_BASE_URL}/api/auth/user`,
   
   // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
   UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
@@ -28,6 +28,9 @@ export const API_ENDPOINTS = {
   // 练习题管理相关
   ORAL_EXERCISES: `${API_BASE_URL}/api/oral/exercises`,
   ORAL_EXERCISES_SEARCH: `${API_BASE_URL}/api/oral/exercises/search`,
+  
+  // 通用文件上传
+  UPLOAD: `${API_BASE_URL}/api/upload/upload`,
   
   // 其他端点可以在这里添加
 };

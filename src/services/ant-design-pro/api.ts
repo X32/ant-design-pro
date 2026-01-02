@@ -47,12 +47,24 @@ const retryRequest = async (fn: Function, maxRetries: number = 2, delay: number 
   throw lastError || new Error('请求失败');
 };
 
-/** 获取当前的用户 GET /api/currentUser */
+/**
+ * 获取当前用户信息
+ * GET /api/auth/user
+ */
 export async function currentUser(options?: { [key: string]: any }) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
   return request<{
-    data: API.CurrentUser;
-  }>('/api/currentUser', {
+    success: boolean;
+    data: {
+      user: API.CurrentUser;
+    };
+  }>(API_ENDPOINTS.CURRENT_USER, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
     ...(options || {}),
   });
 }
@@ -577,6 +589,7 @@ export interface OralExercise {
   category_id: number;
   title: string;
   content: string;
+  image_url?: string;
   difficulty: number;
   is_active: number;
   create_time?: string;
@@ -607,6 +620,7 @@ export interface CreateOralExerciseParams {
   category_id: number;
   title: string;
   content: string;
+  image_url?: string;
   difficulty?: number;
   is_active?: number;
 }
@@ -619,6 +633,7 @@ export interface UpdateOralExerciseParams {
   category_id?: number;
   title?: string;
   content?: string;
+  image_url?: string;
   difficulty?: number;
   is_active?: number;
 }
@@ -780,6 +795,49 @@ export async function searchOralExercises(
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+// ==================== 通用文件上传 API ====================
+
+/**
+ * 文件上传响应接口
+ */
+export interface UploadResponse {
+  success: boolean;
+  message?: string;
+  url?: string;        // 上传成功后的文件URL
+  file_path?: string;  // 文件路径
+}
+
+/**
+ * 通用文件上传
+ * POST /api/upload
+ * @param file 要上传的文件
+ * @param options 额外选项
+ */
+export async function uploadFile(
+  file: File | Blob,
+  filename?: string,
+  options?: { [key: string]: any },
+): Promise<UploadResponse> {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const formData = new FormData();
+  
+  if (file instanceof File) {
+    formData.append('file', file, filename || file.name);
+  } else {
+    formData.append('file', file, filename || 'upload');
+  }
+  
+  return request<UploadResponse>(API_ENDPOINTS.UPLOAD, {
+    method: 'POST',
+    data: formData,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      // 不设置Content-Type，让浏览器自动设置multipart/form-data
     },
     ...(options || {}),
   });

@@ -22,7 +22,10 @@ import {
   Space,
   Tooltip,
   Switch,
+  Upload,
+  Radio,
 } from 'antd';
+import type { UploadChangeParam, UploadFile, RcFile } from 'antd/es/upload';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -35,6 +38,10 @@ import {
   UnorderedListOutlined,
   SearchOutlined,
   CloseCircleOutlined,
+  PictureOutlined,
+  LoadingOutlined,
+  LinkOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import type { DataNode, TreeProps } from 'antd/es/tree';
 import type { ColumnsType } from 'antd/es/table';
@@ -55,6 +62,7 @@ import {
   deleteOralExercise,
   getOralExerciseDetail,
   searchOralExercises,
+  uploadFile,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -143,6 +151,13 @@ const ExercisesManagement: React.FC = () => {
 
   // 表单实例
   const [form] = Form.useForm<ExerciseFormData>();
+
+  // 图片上传状态
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [imageLoading, setImageLoading] = useState(false);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  // 图片输入模式：'upload' 本地上传 | 'link' 链接输入
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'link'>('upload');
 
   /**
    * 获取分类列表
@@ -327,6 +342,7 @@ const ExercisesManagement: React.FC = () => {
     setModalMode('add');
     setCurrentExercise(null);
     form.resetFields();
+    resetImageState();
     form.setFieldsValue({
       category_id: selectedCategory.id,
       difficulty: 3,
@@ -349,9 +365,31 @@ const ExercisesManagement: React.FC = () => {
           category_id: exercise.category_id,
           title: exercise.title,
           content: exercise.content,
+          image_url: exercise.image_url,
           difficulty: exercise.difficulty,
           is_active: exercise.is_active,
         });
+        // 设置图片状态
+        if (exercise.image_url) {
+          setImageUrl(exercise.image_url);
+          // 判断是本地上传还是链接，如果是http开头且不是本站地址，认为是链接模式
+          const isExternalLink = exercise.image_url.startsWith('http') && 
+            !exercise.image_url.includes(window.location.host);
+          if (isExternalLink) {
+            setImageInputMode('link');
+            setFileList([]);
+          } else {
+            setImageInputMode('upload');
+            setFileList([{
+              uid: '-1',
+              name: '已上传图片',
+              status: 'done',
+              url: exercise.image_url,
+            }]);
+          }
+        } else {
+          resetImageState();
+        }
         setModalVisible(true);
       }
     } catch (error: any) {
@@ -401,6 +439,7 @@ const ExercisesManagement: React.FC = () => {
           category_id: values.category_id,
           title: values.title,
           content: values.content,
+          image_url: values.image_url,
           difficulty: values.difficulty,
           is_active: values.is_active,
         });
@@ -410,6 +449,7 @@ const ExercisesManagement: React.FC = () => {
           category_id: values.category_id,
           title: values.title,
           content: values.content,
+          image_url: values.image_url,
           difficulty: values.difficulty,
           is_active: values.is_active,
         });
@@ -437,6 +477,74 @@ const ExercisesManagement: React.FC = () => {
     if (selectedCategory) {
       fetchExercises(selectedCategory.id, onlyActive);
     }
+  };
+
+  /**
+   * 图片上传前校验
+   */
+  const beforeUpload = (file: RcFile) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('只能上传图片文件！');
+      return false;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('图片大小不能超过 5MB！');
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * 自定义上传处理
+   */
+  const customUpload = async (options: any) => {
+    const { file, onSuccess, onError } = options;
+    setImageLoading(true);
+    try {
+      const response = await uploadFile(file as File);
+      if (response.success && (response.url || response.file_path)) {
+        const url = response.url || response.file_path || '';
+        setImageUrl(url);
+        form.setFieldValue('image_url', url);
+        setFileList([{
+          uid: '-1',
+          name: (file as File).name,
+          status: 'done',
+          url: url,
+        }]);
+        onSuccess?.(response, file);
+        message.success('图片上传成功');
+      } else {
+        throw new Error(response.message || '上传失败');
+      }
+    } catch (error: any) {
+      console.error('图片上传失败:', error);
+      message.error(error?.message || '图片上传失败');
+      onError?.(error);
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  /**
+   * 删除图片
+   */
+  const handleRemoveImage = () => {
+    setImageUrl('');
+    setFileList([]);
+    form.setFieldValue('image_url', '');
+  };
+
+  /**
+   * 重置图片状态
+   */
+  const resetImageState = () => {
+    setImageUrl('');
+    setImageLoading(false);
+    setFileList([]);
+    setImageInputMode('upload');
   };
 
   /**
@@ -500,6 +608,30 @@ const ExercisesManagement: React.FC = () => {
         <Tooltip title={text}>
           <span className="exercise-content">{text}</span>
         </Tooltip>
+      ),
+    },
+    {
+      title: '图片',
+      dataIndex: 'image_url',
+      key: 'image_url',
+      width: 80,
+      render: (url) => url ? (
+        <Tooltip title="点击查看大图">
+          <img 
+            src={url} 
+            alt="题目图片" 
+            style={{ 
+              width: 40, 
+              height: 40, 
+              objectFit: 'cover', 
+              borderRadius: 4,
+              cursor: 'pointer'
+            }} 
+            onClick={() => window.open(url, '_blank')}
+          />
+        </Tooltip>
+      ) : (
+        <span style={{ color: '#ccc' }}>-</span>
       ),
     },
     {
@@ -784,6 +916,115 @@ const ExercisesManagement: React.FC = () => {
             />
           </Form.Item>
 
+          {/* 隐藏的 image_url 字段，用于存储实际值 */}
+          <Form.Item name="image_url" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item label="题目图片">
+            <div>
+              {/* 模式切换 */}
+              <Radio.Group 
+                value={imageInputMode} 
+                onChange={(e) => {
+                  const newMode = e.target.value;
+                  setImageInputMode(newMode);
+                  
+                  // 切换模式时保持 imageUrl 不变，只更新 UI 状态
+                  if (newMode === 'upload') {
+                    // 切换到上传模式，如果有图片URL，显示为已上传预览
+                    if (imageUrl) {
+                      setFileList([{
+                        uid: '-1',
+                        name: '已有图片',
+                        status: 'done',
+                        url: imageUrl,
+                      }]);
+                    }
+                  } else {
+                    // 切换到链接模式，清空文件列表，保留 imageUrl
+                    setFileList([]);
+                  }
+                }}
+                style={{ marginBottom: 12 }}
+              >
+                <Radio.Button value="upload">
+                  <UploadOutlined /> 本地上传
+                </Radio.Button>
+                <Radio.Button value="link">
+                  <LinkOutlined /> 链接地址
+                </Radio.Button>
+              </Radio.Group>
+
+              {/* 本地上传模式 */}
+              {imageInputMode === 'upload' && (
+                <>
+                  <Upload
+                    name="file"
+                    listType="picture-card"
+                    fileList={fileList}
+                    beforeUpload={beforeUpload}
+                    customRequest={customUpload}
+                    onRemove={handleRemoveImage}
+                    maxCount={1}
+                    accept="image/*"
+                  >
+                    {fileList.length < 1 && (
+                      <div>
+                        {imageLoading ? <LoadingOutlined /> : <PlusOutlined />}
+                        <div style={{ marginTop: 8 }}>上传图片</div>
+                      </div>
+                    )}
+                  </Upload>
+                  <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                    支持 jpg、png、gif 格式，文件大小不超过 5MB
+                  </div>
+                </>
+              )}
+
+              {/* 链接输入模式 */}
+              {imageInputMode === 'link' && (
+                <>
+                  <Input
+                    placeholder="请输入图片URL链接"
+                    prefix={<LinkOutlined />}
+                    value={imageUrl}
+                    onChange={(e) => {
+                      const url = e.target.value;
+                      setImageUrl(url);
+                      form.setFieldValue('image_url', url);
+                    }}
+                    style={{ marginBottom: 8 }}
+                  />
+                  {imageUrl && (
+                    <div style={{ marginTop: 8 }}>
+                      <span style={{ color: '#999', fontSize: 12, marginBottom: 8, display: 'block' }}>图片预览：</span>
+                      <img 
+                        src={imageUrl} 
+                        alt="图片预览" 
+                        style={{ 
+                          maxWidth: 200, 
+                          maxHeight: 150, 
+                          borderRadius: 4,
+                          border: '1px solid #d9d9d9'
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                        onLoad={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'block';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                    请输入有效的图片URL地址，如 https://example.com/image.jpg
+                  </div>
+                </>
+              )}
+            </div>
+          </Form.Item>
+
           <Space size="large" wrap>
             <Form.Item
               name="difficulty"
@@ -855,6 +1096,25 @@ const ExercisesManagement: React.FC = () => {
                 <span className="item-label">内容：</span>
               </div>
               <div className="content-box">{currentExercise.content}</div>
+              {currentExercise.image_url && (
+                <div className="detail-item" style={{ marginTop: 12 }}>
+                  <span className="item-label">图片：</span>
+                  <div style={{ marginTop: 8 }}>
+                    <img 
+                      src={currentExercise.image_url} 
+                      alt="题目图片" 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: 200, 
+                        borderRadius: 8,
+                        border: '1px solid #f0f0f0',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => window.open(currentExercise.image_url, '_blank')}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="detail-section">

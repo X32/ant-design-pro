@@ -56,11 +56,18 @@ interface Message {
   content: string;      // 消息内容
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳
-  audioFilePath?: string; // 音频文件路径（语音消息专用）
+  audioFilePath?: string; // 音频文件路径（用户语音消息）
   messageType?: 'text' | 'voice'; // 消息类型
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
+  // AI消息音频相关字段
+  audioUrl?: string;      // AI消息的音频URL
+  audioLoaded?: boolean;  // 音频是否已加载
+  roundNum?: number;      // 轮次号
 }
+
+// AI音频基础URL
+const AI_AUDIO_BASE_URL = 'http://localhost:9002';
 
 
 
@@ -97,6 +104,11 @@ const SpokenPractice: React.FC = () => {
   // 音频播放状态管理
   const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  
+  // AI音频自动播放开关（默认开启）
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  // AI音频缓存 Map<messageId, HTMLAudioElement>
+  const aiAudioCacheRef = useRef<Map<number, HTMLAudioElement>>(new Map());
   
 
   
@@ -162,6 +174,103 @@ const SpokenPractice: React.FC = () => {
     const generateMessageId = () => {
       setMessageIdCounter(prev => prev + 1);
       return Date.now() + Math.floor(Math.random() * 1000);
+    };
+    
+    /**
+     * 预加载并播放AI音频
+     * @param messageId 消息ID
+     * @param audioUrl 音频URL
+     */
+    const preloadAndPlayAiAudio = (messageId: number, audioUrl: string) => {
+      // 停止当前正在播放的音频
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+      
+      // 创建新的Audio对象
+      const audio = new Audio(audioUrl);
+      audio.preload = 'auto';
+      
+      // 缓存音频对象
+      aiAudioCacheRef.current.set(messageId, audio);
+      
+      // 监听加载完成事件
+      audio.onloadeddata = () => {
+        console.log('AI音频加载完成:', messageId);
+        // 更新消息的加载状态
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, audioLoaded: true } : msg
+        ));
+      };
+      
+      // 监听可以播放事件
+      audio.oncanplaythrough = () => {
+        // 如果开启了自动播放，开始播放
+        if (autoPlayEnabled) {
+          console.log('自动播放AI音频:', messageId);
+          setPlayingMessageId(messageId);
+          setAudioElement(audio);
+          audio.play().catch(err => {
+            console.error('自动播放失败（可能需要用户交互）:', err);
+            setPlayingMessageId(null);
+          });
+        }
+      };
+      
+      // 音频播放结束
+      audio.onended = () => {
+        console.log('AI音频播放结束:', messageId);
+        setPlayingMessageId(null);
+        setAudioElement(null);
+      };
+      
+      // 音频加载错误
+      audio.onerror = (e) => {
+        console.error('AI音频加载失败:', messageId, e);
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, audioLoaded: false } : msg
+        ));
+      };
+    };
+    
+    /**
+     * 播放AI消息音频（手动触发）
+     */
+    const playAiMessageAudio = (message: Message) => {
+      if (!message.audioUrl) return;
+      
+      // 停止当前正在播放的音频
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+      }
+      
+      // 尝试从缓存获取音频
+      let audio = aiAudioCacheRef.current.get(message.id);
+      
+      if (!audio) {
+        // 缓存中没有，创建新的
+        audio = new Audio(message.audioUrl);
+        aiAudioCacheRef.current.set(message.id, audio);
+      }
+      
+      // 重置播放位置
+      audio.currentTime = 0;
+      
+      setPlayingMessageId(message.id);
+      setAudioElement(audio);
+      
+      audio.onended = () => {
+        setPlayingMessageId(null);
+        setAudioElement(null);
+      };
+      
+      audio.play().catch(err => {
+        console.error('播放AI音频失败:', err);
+        setPlayingMessageId(null);
+        setAudioElement(null);
+      });
     };
   
   // 当消息列表更新时，自动滚动到最底部
@@ -282,21 +391,45 @@ const SpokenPractice: React.FC = () => {
         });
         
         // 监听接收消息事件
-        wsSocket.on('receive_message', (data: { content: string }) => {
+        wsSocket.on('receive_message', (data: { 
+          type?: string;
+          content: string;
+          timestamp?: number;
+          round_num?: number;
+          audio_url?: string;
+          audio_cached?: boolean;
+        }) => {
           console.log('收到WebSocket消息:', data);
           
+          const messageId = generateMessageId();
+          
+          // 构建完整音频URL
+          let fullAudioUrl: string | undefined;
+          if (data.audio_url) {
+            fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
+            console.log('AI音频URL:', fullAudioUrl);
+          }
+          
           // 创建AI回复消息
-        const aiMessage: Message = {
-          id: generateMessageId(),
-          content: data.content || '我收到了你的消息！',
-          sender: 'ai',
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        };
-        
-        setMessages(prevMessages => [...prevMessages, aiMessage]);
+          const aiMessage: Message = {
+            id: messageId,
+            content: data.content || '我收到了你的消息！',
+            sender: 'ai',
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            audioUrl: fullAudioUrl,
+            audioLoaded: false,
+            roundNum: data.round_num,
+          };
+          
+          setMessages(prevMessages => [...prevMessages, aiMessage]);
+          
+          // 预加载并自动播放音频
+          if (fullAudioUrl) {
+            preloadAndPlayAiAudio(messageId, fullAudioUrl);
+          }
         });
         
         // 监听错误事件
@@ -308,12 +441,18 @@ const SpokenPractice: React.FC = () => {
         console.error('WebSocket连接初始化失败:', error);
       }
       
-      // 组件卸载时断开连接
+      // 组件卸载时断开连接并清理音频缓存
       return () => {
         console.log('断开WebSocket连接');
         if (wsSocket) {
           wsSocket.disconnect();
         }
+        // 清理音频缓存
+        aiAudioCacheRef.current.forEach((audio) => {
+          audio.pause();
+          audio.src = '';
+        });
+        aiAudioCacheRef.current.clear();
       };
     }, []);
 
@@ -854,7 +993,8 @@ const SpokenPractice: React.FC = () => {
         {messages.map((message) => (
           <div key={message.id} className={`message-item ${message.sender}`}>
             <div className="message-bubble">
-              {message.messageType === 'voice' && message.audioFilePath ? (
+              {/* 用户语音消息 */}
+              {message.sender === 'user' && message.messageType === 'voice' && message.audioFilePath ? (
                 <div className="voice-message-content">
                   <Button
                     type="text"
@@ -903,7 +1043,46 @@ const SpokenPractice: React.FC = () => {
                     </div>
                   )}
                 </div>
+              ) : message.sender === 'ai' && message.audioUrl ? (
+                /* AI消息带音频 */
+                <div className="ai-audio-message-content">
+                  <p className="message-content">{message.content}</p>
+                  <div style={{ 
+                    marginTop: '8px', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={playingMessageId === message.id ? 
+                        <PauseOutlined /> : 
+                        <PlayCircleOutlined />
+                      }
+                      onClick={() => 
+                        playingMessageId === message.id ? 
+                          stopAudioMessage() : 
+                          playAiMessageAudio(message)
+                      }
+                      style={{ 
+                        padding: '2px 8px',
+                        height: 'auto',
+                        color: '#1890ff',
+                        backgroundColor: 'rgba(24, 144, 255, 0.1)',
+                        borderRadius: '12px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      {playingMessageId === message.id ? '暂停' : '播放音频'}
+                    </Button>
+                    {!message.audioLoaded && (
+                      <span style={{ fontSize: '12px', color: '#999' }}>加载中...</span>
+                    )}
+                  </div>
+                </div>
               ) : (
+                /* 普通文本消息 */
                 <p className="message-content">{message.content}</p>
               )}
               <p className="message-timestamp">{message.timestamp}</p>
