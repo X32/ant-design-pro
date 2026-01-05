@@ -32,6 +32,16 @@ export const API_ENDPOINTS = {
   // 通用文件上传
   UPLOAD: `${API_BASE_URL}/api/upload/upload`,
   
+  // 试卷管理相关
+  EXAM_PAPERS: `${API_BASE_URL}/api/exam/papers`,
+  EXAM_PAPERS_SEARCH: `${API_BASE_URL}/api/exam/papers/search`,
+  
+  // 考试分类管理
+  EXAM_CATEGORIES: `${API_BASE_URL}/api/exam/categories`,
+  
+  // 根据考试分类获取试卷
+  EXAM_PAPERS_BY_CATEGORY: `${API_BASE_URL}/api/exam/papers/by-exam-category`,
+  
   // 其他端点可以在这里添加
 };
 

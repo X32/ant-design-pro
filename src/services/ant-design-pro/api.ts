@@ -842,3 +842,547 @@ export async function uploadFile(
     ...(options || {}),
   });
 }
+
+// ==================== 试卷管理 API ====================
+
+/**
+ * 试卷接口
+ */
+export interface ExamPaper {
+  id: number;
+  paper_code: string;
+  paper_name: string;
+  total_score: number;
+  apply_category_id: number;
+  is_active: number;
+  create_time?: string;
+  update_time?: string;
+}
+
+/**
+ * 创建试卷请求参数
+ */
+export interface CreateExamPaperParams {
+  paper_code: string;
+  paper_name: string;
+  total_score?: number;
+  apply_category_id?: number;
+  is_active?: number;
+}
+
+/**
+ * 更新试卷请求参数
+ */
+export interface UpdateExamPaperParams {
+  paper_name?: string;
+  total_score?: number;
+  apply_category_id?: number;
+  exam_category_id?: number;
+  is_active?: number;
+}
+
+/**
+ * 试卷列表响应
+ */
+export interface ExamPaperListResponse {
+  success: boolean;
+  message?: string;
+  data: ExamPaper[];
+  total: number;
+}
+
+/**
+ * 试卷详情响应
+ */
+export interface ExamPaperDetailResponse {
+  success: boolean;
+  message?: string;
+  data: ExamPaper;
+}
+
+/**
+ * 试卷题目关联接口
+ */
+export interface PaperQuestion {
+  id: number;
+  paper_id: number;
+  exercise_id: number;
+  question_score: number;
+  sort: number;
+  exercise?: {
+    id?: number;
+    category_id: number;
+    title: string;
+    content: string;
+    image_url?: string;
+    difficulty: number;
+    is_active: number;
+  };
+  create_time?: string;
+  update_time?: string;
+}
+
+/**
+ * 试卷题目列表响应
+ */
+export interface PaperQuestionListResponse {
+  success: boolean;
+  message?: string;
+  data: PaperQuestion[];
+  total: number;
+}
+
+/**
+ * 添加题目到试卷请求参数
+ */
+export interface AddQuestionToPaperParams {
+  exercise_id: number;
+  question_score?: number;
+  sort?: number;
+}
+
+/**
+ * 获取试卷列表
+ * GET /api/exam/papers
+ */
+export async function getExamPapers(
+  params?: {
+    apply_category_id?: number;
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<ExamPaperListResponse>(API_ENDPOINTS.EXAM_PAPERS, {
+    method: 'GET',
+    params: params,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 搜索试卷
+ * GET /api/exam/papers/search
+ */
+export async function searchExamPapers(
+  params?: {
+    keyword?: string;
+    apply_category_id?: number;
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<ExamPaperListResponse>(API_ENDPOINTS.EXAM_PAPERS_SEARCH, {
+    method: 'GET',
+    params: params,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取试卷详情
+ * GET /api/exam/papers/{paper_id}
+ */
+export async function getExamPaperDetail(
+  paperId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<ExamPaperDetailResponse>(`${API_ENDPOINTS.EXAM_PAPERS}/${paperId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建试卷
+ * POST /api/exam/papers
+ */
+export async function createExamPaper(
+  params: CreateExamPaperParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<ExamPaperDetailResponse>(API_ENDPOINTS.EXAM_PAPERS, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新试卷
+ * PUT /api/exam/papers/{paper_id}
+ */
+export async function updateExamPaper(
+  paperId: number,
+  params: UpdateExamPaperParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<ExamPaperDetailResponse>(`${API_ENDPOINTS.EXAM_PAPERS}/${paperId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除试卷
+ * DELETE /api/exam/papers/{paper_id}
+ */
+export async function deleteExamPaper(
+  paperId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string }>(`${API_ENDPOINTS.EXAM_PAPERS}/${paperId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取试卷所有题目
+ * GET /api/exam/papers/{paper_id}/questions
+ */
+export async function getPaperQuestions(
+  paperId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<PaperQuestionListResponse>(`${API_ENDPOINTS.EXAM_PAPERS}/${paperId}/questions`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 添加题目到试卷
+ * POST /api/exam/papers/{paper_id}/questions
+ */
+export async function addQuestionToPaper(
+  paperId: number,
+  params: AddQuestionToPaperParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data?: { record_id: number } }>(
+    `${API_ENDPOINTS.EXAM_PAPERS}/${paperId}/questions`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    },
+  );
+}
+
+/**
+ * 批量添加题目到试卷
+ * POST /api/exam/papers/{paper_id}/questions/batch
+ */
+export async function batchAddQuestionsToPaper(
+  paperId: number,
+  questions: AddQuestionToPaperParams[],
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data?: { record_ids: number[]; total: number; success: number } }>(
+    `${API_ENDPOINTS.EXAM_PAPERS}/${paperId}/questions/batch`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: { questions },
+      ...(options || {}),
+    },
+  );
+}
+
+/**
+ * 更新试卷中题目信息
+ * PUT /api/exam/papers/{paper_id}/questions/{exercise_id}
+ */
+export async function updatePaperQuestion(
+  paperId: number,
+  exerciseId: number,
+  params: { question_score?: number; sort?: number },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string }>(
+    `${API_ENDPOINTS.EXAM_PAPERS}/${paperId}/questions/${exerciseId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    },
+  );
+}
+
+/**
+ * 从试卷移除题目
+ * DELETE /api/exam/papers/{paper_id}/questions/{exercise_id}
+ */
+export async function removeQuestionFromPaper(
+  paperId: number,
+  exerciseId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string }>(
+    `${API_ENDPOINTS.EXAM_PAPERS}/${paperId}/questions/${exerciseId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      ...(options || {}),
+    },
+  );
+}
+
+// ==================== 考试分类管理接口 ====================
+
+/**
+ * 考试分类接口类型
+ */
+export interface ExamCategory {
+  id: number;
+  name: string;
+  description?: string;
+  sort: number;
+  is_active: number;
+  create_time?: string;
+  update_time?: string;
+}
+
+/**
+ * 创建考试分类参数
+ */
+export interface CreateExamCategoryParams {
+  name: string;
+  description?: string;
+  sort?: number;
+  is_active?: number;
+}
+
+/**
+ * 更新考试分类参数
+ */
+export interface UpdateExamCategoryParams {
+  name?: string;
+  description?: string;
+  sort?: number;
+  is_active?: number;
+}
+
+/**
+ * 获取考试分类列表
+ * GET /api/exam/categories
+ */
+export async function getExamCategories(
+  params?: {
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: ExamCategory[];
+    total?: number;
+    message?: string;
+  }>(API_ENDPOINTS.EXAM_CATEGORIES, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取考试分类详情
+ * GET /api/exam/categories/{category_id}
+ */
+export async function getExamCategoryDetail(
+  categoryId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: ExamCategory;
+    message?: string;
+  }>(`${API_ENDPOINTS.EXAM_CATEGORIES}/${categoryId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建考试分类
+ * POST /api/exam/categories
+ */
+export async function createExamCategory(
+  params: CreateExamCategoryParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: ExamCategory;
+    message?: string;
+  }>(API_ENDPOINTS.EXAM_CATEGORIES, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新考试分类
+ * PUT /api/exam/categories/{category_id}
+ */
+export async function updateExamCategory(
+  categoryId: number,
+  params: UpdateExamCategoryParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: ExamCategory;
+    message?: string;
+  }>(`${API_ENDPOINTS.EXAM_CATEGORIES}/${categoryId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除考试分类（软删除）
+ * DELETE /api/exam/categories/{category_id}
+ */
+export async function deleteExamCategory(
+  categoryId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`${API_ENDPOINTS.EXAM_CATEGORIES}/${categoryId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 根据考试分类ID获取试卷列表
+ * GET /api/exam/papers/by-exam-category
+ */
+export async function getExamPapersByCategory(
+  params: {
+    exam_category_id: number;
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: ExamPaper[];
+    total?: number;
+    message?: string;
+  }>(API_ENDPOINTS.EXAM_PAPERS_BY_CATEGORY, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}

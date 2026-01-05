@@ -85,6 +85,37 @@ export default [
     component: './exercises',
   },
   {
+    name: 'exam',
+    icon: 'fileText',
+    path: '/exam',
+    routes: [
+      {
+        path: '/exam',
+        redirect: '/exam/list',
+      },
+      {
+        name: 'exam-list',
+        path: '/exam/list',
+        component: './exam/examlist',
+      },
+      {
+        name: 'exam-builder',
+        path: '/exam/builder',
+        component: './exam',
+      },
+      {
+        name: 'exam-category',
+        path: '/exam/category',
+        component: './exam/category',
+      },
+      {
+        name: 'cat-exam-list',
+        path: '/exam/catexamList',
+        component: './exam/catexamList',
+      },
+    ],
+  },
+  {
     component: './404',
     layout: false,
     path: '/*',

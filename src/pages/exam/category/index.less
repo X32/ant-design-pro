@@ -1,0 +1,87 @@
+/**
+ * 考试分类管理页面样式
+ */
+
+.exam-category-page {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+
+  .page-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+    .ant-card-body {
+      padding: 24px;
+    }
+  }
+
+  // 工具栏
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+
+  // 表格样式
+  .category-table {
+    .category-name {
+      font-weight: 600;
+      color: #1890ff;
+    }
+
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #e6f7ff;
+    }
+  }
+}
+
+// 弹窗标题
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .anticon {
+    color: #1890ff;
+  }
+}
+
+// 响应式
+@media screen and (max-width: 768px) {
+  .exam-category-page {
+    padding: 16px;
+
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  }
+}

@@ -1,0 +1,215 @@
+/**
+ * 考试卷列表页面样式
+ */
+
+.exam-list-page {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
+
+  .page-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+    .ant-card-body {
+      padding: 24px;
+    }
+  }
+
+  // 工具栏
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+
+  // 表格样式
+  .paper-table {
+    .paper-code {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      color: #1890ff;
+      font-weight: 500;
+    }
+
+    .score {
+      font-weight: 600;
+      color: #52c41a;
+    }
+
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #e6f7ff;
+    }
+  }
+}
+
+// 详情弹窗
+.paper-detail-modal {
+  .detail-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .anticon {
+      color: #1890ff;
+    }
+  }
+
+  .paper-detail {
+    .detail-section {
+      margin-bottom: 24px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px 24px;
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+
+        .label {
+          color: #666;
+          min-width: 80px;
+        }
+
+        .value {
+          color: #333;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .question-list {
+      max-height: 300px;
+      overflow-y: auto;
+
+      .question-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 12px;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+
+        &:hover {
+          border-color: #1890ff;
+          background: #f6f8fa;
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .question-index {
+          width: 28px;
+          height: 28px;
+          background: #1890ff;
+          color: #fff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 600;
+          flex-shrink: 0;
+          margin-right: 12px;
+        }
+
+        .question-content {
+          flex: 1;
+          min-width: 0;
+
+          .question-title {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 6px;
+            line-height: 1.4;
+          }
+
+          .question-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #888;
+          }
+        }
+      }
+    }
+
+    .empty-questions {
+      text-align: center;
+      color: #999;
+      padding: 40px 0;
+    }
+
+    .loading-container {
+      text-align: center;
+      color: #999;
+      padding: 40px 0;
+    }
+  }
+}
+
+// 响应式
+@media screen and (max-width: 768px) {
+  .exam-list-page {
+    padding: 16px;
+
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  }
+
+  .paper-detail-modal {
+    .detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

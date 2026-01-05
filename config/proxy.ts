@@ -18,6 +18,11 @@ export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调整
   dev: {
     // 认证服务代理 - 最高优先级
+    '/api/exam/**': {
+      target: 'http://localhost:9002',
+      changeOrigin: true,
+    },
+    // 认证服务代理 - 最高优先级
     '/api/oral/**': {
       target: 'http://localhost:9002',
       changeOrigin: true,
