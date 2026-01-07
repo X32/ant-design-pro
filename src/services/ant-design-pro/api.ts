@@ -590,6 +590,7 @@ export interface OralExercise {
   title: string;
   content: string;
   image_url?: string;
+  workflow_type?: string;
   difficulty: number;
   is_active: number;
   create_time?: string;
@@ -621,6 +622,7 @@ export interface CreateOralExerciseParams {
   title: string;
   content: string;
   image_url?: string;
+  workflow_type?: string;
   difficulty?: number;
   is_active?: number;
 }
@@ -634,6 +636,7 @@ export interface UpdateOralExerciseParams {
   title?: string;
   content?: string;
   image_url?: string;
+  workflow_type?: string;
   difficulty?: number;
   is_active?: number;
 }
@@ -909,12 +912,14 @@ export interface PaperQuestion {
   exercise_id: number;
   question_score: number;
   sort: number;
+  workflow_type?: string;
   exercise?: {
     id?: number;
     category_id: number;
     title: string;
     content: string;
-    image_url?: string;
+    image_url?: string | null;
+    workflow_type?: string;
     difficulty: number;
     is_active: number;
   };

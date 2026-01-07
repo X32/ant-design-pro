@@ -1,6 +1,6 @@
 /**
  * 分类试题列表页面
- * 左侧显示考试分类，右侧显示分类下的试卷列表
+ * 左侧显示考试分类，右侧显示分类下的试卷列表（可展开/折叠查看试题）
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,7 +14,6 @@ import {
   Empty,
   Badge,
   Button,
-  Tooltip,
   Modal,
 } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
@@ -22,8 +21,12 @@ import {
   AppstoreOutlined,
   FileTextOutlined,
   ReloadOutlined,
+  DownOutlined,
+  RightOutlined,
   EyeOutlined,
+  PlayCircleOutlined,
 } from '@ant-design/icons';
+import { history } from '@umijs/max';
 import {
   ExamCategory,
   ExamPaper,
@@ -53,11 +56,16 @@ const CategoryExamList: React.FC = () => {
     pageSize: 10,
   });
 
-  // 详情弹窗状态
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [detailPaper, setDetailPaper] = useState<ExamPaper | null>(null);
-  const [paperQuestions, setPaperQuestions] = useState<any[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+  // 展开行状态
+  const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
+  // 试卷题目缓存 { paperId: questions[] }
+  const [questionsMap, setQuestionsMap] = useState<Record<number, any[]>>({});
+  // 正在加载题目的试卷ID
+  const [loadingPaperIds, setLoadingPaperIds] = useState<number[]>([]);
+
+  // 试题详情弹窗状态
+  const [questionModalVisible, setQuestionModalVisible] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
 
   /**
    * 获取分类列表
@@ -166,42 +174,153 @@ const CategoryExamList: React.FC = () => {
    * 刷新数据
    */
   const handleRefresh = () => {
+    setExpandedRowKeys([]);
+    setQuestionsMap({});
     fetchCategories();
     fetchPapers();
   };
 
   /**
-   * 查看试卷详情
+   * 加载试卷题目
    */
-  const handleViewDetail = async (paper: ExamPaper) => {
-    setDetailPaper(paper);
-    setDetailModalVisible(true);
-    setDetailLoading(true);
+  const loadPaperQuestions = async (paperId: number) => {
+    // 已经加载过则跳过
+    if (questionsMap[paperId]) return;
 
+    setLoadingPaperIds(prev => [...prev, paperId]);
     try {
-      const response = await getPaperQuestions(paper.id);
+      const response = await getPaperQuestions(paperId);
       if (response.success) {
         // 按 sort 字段升序排列
         const sortedQuestions = (response.data || []).sort((a: any, b: any) => a.sort - b.sort);
-        setPaperQuestions(sortedQuestions);
+        setQuestionsMap(prev => ({ ...prev, [paperId]: sortedQuestions }));
       } else {
-        setPaperQuestions([]);
+        setQuestionsMap(prev => ({ ...prev, [paperId]: [] }));
       }
     } catch (error: any) {
       console.error('获取试卷题目失败:', error);
-      setPaperQuestions([]);
+      setQuestionsMap(prev => ({ ...prev, [paperId]: [] }));
     } finally {
-      setDetailLoading(false);
+      setLoadingPaperIds(prev => prev.filter(id => id !== paperId));
     }
   };
 
   /**
-   * 关闭详情弹窗
+   * 处理展开/折叠
    */
-  const handleDetailClose = () => {
-    setDetailModalVisible(false);
-    setDetailPaper(null);
-    setPaperQuestions([]);
+  const handleExpand = (expanded: boolean, record: ExamPaper) => {
+    if (expanded) {
+      setExpandedRowKeys([record.id]);
+      loadPaperQuestions(record.id);
+    } else {
+      setExpandedRowKeys([]);
+    }
+  };
+
+  /**
+   * 查看试题详情
+   */
+  const handleViewQuestion = (question: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedQuestion(question);
+    setQuestionModalVisible(true);
+  };
+
+  /**
+   * 关闭试题详情弹窗
+   */
+  const handleCloseQuestionModal = () => {
+    setQuestionModalVisible(false);
+    setSelectedQuestion(null);
+  };
+
+  /**
+   * 跳转到口语练习页面
+   */
+  const handlePractice = (question: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const workflowType = question.exercise?.workflow_type || 'fce_part1';
+    const exerciseId = question.exercise?.id;
+    if (exerciseId) {
+      history.push(`/spoken-practice?workflow_type=${workflowType}&exercise_id=${exerciseId}`);
+    } else {
+      message.warning('缺少练习题ID');
+    }
+  };
+
+  /**
+   * 渲染展开行内容
+   */
+  const renderExpandedRow = (record: ExamPaper) => {
+    const questions = questionsMap[record.id];
+    const isLoading = loadingPaperIds.includes(record.id);
+
+    if (isLoading) {
+      return (
+        <div className="expanded-loading">
+          <Spin size="small" />
+          <span>加载中...</span>
+        </div>
+      );
+    }
+
+    if (!questions || questions.length === 0) {
+      return <div className="expanded-empty">暂无题目</div>;
+    }
+
+    return (
+      <div className="expanded-questions">
+        <div className="questions-header">
+          <Tag color="blue">共 {questions.length} 题</Tag>
+        </div>
+        <div className="questions-list">
+          {questions.map((q, index) => (
+            <div
+              key={q.id}
+              className="question-item clickable"
+              onClick={(e) => handleViewQuestion(q, e)}
+            >
+              <div className="question-index">{index + 1}</div>
+              <div className="question-content">
+                <div className="question-title">{q.exercise?.title || '未知题目'}</div>
+                <div className="question-meta">
+                  <span>分值：{q.question_score}分</span>
+                  {q.exercise?.difficulty && (
+                    <Tag
+                      color={
+                        q.exercise.difficulty <= 2 ? 'green' :
+                        q.exercise.difficulty <= 3 ? 'blue' : 'orange'
+                      }
+                      style={{ fontSize: 10 }}
+                    >
+                      难度 {q.exercise.difficulty}
+                      type {q.exercise.workflow_type}
+                    </Tag>
+                  )}
+                  {q.exercise?.workflow_type && (
+                    <Tag color="purple" style={{ fontSize: 10 }}>
+                      {q.exercise.workflow_type}
+                    </Tag>
+                  )}
+                </div>
+              </div>
+              <div className="question-action">
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<PlayCircleOutlined />}
+                  onClick={(e) => handlePractice(q, e)}
+                  style={{ marginRight: 8 }}
+                >
+                  练习
+                </Button>
+                <EyeOutlined onClick={(e) => handleViewQuestion(q, e)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   /**
@@ -248,22 +367,6 @@ const CategoryExamList: React.FC = () => {
       key: 'create_time',
       width: 160,
       render: (time: string) => time ? new Date(time).toLocaleString() : '-',
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      width: 80,
-      fixed: 'right',
-      render: (_, record) => (
-        <Tooltip title="查看详情">
-          <Button
-            type="text"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-          />
-        </Tooltip>
-      ),
     },
   ];
 
@@ -348,7 +451,7 @@ const CategoryExamList: React.FC = () => {
         >
           {selectedCategory ? (
             <Table
-              className="paper-table"
+              className="paper-table expandable-table"
               columns={columns}
               dataSource={papers}
               rowKey="id"
@@ -361,7 +464,24 @@ const CategoryExamList: React.FC = () => {
                 showTotal: (t) => `共 ${t} 份试卷`,
               }}
               onChange={handleTableChange}
-              scroll={{ x: 700 }}
+              scroll={{ x: 600 }}
+              expandable={{
+                expandedRowKeys,
+                onExpand: handleExpand,
+                expandedRowRender: renderExpandedRow,
+                expandIcon: ({ expanded, onExpand, record }) => (
+                  <span
+                    className="expand-icon"
+                    onClick={(e) => onExpand(record, e)}
+                  >
+                    {expanded ? <DownOutlined /> : <RightOutlined />}
+                  </span>
+                ),
+              }}
+              onRow={(record) => ({
+                onClick: () => handleExpand(!expandedRowKeys.includes(record.id), record),
+                style: { cursor: 'pointer' },
+              })}
             />
           ) : (
             <div className="empty-container">
@@ -372,96 +492,98 @@ const CategoryExamList: React.FC = () => {
         </Card>
       </div>
 
-      {/* 详情弹窗 */}
+      {/* 试题详情弹窗 */}
       <Modal
         title={
-          <div className="detail-modal-title">
+          <div className="question-modal-title">
             <FileTextOutlined />
-            <span>试卷详情</span>
+            <span>试题详情</span>
           </div>
         }
-        open={detailModalVisible}
-        onCancel={handleDetailClose}
+        open={questionModalVisible}
+        onCancel={handleCloseQuestionModal}
         footer={[
-          <Button key="close" onClick={handleDetailClose}>
+          <Button key="close" onClick={handleCloseQuestionModal}>
             关闭
           </Button>,
         ]}
         width={700}
-        className="paper-detail-modal"
+        className="question-detail-modal"
       >
-        {detailPaper && (
-          <div className="paper-detail">
-            <div className="detail-section">
-              <div className="section-title">基本信息</div>
-              <div className="detail-grid">
-                <div className="detail-item">
-                  <span className="label">试卷编号：</span>
-                  <span className="value">{detailPaper.paper_code}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">试卷名称：</span>
-                  <span className="value">{detailPaper.paper_name}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">总分：</span>
-                  <span className="value">{detailPaper.total_score}分</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">考试分类：</span>
-                  <span className="value">
-                    {selectedCategory?.name || '-'}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">状态：</span>
-                  <Badge
-                    status={detailPaper.is_active === 1 ? 'success' : 'default'}
-                    text={detailPaper.is_active === 1 ? '启用' : '禁用'}
-                  />
-                </div>
-                <div className="detail-item">
-                  <span className="label">创建时间：</span>
-                  <span className="value">
-                    {detailPaper.create_time ? new Date(detailPaper.create_time).toLocaleString() : '-'}
-                  </span>
-                </div>
-              </div>
+        {selectedQuestion && (
+          <div className="question-detail">
+            <div className="detail-header">
+              <Tag color="blue">分值：{selectedQuestion.question_score}分</Tag>
+              {selectedQuestion.exercise?.difficulty && (
+                <Tag
+                  color={
+                    selectedQuestion.exercise.difficulty <= 2 ? 'green' :
+                    selectedQuestion.exercise.difficulty <= 3 ? 'blue' : 'orange'
+                  }
+                >
+                  难度 {selectedQuestion.exercise.difficulty}
+                </Tag>
+              )}
+              {selectedQuestion.exercise?.category_name && (
+                <Tag color="purple">{selectedQuestion.exercise.category_name}</Tag>
+              )}
             </div>
 
             <div className="detail-section">
-              <div className="section-title">
-                题目列表
-                <Tag color="blue" style={{ marginLeft: 8 }}>{paperQuestions.length} 题</Tag>
+              <div className="section-label">题目标题</div>
+              <div className="section-content title-content">
+                {selectedQuestion.exercise?.title || '未知题目'}
               </div>
-              {detailLoading ? (
-                <div className="loading-container">加载中...</div>
-              ) : paperQuestions.length > 0 ? (
-                <div className="question-list">
-                  {paperQuestions.map((q, index) => (
-                    <div key={q.id} className="question-item">
-                      <div className="question-index">{index + 1}</div>
-                      <div className="question-content">
-                        <div className="question-title">{q.exercise?.title || '未知题目'}</div>
-                        <div className="question-meta">
-                          <span>分值：{q.question_score}分</span>
-                          {q.exercise?.difficulty && (
-                            <Tag color={
-                              q.exercise.difficulty <= 2 ? 'green' :
-                              q.exercise.difficulty <= 3 ? 'blue' : 'orange'
-                            } style={{ fontSize: 10 }}>
-                              难度 {q.exercise.difficulty}
-                            </Tag>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-questions">暂无题目</div>
-              )}
             </div>
+
+            {selectedQuestion.exercise?.image_url && (
+              <div className="detail-section">
+                <div className="section-label">题目图片</div>
+                <div className="section-content image-content">
+                  <img
+                    src={selectedQuestion.exercise.image_url}
+                    alt="题目图片"
+                    className="question-image"
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedQuestion.exercise?.content && (
+              <div className="detail-section">
+                <div className="section-label">题目内容</div>
+                <div className="section-content">
+                  <div
+                    className="rich-content"
+                    dangerouslySetInnerHTML={{ __html: selectedQuestion.exercise.content }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedQuestion.exercise?.answer && (
+              <div className="detail-section">
+                <div className="section-label">参考答案</div>
+                <div className="section-content answer-content">
+                  <div
+                    className="rich-content"
+                    dangerouslySetInnerHTML={{ __html: selectedQuestion.exercise.answer }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedQuestion.exercise?.analysis && (
+              <div className="detail-section">
+                <div className="section-label">解析说明</div>
+                <div className="section-content">
+                  <div
+                    className="rich-content"
+                    dangerouslySetInnerHTML={{ __html: selectedQuestion.exercise.analysis }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>

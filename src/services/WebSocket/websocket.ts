@@ -19,6 +19,7 @@ class WebSocketService {
   private isAuthenticated = false;
   private authToken: string | null = null;
   private workflowType = 'fce_part1';
+  private paperId: number | null = null;
   private authTimeout: NodeJS.Timeout | null = null;
   private readonly AUTH_TIMEOUT_MS = 5000; // 认证超时时间
 
@@ -27,12 +28,13 @@ class WebSocketService {
     this.url = 'ws://localhost:9001/ws';
   }
 
-  connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1') {
+  connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1', paperId?: number) {
     // 存储连接参数，用于重试
     this.userId = userId;
     this.conversationId = conversationId;
     this.authToken = token || null;
     this.workflowType = workflowType;
+    this.paperId = paperId || null;
     
     // 重置认证状态
     this.isAuthenticated = false;
@@ -170,7 +172,8 @@ class WebSocketService {
     const authMessage = {
       type: 'auth',
       token: this.authToken || '',
-      workflow_type: this.workflowType
+      workflow_type: this.workflowType,
+      paper_id: this.paperId
     };
     
     console.log('发送认证消息:', authMessage);
@@ -245,7 +248,7 @@ class WebSocketService {
     this.retryTimer = setTimeout(() => {
       if (this.isRetrying) {
         console.log(`执行第 ${this.retryCount} 次重连...`);
-        this.connect(this.userId, this.conversationId, this.authToken || undefined, this.workflowType);
+        this.connect(this.userId, this.conversationId, this.authToken || undefined, this.workflowType, this.paperId || undefined);
       }
     }, currentInterval);
   }

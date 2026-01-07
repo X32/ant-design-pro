@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 
 // 导入所需的Ant Design组件
-import { Avatar, Button, Input, Layout, Progress, Space } from 'antd';
+import { Avatar, Button, Input, Layout, Progress, Space, Image } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from '@umijs/max'; // 导入useSearchParams用于获取URL参数
 
@@ -49,21 +49,37 @@ const { Header, Content } = Layout;
 const { TextArea } = Input;
 
 /**
+ * 评分详情接口
+ */
+interface ScoreContent {
+  rawText: string;              // 原始文本
+  dimensionScores?: string;     // 维度分数（第一行）
+  totalScore?: string;          // 总分行
+  advantages?: string;          // 优势部分
+  disadvantages?: string;       // 不足部分
+  suggestions?: string;         // 改进建议
+}
+
+/**
  * 消息数据接口定义
  */
 interface Message {
   id: number;           // 消息ID
-  content: string;      // 消息内容
+  content: string | ScoreContent; // 消息内容（文本或评分对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳
   audioFilePath?: string; // 音频文件路径（用户语音消息）
-  messageType?: 'text' | 'voice'; // 消息类型
+  messageType?: 'text' | 'voice' | 'image' | 'score'; // 消息类型
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
   // AI消息音频相关字段
   audioUrl?: string;      // AI消息的音频URL
   audioLoaded?: boolean;  // 音频是否已加载
   roundNum?: number;      // 轮次号
+  // 图片消息相关字段
+  imageUrl?: string;      // 图片URL
+  // 评分消息相关字段
+  score?: string;         // 总分
 }
 
 // AI音频基础URL
@@ -132,6 +148,21 @@ const SpokenPractice: React.FC = () => {
     });
     
     /**
+     * 从URL参数获取paper_id
+     * @returns paper_id 或 undefined
+     */
+    const getPaperIdFromUrl = (): number | undefined => {
+      const urlPaperId = searchParams.get('exercise_id');
+      if (urlPaperId) {
+        const id = parseInt(urlPaperId, 10);
+        if (!isNaN(id) && id > 0) {
+          return id;
+        }
+      }
+      return undefined;
+    };
+    
+    /**
      * 获取或生成会话ID
      * 优先级: URL参数 > localStorage > 生成新ID
      */
@@ -146,8 +177,8 @@ const SpokenPractice: React.FC = () => {
           return id;
         }
       }
-      
-      // 2. 尝试从localStorage获取
+          
+      // 2. 尝试从lectalStorage获取
       const storedId = localStorage.getItem(CONVERSATION_ID_KEY);
       if (storedId) {
         const id = parseInt(storedId, 10);
@@ -167,6 +198,7 @@ const SpokenPractice: React.FC = () => {
     const conversationId = getOrCreateConversationId();
     const userId = parseInt(localStorage.getItem(USER_ID_KEY) || '1', 10);
     
+   
     // 用于生成唯一消息ID的计数器
     const [messageIdCounter, setMessageIdCounter] = useState(0);
     
@@ -300,8 +332,24 @@ const SpokenPractice: React.FC = () => {
         
         console.log('使用Token连接WebSocket:', token);
         
-        // 连接WebSocket，传入token和workflow_type
-        wsSocket = webSocketService.connect(userId, conversationId, token, 'fce_part1');
+        // 从URL获取paper_id
+        let paperId = getPaperIdFromUrl();
+        console.log('从URL获取的paper_id:', paperId);
+        if (paperId === undefined || paperId === 0) {
+          paperId = 25;
+          console.log('没有从URL获取paper_id使用默认id :', paperId);
+        }
+        //从URL获取workflow_type
+        let workflowType = searchParams.get('workflow_type');
+        if (!workflowType) {
+          workflowType = 'fce_part1';
+          console.log('没有从URL获取workflow_type使用默认workflow_type :', workflowType);
+        }
+        console.log('从URL获取的workflow_type:', workflowType);
+       
+        
+        // 连接WebSocket，传入token、workflow_type和paper_id
+        wsSocket = webSocketService.connect(userId, conversationId, token, workflowType, paperId);
         setSocket(wsSocket);
         
         // 监听认证成功事件
@@ -393,42 +441,145 @@ const SpokenPractice: React.FC = () => {
         // 监听接收消息事件
         wsSocket.on('receive_message', (data: { 
           type?: string;
-          content: string;
+          content: any;
           timestamp?: number;
           round_num?: number;
           audio_url?: string;
           audio_cached?: boolean;
+          score?: string;
         }) => {
           console.log('收到WebSocket消息:', data);
           
           const messageId = generateMessageId();
           
-          // 构建完整音频URL
-          let fullAudioUrl: string | undefined;
-          if (data.audio_url) {
-            fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
-            console.log('AI音频URL:', fullAudioUrl);
-          }
-          
-          // 创建AI回复消息
-          const aiMessage: Message = {
-            id: messageId,
-            content: data.content || '我收到了你的消息！',
-            sender: 'ai',
-            timestamp: new Date().toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-            audioUrl: fullAudioUrl,
-            audioLoaded: false,
-            roundNum: data.round_num,
-          };
-          
-          setMessages(prevMessages => [...prevMessages, aiMessage]);
-          
-          // 预加载并自动播放音频
-          if (fullAudioUrl) {
-            preloadAndPlayAiAudio(messageId, fullAudioUrl);
+          // 判断消息类型
+          if (data.type === 'image_url') {
+            // 图片消息
+            const imageMessage: Message = {
+              id: messageId,
+              content: data.content,
+              sender: 'ai',
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              messageType: 'image',
+              imageUrl: data.content,
+              roundNum: data.round_num,
+            };
+            
+            setMessages(prevMessages => [...prevMessages, imageMessage]);
+            console.log('收到图片消息:', data.content);
+          } else if (data.type === 'score') {
+            // 评分消息 - 解析文本内容
+            const contentText = typeof data.content === 'string' ? data.content : '';
+            
+            // 解析评分内容
+            const parseScoreContent = (text: string): ScoreContent => {
+              const lines = text.split('\n');
+              const result: ScoreContent = { rawText: text };
+              
+              // 提取第一行维度分数
+              if (lines.length > 0) {
+                result.dimensionScores = lines[0];
+              }
+              
+              // 查找各部分
+              let currentSection = '';
+              let advantagesText = '';
+              let disadvantagesText = '';
+              let suggestionsText = '';
+              
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // 识别总分行
+                if (line.startsWith('总分：')) {
+                  result.totalScore = line;
+                  continue;
+                }
+                
+                // 识别章节标题
+                if (line === '详细评价：') {
+                  currentSection = 'detail';
+                  continue;
+                }
+                if (line === '优势：') {
+                  currentSection = 'advantages';
+                  continue;
+                }
+                if (line === '不足：') {
+                  currentSection = 'disadvantages';
+                  continue;
+                }
+                if (line === '改进建议：') {
+                  currentSection = 'suggestions';
+                  continue;
+                }
+                
+                // 收集各部分内容
+                if (currentSection === 'advantages' && line) {
+                  advantagesText += line + '\n';
+                } else if (currentSection === 'disadvantages' && line) {
+                  disadvantagesText += line + '\n';
+                } else if (currentSection === 'suggestions' && line) {
+                  suggestionsText += line + '\n';
+                }
+              }
+              
+              result.advantages = advantagesText.trim();
+              result.disadvantages = disadvantagesText.trim();
+              result.suggestions = suggestionsText.trim();
+              
+              return result;
+            };
+            
+            const parsedContent = parseScoreContent(contentText);
+            
+            const scoreMessage: Message = {
+              id: messageId,
+              content: parsedContent,
+              sender: 'ai',
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              messageType: 'score',
+              score: data.score,
+              roundNum: data.round_num,
+            };
+            
+            setMessages(prevMessages => [...prevMessages, scoreMessage]);
+            console.log('收到评分消息, 总分:', data.score);
+          } else {
+            // 文本/音频消息
+            // 构建完整音频URL
+            let fullAudioUrl: string | undefined;
+            if (data.audio_url) {
+              fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
+              console.log('AI音频URL:', fullAudioUrl);
+            }
+            
+            // 创建AI回复消息
+            const aiMessage: Message = {
+              id: messageId,
+              content: typeof data.content === 'string' ? data.content : '我收到了你的消息！',
+              sender: 'ai',
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              audioUrl: fullAudioUrl,
+              audioLoaded: false,
+              roundNum: data.round_num,
+            };
+            
+            setMessages(prevMessages => [...prevMessages, aiMessage]);
+            
+            // 预加载并自动播放音频
+            if (fullAudioUrl) {
+              preloadAndPlayAiAudio(messageId, fullAudioUrl);
+            }
           }
         });
         
@@ -1043,10 +1194,195 @@ const SpokenPractice: React.FC = () => {
                     </div>
                   )}
                 </div>
+              ) : message.sender === 'ai' && message.messageType === 'image' && message.imageUrl ? (
+                /* AI图片消息 */
+                <div className="ai-image-message-content">
+                  <Image
+                    src={message.imageUrl}
+                    alt="图片消息"
+                    style={{ 
+                      maxWidth: '300px',
+                      maxHeight: '300px',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                    preview={{
+                      mask: '点击放大',
+                    }}
+                  />
+                </div>
+              ) : message.sender === 'ai' && message.messageType === 'score' ? (
+                /* AI评分消息 */
+                <div className="ai-score-message-content" style={{
+                  padding: '16px',
+                  backgroundColor: '#f6ffed',
+                  borderRadius: '12px',
+                  border: '2px solid #b7eb8f',
+                  maxWidth: '600px'
+                }}>
+                  {/* 标题 */}
+                  <div style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 'bold', 
+                    color: '#52c41a',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>📊</span>
+                    <span>口语评分结果</span>
+                  </div>
+                  
+                  {/* 总分 */}
+                  {message.score && (
+                    <div style={{ 
+                      fontSize: '32px', 
+                      fontWeight: 'bold', 
+                      color: '#52c41a',
+                      marginBottom: '16px',
+                      textAlign: 'center',
+                      padding: '12px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      border: '1px solid #d9f7be'
+                    }}>
+                      总分: {message.score}
+                    </div>
+                  )}
+                  
+                  {typeof message.content === 'object' && message.content !== null && (
+                    <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
+                      {/* 维度分数 */}
+                      {(message.content as ScoreContent).dimensionScores && (
+                        <div style={{ 
+                          marginBottom: '16px',
+                          padding: '12px',
+                          backgroundColor: '#ffffff',
+                          borderRadius: '8px',
+                          border: '1px solid #d9f7be'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#389e0d', 
+                            marginBottom: '8px',
+                            fontSize: '15px'
+                          }}>
+                            📈 各维度评分
+                          </div>
+                          <div style={{ color: '#595959', whiteSpace: 'pre-wrap' }}>
+                            {(message.content as ScoreContent).dimensionScores}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 总分行 */}
+                      {(message.content as ScoreContent).totalScore && (
+                        <div style={{ 
+                          marginBottom: '16px',
+                          padding: '10px',
+                          backgroundColor: '#e6f7ff',
+                          borderRadius: '6px',
+                          color: '#0050b3',
+                          fontWeight: '500'
+                        }}>
+                          {(message.content as ScoreContent).totalScore}
+                        </div>
+                      )}
+                      
+                      {/* 优势 */}
+                      {(message.content as ScoreContent).advantages && (
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#52c41a', 
+                            marginBottom: '8px',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>✅</span>
+                            <span>优势</span>
+                          </div>
+                          <div style={{ 
+                            paddingLeft: '12px',
+                            color: '#262626',
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: '#ffffff',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            borderLeft: '3px solid #52c41a'
+                          }}>
+                            {(message.content as ScoreContent).advantages}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 不足 */}
+                      {(message.content as ScoreContent).disadvantages && (
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#fa8c16', 
+                            marginBottom: '8px',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>⚠️</span>
+                            <span>不足</span>
+                          </div>
+                          <div style={{ 
+                            paddingLeft: '12px',
+                            color: '#262626',
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: '#ffffff',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            borderLeft: '3px solid #fa8c16'
+                          }}>
+                            {(message.content as ScoreContent).disadvantages}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 改进建议 */}
+                      {(message.content as ScoreContent).suggestions && (
+                        <div>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#1890ff', 
+                            marginBottom: '8px',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>💡</span>
+                            <span>改进建议</span>
+                          </div>
+                          <div style={{ 
+                            paddingLeft: '12px',
+                            color: '#262626',
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: '#ffffff',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            borderLeft: '3px solid #1890ff'
+                          }}>
+                            {(message.content as ScoreContent).suggestions}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : message.sender === 'ai' && message.audioUrl ? (
                 /* AI消息带音频 */
                 <div className="ai-audio-message-content">
-                  <p className="message-content">{message.content}</p>
+                  <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
                   <div style={{ 
                     marginTop: '8px', 
                     display: 'flex', 
@@ -1083,7 +1419,7 @@ const SpokenPractice: React.FC = () => {
                 </div>
               ) : (
                 /* 普通文本消息 */
-                <p className="message-content">{message.content}</p>
+                <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
               )}
               <p className="message-timestamp">{message.timestamp}</p>
             </div>

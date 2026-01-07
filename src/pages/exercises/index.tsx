@@ -53,6 +53,8 @@ import {
   getLevelName,
   getDifficultyName,
   getDifficultyColor,
+  WORKFLOW_TYPE_OPTIONS,
+  getWorkflowTypeName,
 } from './types';
 import {
   getOralCategoriesTree,
@@ -347,6 +349,7 @@ const ExercisesManagement: React.FC = () => {
       category_id: selectedCategory.id,
       difficulty: 3,
       is_active: 1,
+      workflow_type: 'fce_part1',
     });
     setModalVisible(true);
   };
@@ -366,6 +369,7 @@ const ExercisesManagement: React.FC = () => {
           title: exercise.title,
           content: exercise.content,
           image_url: exercise.image_url,
+          workflow_type: exercise.workflow_type,
           difficulty: exercise.difficulty,
           is_active: exercise.is_active,
         });
@@ -440,6 +444,7 @@ const ExercisesManagement: React.FC = () => {
           title: values.title,
           content: values.content,
           image_url: values.image_url,
+          workflow_type: values.workflow_type,
           difficulty: values.difficulty,
           is_active: values.is_active,
         });
@@ -450,6 +455,7 @@ const ExercisesManagement: React.FC = () => {
           title: values.title,
           content: values.content,
           image_url: values.image_url,
+          workflow_type: values.workflow_type,
           difficulty: values.difficulty,
           is_active: values.is_active,
         });
@@ -642,6 +648,17 @@ const ExercisesManagement: React.FC = () => {
       render: (difficulty) => (
         <Tag color={getDifficultyColor(difficulty)}>
           {getDifficultyName(difficulty)}
+        </Tag>
+      ),
+    },
+    {
+      title: '工作流',
+      dataIndex: 'workflow_type',
+      key: 'workflow_type',
+      width: 100,
+      render: (type) => (
+        <Tag color="purple">
+          {getWorkflowTypeName(type)}
         </Tag>
       ),
     },
@@ -1041,6 +1058,18 @@ const ExercisesManagement: React.FC = () => {
             </Form.Item>
 
             <Form.Item
+              name="workflow_type"
+              label="工作流类型"
+              rules={[{ required: true, message: '请选择工作流类型' }]}
+            >
+              <Select style={{ width: 140 }}>
+                {WORKFLOW_TYPE_OPTIONS.map(opt => (
+                  <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
               name="is_active"
               label="状态"
               rules={[{ required: true, message: '请选择状态' }]}
@@ -1124,6 +1153,12 @@ const ExercisesManagement: React.FC = () => {
                   <span className="item-label">难度：</span>
                   <Tag color={getDifficultyColor(currentExercise.difficulty)}>
                     {getDifficultyName(currentExercise.difficulty)}
+                  </Tag>
+                </div>
+                <div className="detail-item">
+                  <span className="item-label">工作流：</span>
+                  <Tag color="purple">
+                    {getWorkflowTypeName(currentExercise.workflow_type)}
                   </Tag>
                 </div>
                 <div className="detail-item">

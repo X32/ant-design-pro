@@ -53,6 +53,8 @@ export interface Exercise {
   content: string;
   /** 图片URL */
   image_url?: string;
+  /** 工作流类型 */
+  workflow_type?: string;
   /** 难度等级 1-5 */
   difficulty: number;
   /** 是否启用：1-启用，0-禁用 */
@@ -143,6 +145,8 @@ export interface CreateExerciseParams {
   content: string;
   /** 图片URL */
   image_url?: string;
+  /** 工作流类型 */
+  workflow_type?: string;
   /** 难度等级 */
   difficulty?: number;
   /** 是否启用 */
@@ -162,6 +166,8 @@ export interface UpdateExerciseParams {
   content?: string;
   /** 图片URL */
   image_url?: string;
+  /** 工作流类型 */
+  workflow_type?: string;
   /** 难度等级 */
   difficulty?: number;
   /** 是否启用 */
@@ -188,6 +194,8 @@ export interface SearchExercisesParams {
   title: string;
   /** 分类ID（可选），限定在某分类下搜索 */
   category_id?: number;
+  /** 工作流类型（可选） */
+  workflow_type?: string;
   /** 是否仅返回启用题目，默认 true */
   only_active?: boolean;
   /** 页码，默认 1 */
@@ -224,6 +232,8 @@ export interface ExerciseFormData {
   content: string;
   /** 图片URL */
   image_url?: string;
+  /** 工作流类型 */
+  workflow_type?: string;
   /** 难度等级 */
   difficulty: number;
   /** 是否启用 */
@@ -256,4 +266,28 @@ export const getLevelName = (level: number): string => {
     default:
       return '未知层级';
   }
+};
+
+/**
+ * 工作流类型选项
+ */
+export const WORKFLOW_TYPE_OPTIONS = [
+  { label: 'FCE Part1', value: 'fce_part1' },
+  { label: 'FCE Part2', value: 'fce_part2' },
+  { label: 'FCE Part3', value: 'fce_part3' },
+  { label: 'FCE Part4', value: 'fce_part4' },
+  { label: 'PET Part1', value: 'pet_part1' },
+  { label: 'PET Part2', value: 'pet_part2' },
+  { label: 'IELTS Part1', value: 'ielts_part1' },
+  { label: 'IELTS Part2', value: 'ielts_part2' },
+  { label: 'IELTS Part3', value: 'ielts_part3' },
+];
+
+/**
+ * 获取工作流类型名称
+ */
+export const getWorkflowTypeName = (type?: string): string => {
+  if (!type) return '-';
+  const option = WORKFLOW_TYPE_OPTIONS.find(opt => opt.value === type);
+  return option ? option.label : type;
 };

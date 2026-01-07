@@ -231,8 +231,11 @@ const Login: React.FC = () => {
           subTitle={intl.formatMessage({
             id: 'pages.layouts.userLayout.title',
           })}
+          //登录初始值
           initialValues={{
             autoLogin: true,
+            email: 'test_user@example.com',
+            password: 'secure_password_123',
           }}
           actions={[
             <FormattedMessage
