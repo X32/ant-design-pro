@@ -34,7 +34,17 @@ export async function getInitialState(): Promise<{
       const msg = await queryCurrentUser({
         skipErrorHandler: true,
       });
-      return msg.data;
+      // 返回 msg.data.user 并处理字段映射
+      const user = msg.data?.user;
+      if (user) {
+        return {
+          ...user,
+          name: user.email?.split('@')[0] || 'User',
+          userid: user.id?.toString(),
+          access: user.is_superuser ? 'admin' : 'user',
+        };
+      }
+      return undefined;
     } catch (_error) {
       history.push(loginPath);
     }
@@ -44,15 +54,15 @@ export async function getInitialState(): Promise<{
   const { location } = history;
   // 为测试路由添加白名单，允许未登录访问
   const testRoutes = [
-    loginPath, 
-    '/user/register', 
+    loginPath,
+    '/user/register',
     '/user/register-result',
     '/test-page',
     // '/audio-recorder-test',
     // '/audio',
     // '/audio-recorder'
   ];
-  
+
   if (!testRoutes.includes(location.pathname)) {
     const currentUser = await fetchUserInfo();
     return {
@@ -92,16 +102,19 @@ export const layout: RunTimeLayoutConfig = ({
       const { location } = history;
       // 为测试路由添加白名单，允许未登录访问
       const testRoutes = [
-        loginPath, 
-        '/user/register', 
+        loginPath,
+        '/user/register',
         '/user/register-result',
         '/test-page',
         '/audio-recorder-test',
         '/audio',
-        '/audio-recorder'
+        '/audio-recorder',
       ];
       // 如果没有登录且路径不在白名单中，重定向到 login
-      if (!initialState?.currentUser && !testRoutes.includes(location.pathname)) {
+      if (
+        !initialState?.currentUser &&
+        !testRoutes.includes(location.pathname)
+      ) {
         history.push(loginPath);
       }
     },

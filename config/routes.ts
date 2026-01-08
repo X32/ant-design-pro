@@ -38,19 +38,73 @@ export default [
         path: '/admin',
         redirect: '/admin/sub-page',
       },
+      // {
+      //   path: '/admin/sub-page',
+      //   name: 'sub-page',
+      //   component: './Admin',
+      // },
       {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
+        path: '/admin/user-manager',
+        name: 'user-manager',
+        component: './user/manager',
+      },
+      {
+        name: 'topics',
+        icon: 'appstore',
+        path: '/admin/topics',
+        component: './topics',
+      },
+      {
+        name: 'exercises',
+        icon: 'book',
+        path: '/admin/exercises',
+        component: './exercises',
+      },
+      {
+        name: 'messages',
+        icon: 'message',
+        path: '/admin/messages',
+        component: './messages',
+      },
+      {
+        name: 'exam',
+        icon: 'fileText',
+        path: '/admin/exam',
+        routes: [
+          {
+            path: '/admin/exam',
+            redirect: '/admin/exam/list',
+          },
+          {
+            name: 'exam-list',
+            path: '/admin/exam/list',
+            component: './exam/examlist',
+          },
+          {
+            name: 'exam-builder',
+            path: '/admin/exam/builder',
+            component: './exam',
+          },
+          {
+            name: 'exam-category',
+            path: '/admin/exam/category',
+            component: './exam/category',
+          },
+          {
+            name: 'cat-exam-list',
+            path: '/admin/exam/catexamList',
+            component: './exam/catexamList',
+          },
+        ],
       },
     ],
   },
-  {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './table-list',
-  },
+  // {
+  //   name: 'list.table-list',
+  //   icon: 'table',
+  //   path: '/list',
+  //   component: './table-list',
+  // },
   {
     path: '/',
     redirect: '/welcome',
@@ -65,56 +119,14 @@ export default [
     path: '/spoken-practice',
     component: './spokenPages',
   },
+
   {
-    name: 'messages',
-    icon: 'message',
-    path: '/messages',
-    component: './messages',
+    name: 'audio-recorder',
+    icon: 'audio',
+    path: '/audio-recorder',
+    component: './AudioRecorder06/Example',
   },
- {    name: 'audio-recorder',    icon: 'audio',    path: '/audio-recorder',    component: './AudioRecorder06/Example',  }, 
-  {
-    name: 'topics',
-    icon: 'appstore',
-    path: '/topics',
-    component: './topics',
-  },
-  {
-    name: 'exercises',
-    icon: 'book',
-    path: '/exercises',
-    component: './exercises',
-  },
-  {
-    name: 'exam',
-    icon: 'fileText',
-    path: '/exam',
-    routes: [
-      {
-        path: '/exam',
-        redirect: '/exam/list',
-      },
-      {
-        name: 'exam-list',
-        path: '/exam/list',
-        component: './exam/examlist',
-      },
-      {
-        name: 'exam-builder',
-        path: '/exam/builder',
-        component: './exam',
-      },
-      {
-        name: 'exam-category',
-        path: '/exam/category',
-        component: './exam/category',
-      },
-      {
-        name: 'cat-exam-list',
-        path: '/exam/catexamList',
-        component: './exam/catexamList',
-      },
-    ],
-  },
+
   {
     component: './404',
     layout: false,

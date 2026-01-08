@@ -27,6 +27,11 @@ export default {
       target: 'http://localhost:9002',
       changeOrigin: true,
     },
+    // 管理员后台服务代理 - 最高优先级
+    '/api/admin/**': {
+      target: 'http://localhost:9002',
+      changeOrigin: true,
+    },
     // 认证服务代理 - 最高优先级
     '/api/auth/**': {
       target: 'http://localhost:9002',
@@ -68,10 +73,12 @@ export default {
       // 依赖 origin 的功能可能需要这个，比如 cookie
       changeOrigin: true,
       // 添加路径排除，确保/api/upload、/api/upload_audio、/api/transcription_status和/api/auth请求不会被此规则捕获
-      bypass: function(req: any) {
-        if (req.url.startsWith('/api/upload') || 
-            req.url.startsWith('/api/transcription_status') || 
-            req.url.startsWith('/api/auth')) {
+      bypass: (req: any) => {
+        if (
+          req.url.startsWith('/api/upload') ||
+          req.url.startsWith('/api/transcription_status') ||
+          req.url.startsWith('/api/auth')
+        ) {
           return false; // 不绕过，让更具体的规则处理
         }
         return undefined; // 使用默认代理行为
@@ -83,8 +90,8 @@ export default {
       ws: true,
       changeOrigin: true,
       // 保留原始路径和查询参数
-      pathRewrite: { '^/ws': '' }
-    }
+      pathRewrite: { '^/ws': '' },
+    },
   },
   /**
    * @name 详细的代理配置

@@ -1391,3 +1391,202 @@ export async function getExamPapersByCategory(
     ...(options || {}),
   });
 }
+
+// ==================== 用户管理 API ====================
+
+/**
+ * 用户信息接口
+ */
+export interface UserInfo {
+  id: number;
+  email: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  created_at: string;
+}
+
+/**
+ * 创建用户参数
+ */
+export interface CreateUserParams {
+  email: string;
+  password: string;
+  is_superuser?: boolean;
+}
+
+/**
+ * 更新用户参数
+ */
+export interface UpdateUserParams {
+  email?: string;
+  password?: string;
+  is_active?: boolean;
+  is_superuser?: boolean;
+}
+
+/**
+ * 获取用户列表（分页）
+ * GET /api/admin/users
+ */
+export async function getUserList(
+  params?: {
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      users: UserInfo[];
+      total: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+    };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_USERS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取单个用户详情
+ * GET /api/admin/users/{user_id}
+ */
+export async function getUserDetail(
+  userId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      user: UserInfo;
+    };
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_USERS}/${userId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建用户（后台）
+ * POST /api/admin/users
+ */
+export async function createUser(
+  params: CreateUserParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      user: UserInfo;
+    };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_USERS, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新用户信息
+ * PUT /api/admin/users/{user_id}
+ */
+export async function updateUser(
+  userId: number,
+  params: UpdateUserParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      user: UserInfo;
+    };
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_USERS}/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除用户（软删除）
+ * DELETE /api/admin/users/{user_id}
+ */
+export async function deleteUser(
+  userId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      message: string;
+    };
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_USERS}/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取统计信息
+ * GET /api/admin/stats
+ */
+export async function getAdminStats(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    data?: {
+      total_users: number;
+      active_users: number;
+    };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_STATS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}

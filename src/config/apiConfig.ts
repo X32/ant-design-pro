@@ -16,32 +16,36 @@ export const API_ENDPOINTS = {
   LOGOUT: `${API_BASE_URL}/api/auth/logout`,
   REGISTER: `${API_BASE_URL}/api/auth/register`,
   CURRENT_USER: `${API_BASE_URL}/api/auth/user`,
-  
+
   // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
   UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
   TRANSCRIPTION_STATUS: `${API_BASE_URL}/api/upload/transcription_status`,
-  
+
   // 口语分类管理相关
   ORAL_CATEGORIES: `${API_BASE_URL}/api/oral/categories`,
   ORAL_CATEGORIES_TREE: `${API_BASE_URL}/api/oral/categories/tree`,
-  
+
   // 练习题管理相关
   ORAL_EXERCISES: `${API_BASE_URL}/api/oral/exercises`,
   ORAL_EXERCISES_SEARCH: `${API_BASE_URL}/api/oral/exercises/search`,
-  
+
   // 通用文件上传
   UPLOAD: `${API_BASE_URL}/api/upload/upload`,
-  
+
   // 试卷管理相关
   EXAM_PAPERS: `${API_BASE_URL}/api/exam/papers`,
   EXAM_PAPERS_SEARCH: `${API_BASE_URL}/api/exam/papers/search`,
-  
+
   // 考试分类管理
   EXAM_CATEGORIES: `${API_BASE_URL}/api/exam/categories`,
-  
+
   // 根据考试分类获取试卷
   EXAM_PAPERS_BY_CATEGORY: `${API_BASE_URL}/api/exam/papers/by-exam-category`,
-  
+
+  // 用户后台管理（管理员权限）- 开发环境通过proxy代理到 http://localhost:9003
+  ADMIN_USERS: `${API_BASE_URL}/api/admin/users`,
+  ADMIN_STATS: `${API_BASE_URL}/api/admin/stats`,
+
   // 其他端点可以在这里添加
 };
 
