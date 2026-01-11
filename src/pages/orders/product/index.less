@@ -1,0 +1,87 @@
+/**
+ * 商品管理列表页面样式
+ */
+
+.product-list-page {
+  .page-card {
+    border-radius: 8px;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .toolbar-left {
+      display: flex;
+      gap: 12px;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .product-table {
+    .coin-amount {
+      color: #faad14;
+      font-weight: 600;
+      
+      &::after {
+        content: ' 金币';
+        font-size: 12px;
+        font-weight: normal;
+        color: #8c8c8c;
+      }
+    }
+
+    .price {
+      color: #f5222d;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .unit-price {
+      color: #8c8c8c;
+      font-size: 12px;
+    }
+
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+    }
+
+    .ant-btn-text {
+      padding: 4px 8px;
+    }
+  }
+}
+
+// 弹窗内表单
+.ant-modal {
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+
+  .ant-input-number {
+    width: 100%;
+  }
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .product-list-page {
+    .toolbar {
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+    }
+  }
+}

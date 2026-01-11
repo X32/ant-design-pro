@@ -1,0 +1,205 @@
+.order-list-page {
+  padding: 0;
+
+  // 统计卡片行
+  .stats-row {
+    margin-bottom: 16px;
+
+    .ant-card {
+      border-radius: 8px;
+      
+      .ant-statistic-title {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .ant-statistic-content {
+        font-size: 24px;
+      }
+    }
+  }
+
+  .page-card {
+    .ant-card-body {
+      padding: 16px 24px;
+    }
+  }
+
+  // 筛选区域
+  .filter-section {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 6px;
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .amount-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      span {
+        color: #666;
+        white-space: nowrap;
+      }
+
+      .range-separator {
+        color: #999;
+      }
+    }
+  }
+
+  // 工具栏
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .toolbar-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .selected-info {
+        color: #666;
+        font-size: 14px;
+
+        strong {
+          color: #1890ff;
+          margin: 0 4px;
+        }
+      }
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  // 表格样式
+  .order-table {
+    .order-no {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      color: #1890ff;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .user-info {
+      line-height: 1.5;
+
+      .user-id {
+        font-size: 12px;
+        color: #999;
+      }
+
+      .user-email {
+        font-size: 13px;
+        color: #333;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .user-nickname {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+
+    .coin-amount {
+      color: #52c41a;
+      font-weight: 500;
+    }
+
+    .order-amount {
+      color: #fa541c;
+      font-weight: 500;
+    }
+
+    // 斑马纹
+    .ant-table-tbody > tr:nth-child(odd) {
+      background-color: #fafafa;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: #e6f7ff !important;
+    }
+  }
+}
+
+// 订单详情弹窗
+.ant-modal {
+  .coin-amount {
+    color: #52c41a;
+    font-weight: 500;
+    font-size: 16px;
+  }
+
+  .order-amount {
+    color: #fa541c;
+    font-weight: 500;
+    font-size: 16px;
+  }
+
+  .ant-descriptions-item-label {
+    background-color: #fafafa;
+    font-weight: 500;
+  }
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .order-list-page {
+    .filter-section {
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+
+        .ant-input,
+        .ant-select,
+        .ant-picker {
+          width: 100% !important;
+        }
+
+        .amount-range {
+          flex-direction: column;
+          align-items: stretch;
+
+          .ant-input-number {
+            width: 100% !important;
+          }
+        }
+      }
+    }
+
+    .toolbar {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+
+      .toolbar-left,
+      .toolbar-right {
+        justify-content: center;
+      }
+    }
+  }
+}

@@ -5,6 +5,35 @@
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* 禁止文字选中 */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  
+  /* 禁止长按菜单（移动端） */
+  -webkit-touch-callout: none;
+  
+  /* 去除点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* 禁止拖拽 */
+  -webkit-user-drag: none;
+  
+  /* 确保所有子元素继承 */
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 禁止图片拖拽和长按 */
+  img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
 
   h3 {
     margin: 0 0 24px 0;
@@ -29,7 +58,43 @@
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+  
+  /* 禁止选中和长按菜单 */
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* 禁止浏览器默认触摸行为（长按菜单等） */
+  touch-action: manipulation;
+  
+  /* 增加触摸目标大小 */
+  min-width: 120px;
+  min-height: 120px;
+  
+  /* 在触摸设备上增加有效触摸区域 */
+  &:active {
+    transform: scale(1.05);
+  }
+  
+  /* 针对触摸设备的额外优化 */
+  @media (hover: none) and (pointer: coarse) {
+    min-width: 140px;
+    min-height: 140px;
+    width: 140px;
+    height: 140px;
+    
+    /* 移动端触摸反馈 */
+    &:active {
+      transform: scale(1.1);
+    }
+  }
+  
+  /* 确保在所有设备上都有良好的触摸体验 */
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
 
   &:hover {
     background: #40a9ff;

@@ -27,6 +27,13 @@ export default defineConfig({
   publicPath: PUBLIC_PATH,
 
   /**
+   * @name HTTPS 开发服务器配置
+   * @description 启用 HTTPS 开发服务器，支持局域网访问时使用麦克风等功能
+   * @doc https://umijs.org/docs/api/config#https
+   */
+  https: process.env.HTTPS === 'true' ? {} : undefined,
+
+  /**
    * @name 兼容性设置
    * @description 设置 ie11 不一定完美兼容，需要检查自己使用的所有依赖
    * @doc https://umijs.org/docs/api/config#targets

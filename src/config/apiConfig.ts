@@ -16,6 +16,8 @@ export const API_ENDPOINTS = {
   LOGOUT: `${API_BASE_URL}/api/auth/logout`,
   REGISTER: `${API_BASE_URL}/api/auth/register`,
   CURRENT_USER: `${API_BASE_URL}/api/auth/user`,
+  UPDATE_USER_PROFILE: `${API_BASE_URL}/api/auth/user/profile`,
+  UPDATE_USER_PASSWORD: `${API_BASE_URL}/api/auth/user/password`,
 
   // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
   UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
@@ -46,7 +48,42 @@ export const API_ENDPOINTS = {
   ADMIN_USERS: `${API_BASE_URL}/api/admin/users`,
   ADMIN_STATS: `${API_BASE_URL}/api/admin/stats`,
 
+  // 公共考试接口（无需认证）- 开发环境通过proxy代理到 http://localhost:9002
+  PUBLIC_EXAM_CATEGORIES: `${API_BASE_URL}/api/exam/public/categories`,
+  PUBLIC_EXAM_PAPERS: `${API_BASE_URL}/api/exam/public/papers`,
+  PUBLIC_EXAM_PAPER_DETAIL: `${API_BASE_URL}/api/exam/public/papers`,  // 动态拼接 paper_id
+  PUBLIC_EXAM_PAPER_QUESTIONS: `${API_BASE_URL}/api/exam/public/papers`,  // 动态拼接 paper_id/questions
+
+  // 订单管理（管理员权限）
+  ADMIN_ORDERS: `${API_BASE_URL}/api/admin/orders`,
+  ADMIN_ORDER_DETAIL: `${API_BASE_URL}/api/admin/orders`,  // 动态拼接 /{order_no}
+  ADMIN_ORDER_WALLET_LOG: `${API_BASE_URL}/api/admin/orders`,  // 动态拼接 /{order_no}/wallet_log
+  
+  // 订单统计（管理员权限）
+  ADMIN_ORDERS_STATS_OVERVIEW: `${API_BASE_URL}/api/admin/orders/statistics/overview`,
+  ADMIN_ORDERS_STATS_BY_STATUS: `${API_BASE_URL}/api/admin/orders/statistics/orders_by_status`,
+  ADMIN_ORDERS_STATS_TREND: `${API_BASE_URL}/api/admin/orders/statistics/trend`,
+
+  // 商品管理（管理员权限）
+  ADMIN_ITEMS: `${API_BASE_URL}/api/admin/items`,
+  ADMIN_ITEM_DETAIL: `${API_BASE_URL}/api/admin/items`,  // 动态拼接 /{item_id}
+  ADMIN_ITEM_STATUS: `${API_BASE_URL}/api/admin/items`,  // 动态拼接 /{item_id}/status
+
+  // 钱包管理（管理员权限）
+  ADMIN_WALLETS: `${API_BASE_URL}/api/admin/wallets`,
+  ADMIN_WALLET_DETAIL: `${API_BASE_URL}/api/admin/wallets`,  // 动态拼接 /{user_id}
+  ADMIN_WALLET_LOGS: `${API_BASE_URL}/api/admin/wallets`,    // 动态拼接 /{user_id}/logs
+  ADMIN_WALLET_ADJUST: `${API_BASE_URL}/api/admin/wallets`,  // 动态拼接 /{user_id}/adjust
+  ADMIN_GLOBAL_WALLET_LOGS: `${API_BASE_URL}/api/admin/wallet_logs/all`,  // 全局钱包流水
+
   // 其他端点可以在这里添加
+  // 统计管理（管理员权限）
+  ADMIN_STATS_OVERVIEW: `${API_BASE_URL}/api/admin/statistics/overview`,
+  ADMIN_TOP_ITEMS: `${API_BASE_URL}/api/admin/statistics/top_items`,
+  ADMIN_AMOUNT_DISTRIBUTION: `${API_BASE_URL}/api/admin/statistics/amount_distribution`,
+  ADMIN_PAYMENT_CHANNELS: `${API_BASE_URL}/api/admin/statistics/payment_channels`,
+  ADMIN_USER_GROWTH: `${API_BASE_URL}/api/admin/statistics/user_growth`,
+  ADMIN_REVENUE_COMPARISON: `${API_BASE_URL}/api/admin/statistics/revenue_comparison`,
 };
 
 // Token配置

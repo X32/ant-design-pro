@@ -69,6 +69,49 @@ export async function currentUser(options?: { [key: string]: any }) {
   });
 }
 
+/** 更新用户个人信息 */
+export async function updateUserProfile(
+  data: { email?: string; name?: string },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message?: string;
+    data?: any;
+  }>(API_ENDPOINTS.UPDATE_USER_PROFILE, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/** 修改用户密码 */
+export async function updateUserPassword(
+  data: { old_password: string; new_password: string },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(API_ENDPOINTS.UPDATE_USER_PASSWORD, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
 /** 退出登录接口 POST /api/login/outLogin */
 export async function outLogin(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/login/outLogin', {
@@ -1586,6 +1629,848 @@ export async function getAdminStats(
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+// ==================== 公共考试接口（无需认证）====================
+
+/** 获取公开的考试分类列表 */
+export async function getPublicExamCategories(
+  params?: {
+    only_active?: boolean;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: any[];
+    total: number;
+    message?: string;
+  }>(API_ENDPOINTS.PUBLIC_EXAM_CATEGORIES, {
+    method: 'GET',
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 获取公开的试卷列表 */
+export async function getPublicExamPapers(
+  params?: {
+    exam_category_id?: number;
+    apply_category_id?: number;
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: any[];
+    total: number;
+    message?: string;
+  }>(API_ENDPOINTS.PUBLIC_EXAM_PAPERS, {
+    method: 'GET',
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 获取公开的试卷详情 */
+export async function getPublicExamPaperDetail(
+  paperId: number,
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: any;
+    message?: string;
+  }>(`${API_ENDPOINTS.PUBLIC_EXAM_PAPER_DETAIL}/${paperId}`, {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
+/** 获取公开的试卷题目列表 */
+export async function getPublicExamPaperQuestions(
+  paperId: number,
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: any[];
+    total: number;
+    message?: string;
+  }>(`${API_ENDPOINTS.PUBLIC_EXAM_PAPER_QUESTIONS}/${paperId}/questions`, {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
+// ==================== 订单管理 API ====================
+
+/** 订单列表查询参数 */
+export interface AdminOrderParams {
+  page?: number;
+  page_size?: number;
+  status?: string;  // CREATED/PAID/COMPLETED/CANCELED
+  user_id?: number;
+  order_no?: string;
+  start_date?: string;  // YYYY-MM-DD
+  end_date?: string;    // YYYY-MM-DD
+  sort_by?: string;     // created_at/updated_at/total_amount/user_id/id
+  sort_order?: string;  // asc/desc
+}
+
+/** 订单数据类型 */
+export interface OrderItem {
+  id: number;
+  order_no: string;
+  user_id: number;
+  user_email: string;
+  item_name: string;
+  coin_amount: number;
+  total_amount: number;  // 单位：分
+  status: string;        // CREATED/PAID/COMPLETED/CANCELED
+  pay_channel: string;
+  created_at: string;
+  updated_at: string;
+  has_wallet_log: boolean;
+}
+
+/** 订单详情类型 */
+export interface OrderDetail {
+  order: {
+    id: number;
+    order_no: string;
+    user_id: number;
+    item_id: number;
+    item_name: string;
+    coin_amount: number;
+    item_price: number;
+    quantity: number;
+    total_amount: number;
+    status: string;
+    pay_channel: string;
+    pay_order_no: string;
+    expired_at: string;
+    created_at: string;
+    updated_at: string;
+  };
+  user: {
+    user_id: number;
+    email: string;
+    created_at: string;
+    is_active: boolean;
+    current_balance: number;
+    total_orders: number;
+    total_recharge_amount: number;
+  };
+  wallet_logs: Array<{
+    id: number;
+    change_amount: number;
+    balance_before: number;
+    balance_after: number;
+    biz_type: string;
+    biz_id: number;
+    remark: string;
+    created_at: string;
+  }>;
+  has_wallet_log: boolean;
+}
+
+/** 统计概览数据类型 */
+export interface OrderStatsOverview {
+  today: {
+    orders: number;
+    amount: number;
+    users: number;
+    success_rate: number;
+  };
+  total: {
+    orders: number;
+    amount: number;
+    users: number;
+    avg_amount: number;
+  };
+  current: {
+    pending_orders: number;
+    abnormal_orders: number;
+    total_balance: number;
+  };
+}
+
+/** 订单趋势数据类型 */
+export interface OrderTrendItem {
+  date: string;
+  orders: number;
+  amount: number;
+  completed_orders: number;
+}
+
+/** 获取订单列表（管理员） */
+export async function getAdminOrders(
+  params: AdminOrderParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: OrderItem[];
+    total: number;
+    page: number;
+    page_size: number;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ORDERS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 获取订单详情（管理员） */
+export async function getAdminOrderDetail(
+  orderNo: string,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: OrderDetail;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ORDER_DETAIL}/${orderNo}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取订单钱包流水（管理员） */
+export async function getAdminOrderWalletLog(
+  orderNo: string,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: any;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ORDER_WALLET_LOG}/${orderNo}/wallet_log`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取订单统计概览 */
+export async function getOrderStatsOverview(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: OrderStatsOverview;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ORDERS_STATS_OVERVIEW, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取订单状态分布 */
+export async function getOrderStatsByStatus(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: Record<string, { count: number; total_amount: number }>;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ORDERS_STATS_BY_STATUS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取订单趋势数据 */
+export async function getOrderStatsTrend(
+  days: number = 30,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: {
+      days: number;
+      trend: OrderTrendItem[];
+    };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ORDERS_STATS_TREND, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params: { days },
+    ...(options || {}),
+  });
+}
+
+// ==================== 商品管理 API ====================
+
+/** 商品数据类型 */
+export interface ProductItem {
+  id: number;
+  item_type: string;
+  name: string;
+  description: string;
+  coin_amount: number;
+  price: number;        // 单位：分
+  currency: string;
+  status: number;       // 1=上架，0=下架
+  status_label: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 创建/更新商品参数 */
+export interface ProductFormData {
+  name: string;
+  description?: string;
+  coin_amount: number;
+  price: number;
+  currency?: string;
+  status?: number;
+}
+
+/** 获取商品列表 */
+export async function getAdminItems(
+  params?: { item_type?: string; status?: number },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: ProductItem[];
+    total: number;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ITEMS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 获取商品详情 */
+export async function getAdminItemDetail(
+  itemId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: ProductItem;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ITEM_DETAIL}/${itemId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 创建商品 */
+export async function createAdminItem(
+  data: ProductFormData,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: ProductItem;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_ITEMS, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/** 更新商品 */
+export async function updateAdminItem(
+  itemId: number,
+  data: Partial<ProductFormData>,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: ProductItem;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ITEM_DETAIL}/${itemId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/** 更新商品状态（上架/下架） */
+export async function updateAdminItemStatus(
+  itemId: number,
+  status: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ITEM_STATUS}/${itemId}/status`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: { status },
+    ...(options || {}),
+  });
+}
+
+/** 删除商品（软删除） */
+export async function deleteAdminItem(
+  itemId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_ITEM_DETAIL}/${itemId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+// ==================== 钱包管理 API ====================
+
+/** 钱包列表数据类型 */
+export interface WalletItem {
+  id: number;
+  user_id: number;
+  email: string;
+  username: string;
+  balance: number;
+  frozen_balance: number;
+  total_recharge: number;
+  total_consume: number;
+  last_transaction_time: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 钱包列表查询参数 */
+export interface WalletListParams {
+  page?: number;
+  page_size?: number;
+  min_balance?: number;
+  max_balance?: number;
+  user_id?: number;
+  user_email?: string;
+  sort_by?: string;     // balance/frozen_balance/created_at/updated_at/user_id
+  sort_order?: string;  // asc/desc
+}
+
+/** 钱包详情数据类型 */
+export interface WalletDetail {
+  wallet: {
+    id: number;
+    user_id: number;
+    balance: number;
+    frozen_balance: number;
+    created_at: string;
+    updated_at: string;
+  };
+  user: {
+    user_id: number;
+    email: string;
+    username: string;
+    is_active: boolean;
+    created_at: string;
+  };
+  statistics: {
+    total_recharge: number;
+    total_consume: number;
+    transaction_count: number;
+    last_transaction_time: string;
+  };
+}
+
+/** 钱包流水数据类型 */
+export interface WalletLog {
+  id: number;
+  user_id: number;
+  change_amount: number;
+  balance_before: number;
+  balance_after: number;
+  biz_type: string;  // recharge_order/consume/admin_adjust/refund
+  biz_id: number;
+  remark: string;
+  created_at: string;
+}
+
+/** 钱包调整参数 */
+export interface WalletAdjustParams {
+  change_amount: number;
+  remark: string;
+}
+
+/** 获取钱包列表 */
+export async function getAdminWallets(
+  params?: WalletListParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: WalletItem[];
+    total: number;
+    page: number;
+    page_size: number;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_WALLETS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 获取钱包详情 */
+export async function getAdminWalletDetail(
+  userId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: WalletDetail;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_WALLET_DETAIL}/${userId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取钱包流水 */
+export async function getAdminWalletLogs(
+  userId: number,
+  params?: { page?: number; page_size?: number },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: WalletLog[];
+    total: number;
+    page: number;
+    page_size: number;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_WALLET_LOGS}/${userId}/logs`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/** 手动调整钱包余额 */
+export async function adjustAdminWallet(
+  userId: number,
+  data: WalletAdjustParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`${API_ENDPOINTS.ADMIN_WALLET_ADJUST}/${userId}/adjust`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/** 全局钱包流水查询参数 */
+export interface GlobalWalletLogParams {
+  user_id?: number;
+  start_date?: string;  // YYYY-MM-DD
+  end_date?: string;    // YYYY-MM-DD
+  biz_type?: string;    // recharge_order/consume/admin_adjust/refund
+  min_amount?: number;
+  max_amount?: number;
+  page?: number;
+  page_size?: number;
+}
+
+/** 获取全局钱包流水 */
+export async function getGlobalWalletLogs(
+  params?: GlobalWalletLogParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: WalletLog[];
+    total: number;
+    page: number;
+    page_size: number;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_GLOBAL_WALLET_LOGS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+// ==================== 统计管理 API ====================
+
+/** 统计概览数据类型 */
+export interface StatsOverview {
+  today: {
+    orders: number;
+    amount: number;  // 单位：分
+    users: number;
+    success_rate: number;
+  };
+  total: {
+    orders: number;
+    amount: number;  // 单位：分
+    users: number;
+    avg_amount: number;  // 单位：分
+  };
+  current: {
+    pending_orders: number;
+    abnormal_orders: number;
+    total_balance: number;  // 单位：分
+    online_users: number;
+  };
+}
+
+/** 热门商品数据类型 */
+export interface TopItem {
+  item_name: string;
+  sales_count: number;
+  total_sales: number;  // 单位：分
+}
+
+/** 金额分布数据类型 */
+export interface AmountDistributionItem {
+  range: string;
+  count: number;
+  total_amount: number;  // 单位：分
+}
+
+/** 支付渠道数据类型 */
+export interface PaymentChannelItem {
+  channel: string;
+  count: number;
+  total_amount: number;  // 单位：分
+  completed_count: number;
+}
+
+/** 用户增长数据类型 */
+export interface UserGrowthItem {
+  date: string;
+  new_users: number;
+}
+
+/** 收入对比数据类型 */
+export interface RevenueComparison {
+  current: {
+    revenue: number;  // 单位：分
+    orders: number;
+  };
+  previous: {
+    revenue: number;  // 单位：分
+    orders: number;
+  };
+  growth: {
+    revenue_growth: number;  // 百分比
+    orders_growth: number;   // 百分比
+  };
+}
+
+/** 获取统计概览 */
+export async function getAdminStatsOverview(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    data: StatsOverview;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_STATS_OVERVIEW, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取热门商品排行 */
+export async function getAdminTopItems(
+  limit: number = 10,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{ 
+    success: boolean;
+    data: { items: TopItem[] };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_TOP_ITEMS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params: { limit },
+    ...(options || {}),
+  });
+}
+
+/** 获取金额分布统计 */
+export async function getAdminAmountDistribution(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{ 
+    success: boolean;
+    data: { distribution: AmountDistributionItem[] };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_AMOUNT_DISTRIBUTION, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取支付渠道分布 */
+export async function getAdminPaymentChannels(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{ 
+    success: boolean;
+    data: { channels: PaymentChannelItem[] };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_PAYMENT_CHANNELS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取用户增长趋势 */
+export async function getAdminUserGrowth(
+  days: number = 30,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{ 
+    success: boolean;
+    data: { growth: UserGrowthItem[] };
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_USER_GROWTH, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params: { days },
+    ...(options || {}),
+  });
+}
+
+/** 获取收入对比统计 */
+export async function getAdminRevenueComparison(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{ 
+    success: boolean;
+    data: RevenueComparison;
+    message?: string;
+  }>(API_ENDPOINTS.ADMIN_REVENUE_COMPARISON, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
     },
     ...(options || {}),
   });

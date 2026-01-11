@@ -44,7 +44,7 @@ export default {
         },
         // 将ws://localhost:8001/ws?userId=1&conversationId=1代理到ws://localhost:9001
         '/ws': {
-            target: 'ws://localhost:9001',
+            target: 'ws://192.168.4.30:9001',
             ws: true,
             changeOrigin: true,
             // 保留原始路径和查询参数

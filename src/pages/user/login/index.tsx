@@ -176,9 +176,14 @@ const Login: React.FC = () => {
         const urlParams = new URL(window.location.href).searchParams;
         const redirect = urlParams.get('redirect');
         
-        // 跳转到重定向页面或默认首页
+        // 根据用户角色跳转：管理员跳转到后台，普通用户跳转到首页
+        let defaultPath = '/home';  // 普通用户默认跳转到首页
+        if (user && user.is_superuser) {
+          defaultPath = '/back/welcome';  // 管理员跳转到后台工作台
+        }
+        
         setTimeout(() => {
-          history.push(redirect || '/welcome');
+          history.push(redirect || defaultPath);
         }, 100);
         
         return;
@@ -234,8 +239,10 @@ const Login: React.FC = () => {
           //登录初始值
           initialValues={{
             autoLogin: true,
-            email: 'test_user@example.com',
-            password: 'secure_password_123',
+             email: 'test@example.com',
+            password: 'test123456',
+            // email: 'test_user@example.com',
+            // password: 'secure_password_123',
           }}
           actions={[
             <FormattedMessage

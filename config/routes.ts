@@ -11,6 +11,7 @@
  * @doc https://umijs.org/docs/guides/routes
  */
 export default [
+  // ========== 登录注册路由（无需认证）==========
   {
     path: '/user',
     layout: false,
@@ -20,113 +21,177 @@ export default [
         path: '/user/login',
         component: './user',
       },
+      {
+        name: 'profile',
+        path: '/user/profile',
+        component: './user/profile',
+      },
     ],
   },
+
+  // ========== 首页（无需登录，完全自定义布局）==========
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'smile',
-    component: './Welcome',
+    path: '/home',
+    name: 'home',
+    component: './home',
+    layout: false,
   },
+
+  // ========== 考试目录（公开访问，无需登录，不显示菜单）==========
   {
-    path: '/admin',
-    name: 'admin',
+    path: '/exam-catalog',
+    name: 'exam-catalog',
+    component: './exam-catalog',
+    layout: false,  // 不显示左侧菜单和顶部导航
+  },
+
+  // ========== 后台管理路由（需要管理员权限）==========
+  {
+    path: '/back',
+    name: 'back',
     icon: 'crown',
     access: 'canAdmin',
     routes: [
       {
-        path: '/admin',
-        redirect: '/admin/sub-page',
+        path: '/back',
+        redirect: '/back/welcome',
       },
-      // {
-      //   path: '/admin/sub-page',
-      //   name: 'sub-page',
-      //   component: './Admin',
-      // },
       {
-        path: '/admin/user-manager',
+        path: '/back/welcome',
+        name: 'welcome',
+        icon: 'smile',
+        component: './Welcome',
+      },
+      {
+        path: '/back/dashboard',
+        name: 'dashboard',
+        icon: 'dashboard',
+        component: './dashboard',
+      },
+      {
+        path: '/back/user-manager',
         name: 'user-manager',
+        icon: 'team',
         component: './user/manager',
       },
       {
         name: 'topics',
         icon: 'appstore',
-        path: '/admin/topics',
+        path: '/back/topics',
         component: './topics',
       },
       {
         name: 'exercises',
         icon: 'book',
-        path: '/admin/exercises',
+        path: '/back/exercises',
         component: './exercises',
       },
       {
         name: 'messages',
         icon: 'message',
-        path: '/admin/messages',
+        path: '/back/messages',
         component: './messages',
+      },
+      {
+        name: 'audio-recorder',
+        icon: 'audio',
+        path: '/back/audio-recorder',
+        component: './AudioRecorder06/Example',
+      },
+      {
+        name: 'spoken-practice',
+        icon: 'sound',
+        path: '/back/spoken-practice',
+        component: './spokenPages',
       },
       {
         name: 'exam',
         icon: 'fileText',
-        path: '/admin/exam',
+        path: '/back/exam',
         routes: [
           {
-            path: '/admin/exam',
-            redirect: '/admin/exam/list',
+            path: '/back/exam',
+            redirect: '/back/exam/list',
           },
           {
             name: 'exam-list',
-            path: '/admin/exam/list',
+            path: '/back/exam/list',
             component: './exam/examlist',
           },
           {
             name: 'exam-builder',
-            path: '/admin/exam/builder',
+            path: '/back/exam/builder',
             component: './exam',
           },
           {
             name: 'exam-category',
-            path: '/admin/exam/category',
+            path: '/back/exam/category',
             component: './exam/category',
           },
           {
             name: 'cat-exam-list',
-            path: '/admin/exam/catexamList',
+            path: '/back/exam/catexamList',
             component: './exam/catexamList',
+          },
+        ],
+      },
+      {
+        name: 'orders',
+        icon: 'shoppingCart',
+        path: '/back/orders',
+        routes: [
+          {
+            path: '/back/orders',
+            redirect: '/back/orders/list',
+          },
+          {
+            name: 'order-list',
+            path: '/back/orders/list',
+            component: './orders',
+          },
+          {
+            name: 'product',
+            path: '/back/orders/product',
+            component: './orders/product',
+          },
+          {
+            name: 'wallets',
+            path: '/back/orders/wallets',
+            component: './orders/wallets',
+          },
+          {
+            name: 'wallet-logs',
+            path: '/back/orders/wallet-logs',
+            component: './orders/wallets/logs',
           },
         ],
       },
     ],
   },
-  // {
-  //   name: 'list.table-list',
-  //   icon: 'table',
-  //   path: '/list',
-  //   component: './table-list',
-  // },
-  {
-    path: '/',
-    redirect: '/welcome',
-  },
+
+  // ========== 前台功能页面（保留左侧菜单）==========
   {
     path: '/tts-mobile-pro',
     component: './tts_mobile_pro',
+    layout: false,
   },
+  // ========== 口语练习页面（普通用户，不显示侧边栏）==========
   {
     name: 'spoken-practice',
-    icon: 'mic',
+    icon: 'sound',
     path: '/spoken-practice',
     component: './spokenPages',
+    layout: false,  // 普通用户不显示侧边栏
   },
+  
 
+  // ========== 根路径重定向到首页 ==========
   {
-    name: 'audio-recorder',
-    icon: 'audio',
-    path: '/audio-recorder',
-    component: './AudioRecorder06/Example',
+    path: '/',
+    redirect: '/home',
   },
 
+  // ========== 404 页面 ==========
   {
     component: './404',
     layout: false,

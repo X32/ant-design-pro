@@ -24,8 +24,22 @@ class WebSocketService {
   private readonly AUTH_TIMEOUT_MS = 5000; // 认证超时时间
 
   constructor() {
-    // 直接连接到目标WebSocket服务器，不使用代理
-    this.url = 'ws://localhost:9001/ws';
+    // 根据当前页面协议自动选择 ws:// 或 wss://
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    
+    // 如果是通过 HTTPS 访问，使用 wss:// 连接到 Nginx 代理
+    // Nginx 会将请求转发到后端的 ws://localhost:9001/ws
+    if (protocol === 'wss:') {
+      // 通过 Nginx 代理
+      this.url = `${protocol}//${host}/api/ws`;
+    } else {
+      // 直接连接
+      this.url = 'ws://localhost:9001/ws';
+      // this.url = 'ws://192.168.4.30:9001/ws';
+    }
+    
+    console.log('WebSocket URL:', this.url);
   }
 
   connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1', paperId?: number) {

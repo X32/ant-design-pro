@@ -4,6 +4,7 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import React from 'react';
+import { TOKEN_KEY } from '@/config/apiConfig';
 import {
   AvatarDropdown,
   AvatarName,
@@ -63,13 +64,45 @@ export async function getInitialState(): Promise<{
     // '/audio-recorder'
   ];
 
+  // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
+  const publicRoutes = ['/home', '/exam-catalog'];
+
   if (!testRoutes.includes(location.pathname)) {
-    const currentUser = await fetchUserInfo();
-    return {
-      fetchUserInfo,
-      currentUser,
-      settings: defaultSettings as Partial<LayoutSettings>,
-    };
+    // 对于公开页面，先检查是否有token
+    if (publicRoutes.includes(location.pathname)) {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        // 有token，尝试加载用户信息
+        try {
+          const currentUser = await fetchUserInfo();
+          return {
+            fetchUserInfo,
+            currentUser,
+            settings: defaultSettings as Partial<LayoutSettings>,
+          };
+        } catch (error) {
+          // 加载失败，也允许访问
+          return {
+            fetchUserInfo,
+            settings: defaultSettings as Partial<LayoutSettings>,
+          };
+        }
+      } else {
+        // 没有token，直接允许访问
+        return {
+          fetchUserInfo,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      }
+    } else {
+      // 非公开页面，必须登录
+      const currentUser = await fetchUserInfo();
+      return {
+        fetchUserInfo,
+        currentUser,
+        settings: defaultSettings as Partial<LayoutSettings>,
+      };
+    }
   }
   return {
     fetchUserInfo,

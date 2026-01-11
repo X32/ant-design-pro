@@ -42,3 +42,15 @@ build
 # Prevent JS files from being generated in locales
 /src/locales/**/*.js
 !/src/locales/**/*.d.ts
+
+# 部署相关（不提交到仓库）
+# 生产环境配置文件包含敏感信息，不应提交
+.env.production
+.env.local
+.env.*.local
+
+# 部署文档和配置可以提交，但是模板文件需要保留
+# .env.production.template 保留在仓库中
+# 宝塔部署指南.md 保留在仓库中
+# nginx-bt.conf 保留在仓库中
+# bt-deploy.sh 保留在仓库中

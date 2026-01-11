@@ -83,9 +83,9 @@ interface Message {
 }
 
 // AI音频基础URL
-const AI_AUDIO_BASE_URL = 'http://localhost:9002';
+// const AI_AUDIO_BASE_URL = 'http://localhost:9002';
 
-
+const AI_AUDIO_BASE_URL = 'http://192.168.4.30:9002';
 
 /**
  * AI口语练习组件

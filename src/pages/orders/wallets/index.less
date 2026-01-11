@@ -1,0 +1,105 @@
+/**
+ * 用户钱包列表页面样式
+ */
+
+.wallet-list-page {
+  .page-card {
+    border-radius: 8px;
+  }
+
+  .filter-bar {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 4px;
+  }
+
+  .wallet-table {
+    .balance-amount {
+      &::after {
+        content: ' 金币';
+        font-size: 12px;
+        font-weight: normal;
+        color: #8c8c8c;
+        margin-left: 4px;
+      }
+    }
+
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+    }
+
+    .ant-btn-text {
+      padding: 4px 8px;
+    }
+  }
+
+  // 流水记录样式
+  .log-item {
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      .log-time {
+        color: #8c8c8c;
+        font-size: 12px;
+      }
+
+      .log-amount {
+        font-size: 16px;
+        font-weight: 600;
+      }
+    }
+
+    .log-balance {
+      color: #595959;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .log-remark {
+      color: #8c8c8c;
+      font-size: 12px;
+    }
+  }
+}
+
+// 抽屉内容样式
+.ant-drawer-body {
+  .ant-card {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .ant-statistic {
+    .ant-statistic-content-suffix {
+      font-size: 14px;
+      color: #8c8c8c;
+    }
+  }
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .wallet-list-page {
+    .filter-bar {
+      .ant-space {
+        width: 100%;
+
+        .ant-space-item {
+          width: 100%;
+
+          input,
+          .ant-input-number {
+            width: 100% !important;
+          }
+        }
+      }
+    }
+  }
+}
