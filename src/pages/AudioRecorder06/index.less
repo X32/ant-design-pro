@@ -58,7 +58,8 @@
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+  position: relative; /* 添加相对定位以支持内部绝对定位的元素 */
+
   /* 禁止选中和长按菜单 */
   user-select: none;
   -webkit-user-select: none;
@@ -117,10 +118,12 @@
   .anticon {
     font-size: 32px;
     margin-bottom: 8px;
+    /* 移除 pointer-events: none，避免事件穿透问题 */
   }
 
   span {
     font-size: 14px;
+    /* 移除 pointer-events: none，避免事件穿透问题 */
   }
 }
 

@@ -801,6 +801,11 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       touchActiveRef.current = true;
       touchStartTimeRef.current = Date.now();
       
+      // 清除可能存在的旧定时器
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+      
       // 设置长按定时器 - 300ms后开始录音
       const longPressTimer = setTimeout(() => {
         if (touchActiveRef.current) { // 确保触摸仍然处于活动状态
@@ -809,8 +814,8 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         }
       }, LONG_PRESS_THRESHOLD);
       
-      // 将定时器保存到事件目标上以便在触摸结束时清除
-      (e.target as any).__longPressTimer = longPressTimer;
+      // 将定时器保存到组件ref中
+      longPressTimerRef.current = longPressTimer;
     };
     
     // 触摸结束处理 - 移动端松开手指停止录音
@@ -820,10 +825,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       e.stopPropagation();
       
       // 清除长按定时器 - 防止在触摸结束后触发长按录音
-      const timer = (e.target as any).__longPressTimer;
-      if (timer) {
-        clearTimeout(timer);
-        (e.target as any).__longPressTimer = null;
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
       }
       
       // 计算触摸持续时间
@@ -854,10 +858,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       e.stopPropagation();
       
       // 清除长按定时器
-      const timer = (e.target as any).__longPressTimer;
-      if (timer) {
-        clearTimeout(timer);
-        (e.target as any).__longPressTimer = null;
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
       }
       
       // 如果已经在录音，则停止录音
@@ -883,10 +886,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
       if (touch.clientX < rect.left || touch.clientX > rect.right || 
           touch.clientY < rect.top || touch.clientY > rect.bottom) {
         // 清除长按定时器
-        const timer = (e.target as any).__longPressTimer;
-        if (timer) {
-          clearTimeout(timer);
-          (e.target as any).__longPressTimer = null;
+        if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
         }
         
         if (touchActiveRef.current && isRecording) {
@@ -958,18 +960,41 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
         onContextMenu={handleContextMenu}
         // 根据按钮状态设置内联样式：禁用时设置不可用光标和透明度，启用时设置touchAction为manipulation优化触摸体验
         style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : { touchAction: 'manipulation' }}
-        // 添加额外的触摸事件优化：在捕获阶段阻止触摸移动的默认行为
-        onTouchMoveCapture={(e) => e.preventDefault()}
       >
-        {/* 录音图标 */}
-        <AudioOutlined />
-        <span>
+        {/* 录音图标 - 添加事件处理以确保触摸事件能够正确传递 */}
+        <AudioOutlined 
+          style={{ pointerEvents: 'none' }}
+        />
+        <span 
+          style={{ pointerEvents: 'none' }}
+        >
           {/* 根据按钮状态显示不同的文本：禁用时显示最大时长提示，录音中显示"松开停止"，否则显示"长按录音" */}
           {isDisabled 
             ? `已达最大时长(${maxDuration}秒)` 
             : (isRecording ? '松开停止' : '长按录音')
           }
         </span>
+        {/* 透明覆盖按钮 - 捕获所有事件 */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+            backgroundColor: 'transparent', // 完全透明
+            cursor: 'pointer',
+          }}
+          onMouseDown={isDisabled ? undefined : handleMouseDown}
+          onMouseUp={isDisabled ? undefined : handleMouseUp}
+          onMouseLeave={isDisabled ? undefined : handleMouseLeave}
+          onTouchStart={isDisabled ? undefined : handleTouchStart}
+          onTouchEnd={isDisabled ? undefined : handleTouchEnd}
+          onTouchCancel={isDisabled ? undefined : handleTouchCancel}
+          onTouchMove={isDisabled ? undefined : handleTouchMove}
+          onContextMenu={handleContextMenu}
+        />
       </div>
     );
   };
