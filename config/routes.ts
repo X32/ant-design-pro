@@ -168,6 +168,13 @@ export default [
       },
     ],
   },
+  
+  // ========== 用户充值页面（普通用户，不显示侧边栏）==========
+  {
+    path: '/orders/recharge',
+    component: './orders/recharge',
+    layout: false,  // 不显示侧边栏
+  },
 
   // ========== 前台功能页面（保留左侧菜单）==========
   {

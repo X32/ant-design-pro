@@ -1,3 +1,4 @@
+
 /**
  * API配置
  */
@@ -76,6 +77,9 @@ export const API_ENDPOINTS = {
   ADMIN_WALLET_ADJUST: `${API_BASE_URL}/api/admin/wallets`,  // 动态拼接 /{user_id}/adjust
   ADMIN_GLOBAL_WALLET_LOGS: `${API_BASE_URL}/api/admin/wallet_logs/all`,  // 全局钱包流水
 
+  // 金币套餐相关
+  COIN_PACKAGES: `${API_BASE_URL}/api/order/coin/packages`,
+  
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）
   ADMIN_STATS_OVERVIEW: `${API_BASE_URL}/api/admin/statistics/overview`,
@@ -100,3 +104,4 @@ export default {
   USER_ID_KEY,
   CONVERSATION_ID_KEY,
 };
+

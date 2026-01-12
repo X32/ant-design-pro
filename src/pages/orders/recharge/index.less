@@ -1,0 +1,132 @@
+/* 充值页面样式 */
+
+.recharge-page {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.recharge-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.recharge-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.recharge-title {
+  color: #1890ff;
+  margin-bottom: 16px;
+}
+
+.recharge-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+.package-grid {
+  margin-bottom: 40px;
+}
+
+.package-card {
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.package-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.package-card-selected {
+  border: 2px solid #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.package-popular-tag {
+  position: absolute;
+  top: 12px;
+  right: -20px;
+  background: #faad14;
+  color: #fff;
+  padding: 2px 20px;
+  transform: rotate(45deg);
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 1;
+}
+
+.package-content {
+  text-align: center;
+  padding: 20px 10px;
+}
+
+.package-icon {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 12px;
+}
+
+.package-name {
+  margin: 10px 0;
+  color: #333;
+}
+
+.package-price-original {
+  font-size: 16px;
+}
+
+.package-price-current {
+  color: #f5222d;
+}
+
+.package-features {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.package-feature-item {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.package-feature-icon {
+  color: #52c41a;
+  margin-right: 8px;
+}
+
+.package-button {
+  width: 100%;
+  font-weight: bold;
+}
+
+.selected-package-info {
+  text-align: center;
+  margin: 40px 0;
+}
+
+.payment-security {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.security-divider {
+  margin: 40px 0;
+}
+
+@media (max-width: 768px) {
+  .recharge-page {
+    padding: 16px;
+  }
+  
+  .package-card {
+    margin-bottom: 16px;
+  }
+}

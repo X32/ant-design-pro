@@ -138,12 +138,14 @@
 
       .input-buttons {
         display: flex;
-        gap: 8px;
+        gap: 12px;
       }
 
       .voice-button,
       .send-button {
-        border-radius: 8px;
+        border-radius: 12px;
+        min-width: 60px;  // 增加最小宽度以适配移动端触摸
+        min-height: 60px;
       }
     }
 
