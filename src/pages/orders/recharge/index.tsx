@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin } from 'antd';
 import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { getCoinPackages, CoinPackage } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
+import { getCoinPackages, CoinPackage, createCoinOrder } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
 import './index.less'; // 引入样式文件
 
 const { Title, Text, Paragraph } = Typography;
@@ -113,27 +113,51 @@ const RechargePage: React.FC = () => {
 
     setLoading(true);
     try {
-      // 这里调用实际的充值API
-      // const response = await rechargeCoins({
-      //   packageId: selectedPackage,
-      //   amount: packages.find(pkg => pkg.id === selectedPackage)?.price || 0,
-      // });
-      
-      // 模拟充值成功
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const selectedPkg = packages.find(pkg => pkg.id === selectedPackage);
-      Modal.success({
-        title: '充值成功！',
-        content: `您已成功充值 ${selectedPkg?.coins} 金币`,
-        onOk: () => {
-          // 可以在这里更新用户金币数量
-          console.log('充值成功');
-        }
+      // 调用创建订单API
+      const response = await createCoinOrder({
+        item_id: selectedPackage,
       });
-    } catch (error) {
-      message.error('充值失败，请稍后重试');
-      console.error('Recharge error:', error);
+
+      if (response.success && response.data) {
+        const order = response.data;
+        Modal.success({
+          title: '订单创建成功！',
+          content: (
+            <div>
+              <p>订单号：{order.order_no}</p>
+              <p>商品：{order.item_name}</p>
+              <p>金币数量：{order.coin_amount}</p>
+              <p>金额：¥{order.total_amount}</p>
+              <p>状态：{order.status}</p>
+            </div>
+          ),
+          onOk: () => {
+            // 这里可以跳转到支付页面或打开支付窗口
+            console.log('订单创建成功，跳转到支付页面', order);
+            // TODO: 实际的支付流程，例如跳转到支付页面
+            // window.location.href = `/payment/${order.order_no}`;
+          }
+        });
+      } else {
+        message.error(response.message || '创建订单失败');
+      }
+    } catch (error: any) {
+      console.error('创建订单失败:', error);
+      let errorMessage = '创建订单失败，请稍后重试';
+      
+      // 如果错误包含详细信息，提取出来显示
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          errorMessage = detail.map((item: any) => item.msg).join(', ');
+        } else {
+          errorMessage = error.response.data.detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

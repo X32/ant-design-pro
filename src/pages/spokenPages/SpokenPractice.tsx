@@ -58,6 +58,7 @@ interface ScoreContent {
   advantages?: string;          // 优势部分
   disadvantages?: string;       // 不足部分
   suggestions?: string;         // 改进建议
+  improvedAnswer?: string;      // 改进的回答
 }
 
 /**
@@ -489,6 +490,8 @@ const SpokenPractice: React.FC = () => {
               let advantagesText = '';
               let disadvantagesText = '';
               let suggestionsText = '';
+              let improvedAnswerText = '';
+
               
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -516,6 +519,10 @@ const SpokenPractice: React.FC = () => {
                   currentSection = 'suggestions';
                   continue;
                 }
+                if (line === '改进的回答：') {
+                  currentSection = 'improved_answer';
+                  continue;
+                }
                 
                 // 收集各部分内容
                 if (currentSection === 'advantages' && line) {
@@ -525,11 +532,15 @@ const SpokenPractice: React.FC = () => {
                 } else if (currentSection === 'suggestions' && line) {
                   suggestionsText += line + '\n';
                 }
+                else if (currentSection === 'improved_answer' && line) {
+                  improvedAnswerText += line + '\n';
+                }
               }
               
               result.advantages = advantagesText.trim();
               result.disadvantages = disadvantagesText.trim();
               result.suggestions = suggestionsText.trim();
+              result.improvedAnswer = improvedAnswerText.trim();
               
               return result;
             };
@@ -1373,6 +1384,35 @@ const SpokenPractice: React.FC = () => {
                             borderLeft: '3px solid #1890ff'
                           }}>
                             {(message.content as ScoreContent).suggestions}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 改进的回答 */}
+                      {(message.content as ScoreContent).improvedAnswer && (
+                        <div>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#722ed1', 
+                            marginBottom: '8px',
+                            fontSize: '15px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>✨</span>
+                            <span>改进的回答</span>
+                          </div>
+                          <div style={{ 
+                            paddingLeft: '12px',
+                            color: '#262626',
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: '#ffffff',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            borderLeft: '3px solid #722ed1'
+                          }}>
+                            {(message.content as ScoreContent).improvedAnswer}
                           </div>
                         </div>
                       )}

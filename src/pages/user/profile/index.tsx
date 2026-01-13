@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LockOutlined, MailOutlined, UserOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { App, Avatar, Button, Card, Form, Input } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
@@ -9,7 +9,7 @@ const UserProfile: React.FC = () => {
   const { message } = App.useApp();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser: user } = initialState || {};
-  
+
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileForm] = Form.useForm();
@@ -27,6 +27,11 @@ const UserProfile: React.FC = () => {
   // 返回首页
   const handleBack = () => {
     history.push('/home');
+  };
+
+  // 跳转到充值页面
+  const handleRecharge = () => {
+    history.push('/orders/recharge');
   };
 
   // 更新个人信息
@@ -112,6 +117,15 @@ const UserProfile: React.FC = () => {
           <h2 className="user-name">{user?.name || user?.email?.split('@')[0]}</h2>
           <p className="user-email">{user?.email}</p>
           <p className="user-role">{user?.access === 'admin' ? '管理员' : '普通用户'}</p>
+          {/* 充值入口按钮 */}
+          <Button 
+            type="primary" 
+            icon={<CreditCardOutlined />} 
+            onClick={handleRecharge}
+            style={{ marginTop: 24, width: '100%' }}
+          >
+            账户充值
+          </Button>
         </div>
 
         <div className="profile-main">

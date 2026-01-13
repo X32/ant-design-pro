@@ -239,10 +239,10 @@ const Login: React.FC = () => {
           //登录初始值
           initialValues={{
             autoLogin: true,
-             email: 'test@example.com',
-            password: 'test123456',
-            // email: 'test_user@example.com',
-            // password: 'secure_password_123',
+            //  email: 'test@example.com',
+            // password: 'test123456',
+            email: 'test_user@example.com',
+            password: 'secure_password_123',
           }}
           actions={[
             <FormattedMessage
