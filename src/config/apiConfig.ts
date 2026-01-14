@@ -82,6 +82,17 @@ export const API_ENDPOINTS = {
   // 创建金币订单
   CREATE_COIN_ORDER: `${API_BASE_URL}/api/order/coin/create`,
   
+  // 口语练习会话管理 - 开发环境通过proxy代理到 http://127.0.0.1:9002
+  SPOKEN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/conversations`,
+  SPOKEN_CONVERSATION_DETAIL: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}
+  SPOKEN_MESSAGES: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages
+  SPOKEN_MESSAGE_TEXT: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages/text
+  SPOKEN_MESSAGE_VOICE: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages/voice
+  SPOKEN_MESSAGE_IMAGE: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages/image
+  SPOKEN_MESSAGE_SCORE: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages/score
+  SPOKEN_MESSAGE_DETAIL: `${API_BASE_URL}/api/spoken/messages`,  // 动态拼接 /{message_id}
+  SPOKEN_TRANSCRIPTION: `${API_BASE_URL}/api/spoken/messages`,  // 动态拼接 /{message_id}/transcription
+  
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）
   ADMIN_STATS_OVERVIEW: `${API_BASE_URL}/api/admin/statistics/overview`,

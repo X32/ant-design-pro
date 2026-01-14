@@ -1,0 +1,197 @@
+// 极简风格录音组件样式
+.audio-recorder-minimal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  gap: 32px;
+  
+  // 禁止文字选中
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+// 录音按钮包装器
+.minimal-record-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+// 录音按钮 - 极简圆形设计
+.minimal-record-button {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  
+  // 外圈光晕效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(24, 144, 255, 0.1) 0%, transparent 70%);
+    transition: all 0.3s ease;
+  }
+  
+  &:hover::before {
+    width: 130px;
+    height: 130px;
+    background: radial-gradient(circle, rgba(24, 144, 255, 0.2) 0%, transparent 70%);
+  }
+  
+  // 录音中状态
+  &.recording {
+    &::before {
+      animation: minimal-pulse 1.5s ease-in-out infinite;
+    }
+    
+    .minimal-record-button-inner {
+      background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+      transform: scale(0.9);
+      
+      &::after {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+      }
+    }
+  }
+  
+  // 禁用状态
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    
+    &::before {
+      display: none;
+    }
+  }
+}
+
+// 录音按钮内圈
+.minimal-record-button-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1;
+  
+  // 中心装饰（录音时变成方形）
+  &::after {
+    content: '';
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 录音图标
+.minimal-record-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 36px;
+  color: #fff;
+  pointer-events: none;
+}
+
+// 录音提示文字
+.minimal-record-text {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  text-align: center;
+  min-height: 20px;
+}
+
+// 进度条包装器
+.minimal-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+// 进度条标签
+.minimal-progress-label {
+  font-size: 13px;
+  color: #999;
+}
+
+// 操作按钮
+.minimal-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  
+  .ant-btn {
+    min-width: 100px;
+    height: 40px;
+    border-radius: 20px;
+    font-size: 15px;
+    
+    &[disabled] {
+      opacity: 0.4;
+    }
+  }
+}
+
+// 脉冲动画
+@keyframes minimal-pulse {
+  0%, 100% {
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(255, 77, 79, 0.3) 0%, transparent 70%);
+  }
+  50% {
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(255, 77, 79, 0.1) 0%, transparent 70%);
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .audio-recorder-minimal {
+    padding: 24px 16px;
+  }
+  
+  .minimal-record-button {
+    width: 120px;
+    height: 120px;
+    
+    &::before {
+      width: 140px;
+      height: 140px;
+    }
+  }
+  
+  .minimal-record-icon {
+    font-size: 42px;
+  }
+}

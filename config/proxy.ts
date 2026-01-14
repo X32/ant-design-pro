@@ -15,8 +15,13 @@ const getCurrentPort = () => {
 };
 
 export default {
-  // 如果需要自定义本地开发服务器  请取消注释按需调整
+  // 如果需要自定义本地开发服务器  请取消注释按需调 /api/spoken/
   dev: {
+      // 认证服务代理 - 最高优先级
+    '/api/spoken/**': {
+      target: 'http://localhost:9002',
+      changeOrigin: true,
+    },
       // 认证服务代理 - 最高优先级
     '/api/order/**': {
       target: 'http://localhost:9002',

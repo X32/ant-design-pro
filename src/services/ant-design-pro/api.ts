@@ -2510,3 +2510,425 @@ export async function getCoinPackages(
     ...(options || {}),
   });
 }
+
+// ==================== 口语练习会话管理 API ====================
+
+/** 口语会话数据类型 */
+export interface SpokenConversation {
+  id: number;
+  user_id: number;
+  exercise_id?: number;
+  workflow_type?: string;
+  title?: string;
+  status: 'active' | 'completed' | 'archived';
+  total_messages: number;
+  total_rounds: number;
+  last_message_time?: string;
+  created_at: string;
+  updated_at?: string;
+  last_message_preview?: string;
+}
+
+/** 口语消息数据类型 */
+export interface SpokenMessage {
+  id: number;
+  conversation_id: number;
+  user_id: number;
+  sender: 'user' | 'ai';
+  message_type: 'text' | 'voice' | 'image' | 'score';
+  content: string;
+  round_num?: number;
+  timestamp: string;
+  audio_file_path?: string;
+  audio_url?: string;
+  transcription_text?: string;
+  transcription_status?: 'pending' | 'processing' | 'done' | 'failed';
+  image_url?: string;
+  total_score?: string;
+  dimension_scores?: string;
+  advantages?: string;
+  disadvantages?: string;
+  suggestions?: string;
+  improved_answer?: string;
+  raw_text?: string;
+}
+
+/** 创建口语会话请求参数 */
+export interface CreateSpokenConversationParams {
+  exercise_id?: number;
+  workflow_type?: string;
+  title?: string;
+}
+
+/** 创建口语会话响应 */
+export interface CreateSpokenConversationResponse {
+  success: boolean;
+  message?: string;
+  data: SpokenConversation;
+}
+
+/** 获取口语会话列表响应 */
+export interface GetSpokenConversationsResponse {
+  success: boolean;
+  data: SpokenConversation[];
+  total: number;
+}
+
+/** 获取口语消息列表响应 */
+export interface GetSpokenMessagesResponse {
+  success: boolean;
+  data: SpokenMessage[];
+  total: number;
+  conversation?: {
+    id: number;
+    title?: string;
+    status: string;
+  };
+  message?: string;
+  error_code?: string;
+}
+
+/** 创建文本消息请求参数 */
+export interface CreateTextMessageParams {
+  sender: 'user' | 'ai';
+  content: string;
+  round_num?: number;
+}
+
+/** 创建语音消息请求参数 */
+export interface CreateVoiceMessageParams {
+  sender: 'user' | 'ai';
+  audio_file_path?: string;
+  audio_url?: string;
+  round_num?: number;
+  task_id?: string;
+}
+
+/** 创建图片消息请求参数 */
+export interface CreateImageMessageParams {
+  image_url: string;
+  round_num?: number;
+  image_width?: number;
+  image_height?: number;
+}
+
+/** 创建评分消息请求参数 */
+export interface CreateScoreMessageParams {
+  raw_text: string;
+  round_num?: number;
+  total_score?: string;
+  dimension_scores?: string;
+  advantages?: string;
+  disadvantages?: string;
+  suggestions?: string;
+  improved_answer?: string;
+}
+
+/** 更新转写请求参数 */
+export interface UpdateTranscriptionParams {
+  transcription_text: string;
+  status?: 'pending' | 'processing' | 'done' | 'failed';
+}
+
+/** 更新会话请求参数 */
+export interface UpdateSpokenConversationParams {
+  title?: string;
+  status?: 'active' | 'completed' | 'archived';
+}
+
+/**
+ * 创建口语练习会话
+ * POST /api/spoken/conversations
+ */
+export async function createSpokenConversation(
+  params: CreateSpokenConversationParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<CreateSpokenConversationResponse>(API_ENDPOINTS.SPOKEN_CONVERSATIONS, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取口语练习会话列表
+ * GET /api/spoken/conversations
+ */
+export async function getSpokenConversations(
+  params?: {
+    status_filter?: 'active' | 'completed' | 'archived';
+    limit?: number;
+    offset?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GetSpokenConversationsResponse>(API_ENDPOINTS.SPOKEN_CONVERSATIONS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取单个会话详情
+ * GET /api/spoken/conversations/{conversation_id}
+ */
+export async function getSpokenConversationDetail(
+  conversationId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenConversation }>(
+    `${API_ENDPOINTS.SPOKEN_CONVERSATION_DETAIL}/${conversationId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 更新会话
+ * PUT /api/spoken/conversations/{conversation_id}
+ */
+export async function updateSpokenConversation(
+  conversationId: number,
+  params: UpdateSpokenConversationParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenConversation }>(
+    `${API_ENDPOINTS.SPOKEN_CONVERSATION_DETAIL}/${conversationId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 删除口语练习会话
+ * DELETE /api/spoken/conversations/{conversation_id}
+ * @param conversationId 会话 ID
+ * @param hardDelete 是否硬删除（默认 false 为软删除）
+ */
+export async function deleteSpokenConversation(
+  conversationId: number,
+  hardDelete: boolean = false,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      conversation_id: number;
+      delete_type: 'soft' | 'hard';
+    };
+    error_code?: string;
+  }>(
+    `${API_ENDPOINTS.SPOKEN_CONVERSATION_DETAIL}/${conversationId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      params: {
+        hard_delete: hardDelete,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 获取会话的消息列表
+ * GET /api/spoken/conversations/{conversation_id}/messages
+ */
+export async function getSpokenMessages(
+  conversationId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GetSpokenMessagesResponse>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGES}/${conversationId}/messages`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 创建文本消息
+ * POST /api/spoken/conversations/{conversation_id}/messages/text
+ */
+export async function createSpokenTextMessage(
+  conversationId: number,
+  params: CreateTextMessageParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenMessage }>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_TEXT}/${conversationId}/messages/text`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 创建语音消息
+ * POST /api/spoken/conversations/{conversation_id}/messages/voice
+ */
+export async function createSpokenVoiceMessage(
+  conversationId: number,
+  params: CreateVoiceMessageParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenMessage }>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_VOICE}/${conversationId}/messages/voice`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 创建图片消息
+ * POST /api/spoken/conversations/{conversation_id}/messages/image
+ */
+export async function createSpokenImageMessage(
+  conversationId: number,
+  params: CreateImageMessageParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenMessage }>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_IMAGE}/${conversationId}/messages/image`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 创建评分消息
+ * POST /api/spoken/conversations/{conversation_id}/messages/score
+ */
+export async function createSpokenScoreMessage(
+  conversationId: number,
+  params: CreateScoreMessageParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenMessage }>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_SCORE}/${conversationId}/messages/score`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 更新语音消息的转写结果
+ * PUT /api/spoken/messages/{message_id}/transcription
+ */
+export async function updateSpokenMessageTranscription(
+  messageId: number,
+  params: UpdateTranscriptionParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string }>(
+    `${API_ENDPOINTS.SPOKEN_TRANSCRIPTION}/${messageId}/transcription`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 获取消息详情
+ * GET /api/spoken/messages/{message_id}
+ */
+export async function getSpokenMessageDetail(
+  messageId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: SpokenMessage }>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_DETAIL}/${messageId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}

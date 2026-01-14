@@ -1,15 +1,30 @@
 // 导入React及相关Hook
 import React, { useState, useEffect, useCallback } from 'react';
 // 导入Ant Design组件
-import { Input, Select, DatePicker, Button, Table, Pagination, Space, Tag, Modal, Form, message, Popconfirm } from 'antd';
+import { Input, Select, DatePicker, Button, Table, Pagination, Space, Tag, Modal, Form, App, Popconfirm } from 'antd';
 // 导入Ant Design图标
 import { SearchOutlined, ReloadOutlined, ExportOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
 // 导入类型定义
-import { Session, Message, MessageContent, SessionStatus, MessageRole, MessageType, SearchParams, FilterParams, PaginationParams } from './types';
+import { 
+  SpokenConversation, 
+  SpokenMessage, 
+  SessionStatus, 
+  MessageRole, 
+  MessageType, 
+  SearchParams, 
+  FilterParams, 
+  PaginationParams 
+} from './types';
 // 导入模拟数据API
 import { mockApi } from './mockData';
 // 导入API服务
-import { getConversationList, getConversationDetail, deleteMessage } from '@/services/ant-design-pro/api';
+import { 
+  getSpokenConversations,
+  getSpokenMessages,
+  updateSpokenConversation,
+  createSpokenConversation,
+  deleteSpokenConversation  // 💡 新增：导入删除接口
+} from '@/services/ant-design-pro/api';
 // 导入样式文件
 import './index.less';
 
@@ -19,10 +34,13 @@ const { RangePicker } = DatePicker;
 const { TextArea } = Input;
 
 /**
- * 消息管理组件
- * 提供会话、消息和消息内容的管理功能
+ * 口语练习会话管理组件
+ * 提供口语练习会话和消息的管理功能
  */
 const MessagesManagement: React.FC = () => {
+  // 使用 App 组件提供的 message API
+  const { message } = App.useApp();
+  
   // 搜索和筛选参数
   const [searchParams, setSearchParams] = useState<SearchParams>({});
   const [filterParams, setFilterParams] = useState<FilterParams>({});
@@ -32,265 +50,142 @@ const MessagesManagement: React.FC = () => {
   const [messagePagination, setMessagePagination] = useState<PaginationParams>({ page: 1, pageSize: 10 });
   
   // 数据状态
-  const [sessions, setSessions] = useState<Session[]>([]); // 会话列表
-  const [messages, setMessages] = useState<Message[]>([]); // 消息列表
-  const [messageContents, setMessageContents] = useState<MessageContent[]>([]); // 消息内容列表
-  const [totalSessions, setTotalSessions] = useState<number>(0); // 会话总数
+  const [conversations, setConversations] = useState<SpokenConversation[]>([]); // 口语会话列表
+  const [messages, setMessages] = useState<SpokenMessage[]>([]); // 消息列表
+  const [totalConversations, setTotalConversations] = useState<number>(0); // 会话总数
   const [totalMessages, setTotalMessages] = useState<number>(0); // 消息总数
   
   // 加载状态使用 ref 避免依赖项变化
-  const isFetchingSessionsRef = React.useRef<boolean>(false); // 会话列表加载状态
+  const isFetchingConversationsRef = React.useRef<boolean>(false); // 会话列表加载状态
   const isFetchingMessagesRef = React.useRef<boolean>(false); // 消息列表加载状态
   
   // 选中状态
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null); // 当前选中的会话
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null); // 当前选中的消息
+  const [selectedConversation, setSelectedConversation] = useState<SpokenConversation | null>(null); // 当前选中的会话
+  const [selectedMessage, setSelectedMessage] = useState<SpokenMessage | null>(null); // 当前选中的消息
   
   // 模态框状态
-  const [contentModalVisible, setContentModalVisible] = useState(false); // 内容编辑模态框显示状态
-  const [editingContent, setEditingContent] = useState<MessageContent | null>(null); // 正在编辑的内容
+  const [editModalVisible, setEditModalVisible] = useState(false); // 会话编辑模态框显示状态
+  const [editingConversation, setEditingConversation] = useState<SpokenConversation | null>(null); // 正在编辑的会话
   
   // 表单实例
-  const [contentForm] = Form.useForm(); // 内容编辑表单实例
+  const [editForm] = Form.useForm(); // 会话编辑表单实例
   
   /**
-   * 获取会话列表
+   * 获取口语练习会话列表
    * 1. 调用API获取真实数据
    * 2. 数据转换为组件所需格式
-   * 3. API失败时回退到模拟数据
    */
-  const fetchSessions = useCallback(async () => {
+  const fetchConversations = useCallback(async () => {
     // 防止重复调用
-    if (isFetchingSessionsRef.current) return;
+    if (isFetchingConversationsRef.current) return;
     
-    isFetchingSessionsRef.current = true;
+    isFetchingConversationsRef.current = true;
     
     try {
-      // 使用新的接口获取对话列表
-      const response = await getConversationList({ user_id: 1 });
+      // 使用口语练习会话接口
+      const response = await getSpokenConversations({
+        status_filter: filterParams.status as 'active' | 'completed' | 'archived' | undefined,
+        limit: sessionPagination.pageSize,
+        offset: (sessionPagination.page - 1) * sessionPagination.pageSize,
+      });
       
       // 根据实际接口返回格式处理数据
-      if (response.conversations) {
-        // 将API返回的数据转换为组件所需的Session类型
-        const convertedSessions = response.conversations.map(item => ({
-          id: item.conversation_id?.toString() ?? '',
-          userId: item.user_id?.toString() ?? '1',
-          title: item.title || '未命名对话',
-          messageCount: 0, // 接口返回数据中没有消息数字段
-          updatedAt: item.update_time || new Date().toISOString(),
-          status: item.status === 1 ? SessionStatus.ACTIVE : SessionStatus.DELETED
-        }));
-        
-        setSessions(convertedSessions);
-        setTotalSessions(response.total || convertedSessions.length);
-        
-        // 只在成功时显示提示
-        message.success('获取对话列表成功');
+      if (response.success && response.data) {
+        setConversations(response.data);
+        setTotalConversations(response.total || response.data.length);
+        message.success('获取会话列表成功');
       } else {
         throw new Error('API返回数据格式错误');
       }
     } catch (error) {
-      console.error('获取对话列表失败:', error);
-      
-      // 失败时可以回退到模拟数据
-      try {
-        const { data, total } = await mockApi.getSessions({
-          search: searchParams.sessionTitle || searchParams.userId,
-          filter: {
-            status: filterParams.status,
-            startDate: filterParams.startDate,
-            endDate: filterParams.endDate
-          },
-          page: sessionPagination.page,
-          pageSize: sessionPagination.pageSize
-        });
-        setSessions(data);
-        setTotalSessions(total);
-      } catch (mockError) {
-        console.error('回退到模拟数据也失败:', mockError);
-        // 只有当模拟数据也失败时才显示错误提示
-        message.error('获取对话列表失败');
-      }
+      console.error('获取会话列表失败:', error);
+      message.error('获取会话列表失败');
+      setConversations([]);
+      setTotalConversations(0);
     } finally {
-      isFetchingSessionsRef.current = false;
+      isFetchingConversationsRef.current = false;
     }
   }, [searchParams, filterParams, sessionPagination]);
   
   /**
    * 获取消息列表
-   * 1. 根据会话ID调用API获取消息数据
-   * 2. 数据转换为组件所需格式，包括消息内容
-   * 3. API失败时回退到模拟数据
+   * 1. 根据会话 ID 调用 API 获取消息数据
+   * 2. 数据转换为组件所需格式
    */
-  const fetchMessages = useCallback(async (sessionId: string) => {
+  const fetchMessages = useCallback(async (conversationId: number) => {
     // 防止重复调用
     if (isFetchingMessagesRef.current) return;
-    
-    // 验证sessionId是否为有效数字
-    const conversationId = parseInt(sessionId);
-    if (isNaN(conversationId)) {
-      console.error('无效的会话ID:', sessionId);
-      isFetchingMessagesRef.current = false;
-      return;
-    }
-    
-    isFetchingMessagesRef.current = true;
-    
-    try {
-      // 使用新的接口获取会话详情和消息列表
-      const response = await getConversationDetail({ 
-        conversation_id: conversationId, 
-        user_id: 1 
-      });
       
-      // 根据实际接口返回格式处理数据
-      if (response.messages) {
-        // 将API返回的数据转换为组件所需的Message类型
-        const convertedMessages = response.messages.map(item => ({
-          id: item.message_id?.toString() ?? '',
-          sessionId: item.conversation_id?.toString() ?? '',
-          role: (item.role || 'user') as MessageRole,
-          sequence: item.seq ?? 0,
-          type: MessageType.TEXT, // 默认类型为文本
-          preview: item.contents?.[0]?.text?.substring(0, 100) || '', // 取第一条内容的前100个字符作为预览
-          createdAt: item.create_time || new Date().toISOString(),
-          contents: item.contents?.map(content => ({
-            id: content.content_id?.toString() ?? '',
-            messageId: content.message_id?.toString() ?? '',
-            type: (content.content_type || 'text') as MessageType,
-            content: content.text || '',
-            sequence: content.seq ?? 0,
-            createdAt: item.create_time || new Date().toISOString() // 使用消息的创建时间作为内容的创建时间
-          })) || [] // 新增：消息内容列表
-        }));
+    isFetchingMessagesRef.current = true;
+      
+    try {
+      // 使用口语练习消息接口
+      const response = await getSpokenMessages(conversationId);
         
-        setMessages(convertedMessages);
-        setTotalMessages(convertedMessages.length);
-        
+      if (response.success && response.data) {
+        setMessages(response.data);
+        setTotalMessages(response.data.length);
+          
         // 如果没有选中消息，默认选中第一个
-        // 注意：这里不能依赖selectedMessage，否则会导致循环调用
-        if (convertedMessages.length > 0) {
-          setSelectedMessage(prev => prev || convertedMessages[0]);
+        if (response.data.length > 0 && !selectedMessage) {
+          setSelectedMessage(response.data[0]);
         }
-        
-        // 只在成功时显示提示
+          
         message.success('获取消息列表成功');
       } else {
         throw new Error('API返回数据格式错误');
       }
     } catch (error) {
       console.error('获取消息列表失败:', error);
-      
-      // 失败时可以回退到模拟数据
-      try {
-        const { data, total } = await mockApi.getMessages(sessionId, {
-          search: searchParams.messageContent,
-          filter: { 
-            role: filterParams.role 
-          },
-          page: messagePagination.page,
-          pageSize: messagePagination.pageSize
-        });
-        setMessages(data);
-        setTotalMessages(total);
-        
-        if (!selectedMessage && data.length > 0) {
-          setSelectedMessage(data[0]);
-        }
-      } catch (mockError) {
-        console.error('回退到模拟数据也失败:', mockError);
-        // 只有当模拟数据也失败时才显示错误提示
-        message.error('获取消息列表失败');
-      }
+      message.error('获取消息列表失败');
+      setMessages([]);
+      setTotalMessages(0);
     } finally {
       isFetchingMessagesRef.current = false;
     }
-  }, [searchParams, filterParams, messagePagination]); // 移除selectedMessage依赖，避免循环调用
+  }, [selectedMessage]);
   
-  /**
-   * 获取消息内容
-   * 1. 从已获取的消息状态中查找对应消息
-   * 2. 提取消息内容列表
-   * 3. 失败时尝试使用模拟数据
-   */
-  const fetchMessageContents = useCallback(async (messageId: string) => {
-    try {
-      // 找到选中的消息
-      const selectedMessageItem = messages.find(message => message.id === messageId);
-      if (selectedMessageItem) {
-        // 直接从messages状态中获取消息内容，不需要再次调用API
-        setMessageContents(selectedMessageItem.contents || []);
-        message.success('获取消息内容成功');
-      } else {
-        setMessageContents([]);
-      }
-    } catch (error) {
-      console.error('获取消息内容失败:', error);
-      message.error('获取消息内容失败');
-      
-      // 失败时可以回退到模拟数据
-      try {
-        const contents = await mockApi.getMessageContents(messageId);
-        setMessageContents(contents);
-      } catch (mockError) {
-        console.error('回退到模拟数据也失败:', mockError);
-      }
-    }
-  }, [messages]);
-  
+
   // 初始化数据
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]); // 只在fetchSessions函数变化时调用
-  
+    fetchConversations();
+  }, [fetchConversations]); // 只在fetchConversations函数变化时调用
+    
   // 使用ref来跟踪上一个会话ID，避免不必要的重复调用
-  const prevSessionIdRef = React.useRef<string | null>(null);
-  
+  const prevConversationIdRef = React.useRef<number | null>(null);
+    
   /**
    * 会话选中变化处理
-   * 1. 检测会话ID是否真正变化
+   * 1. 检测会话 ID 是否真正变化
    * 2. 重置消息分页
    * 3. 获取新会话的消息列表
    * 4. 会话为空时清空相关状态
    */
   useEffect(() => {
-    if (selectedSession && selectedSession.id && !isNaN(Number(selectedSession.id))) {
-      // 只有当会话ID真正变化时才调用fetchMessages
-      if (selectedSession.id !== prevSessionIdRef.current) {
+    if (selectedConversation && selectedConversation.id) {
+      // 只有当会话 ID 真正变化时才调用 fetchMessages
+      if (selectedConversation.id !== prevConversationIdRef.current) {
         setMessagePagination({ page: 1, pageSize: 10 });
-        fetchMessages(selectedSession.id);
-        prevSessionIdRef.current = selectedSession.id;
+        fetchMessages(selectedConversation.id);
+        prevConversationIdRef.current = selectedConversation.id;
       }
     } else {
       setMessages([]);
       setTotalMessages(0);
       setSelectedMessage(null);
-      setMessageContents([]);
-      prevSessionIdRef.current = null;
+      prevConversationIdRef.current = null;
     }
-  }, [selectedSession, fetchMessages]);
-
+  }, [selectedConversation, fetchMessages]);
+  
   /**
    * 会话列表变化处理
    * 当没有选中会话时，自动选中第一个会话
    */
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession) {
-      setSelectedSession(sessions[0]);
+    if (conversations.length > 0 && !selectedConversation) {
+      setSelectedConversation(conversations[0]);
     }
-  }, [sessions, selectedSession]);
-  
-  /**
-   * 消息选中变化处理
-   * 根据选中的消息获取对应的消息内容
-   */
-  useEffect(() => {
-    if (selectedMessage) {
-      fetchMessageContents(selectedMessage.id);
-    } else {
-      setMessageContents([]);
-    }
-  }, [selectedMessage, fetchMessageContents]);
+  }, [conversations, selectedConversation]);
   
   /**
    * 搜索参数处理
@@ -334,9 +229,8 @@ const MessagesManagement: React.FC = () => {
     setFilterParams({});
     setSessionPagination({ page: 1, pageSize: 10 });
     setMessagePagination({ page: 1, pageSize: 10 });
-    setSelectedSession(null);
+    setSelectedConversation(null);
     setSelectedMessage(null);
-    setMessageContents([]);
   };
   
   /**
@@ -348,122 +242,71 @@ const MessagesManagement: React.FC = () => {
   };
   
   /**
-   * 删除会话
-   * 1. 调用API删除指定会话
-   * 2. 刷新会话列表
-   * 3. 如果删除当前选中会话，清除选中状态
+   * 删除会话（软删除或硬删除）
+   * @param conversationId 会话 ID
+   * @param hardDelete 是否硬删除（默认 false 为软删除）
    */
-  const handleDeleteSession = async (sessionId: string) => {
+  const handleDeleteConversation = async (conversationId: number, hardDelete: boolean = false) => {
     try {
-      await mockApi.deleteSession(sessionId);
-      message.success('会话删除成功');
-      fetchSessions();
+      const response = await deleteSpokenConversation(conversationId, hardDelete);
       
-      // 如果删除的是当前选中的会话，清除选中状态
-      if (selectedSession?.id === sessionId) {
-        setSelectedSession(null);
-      }
-    } catch (error) {
-      message.error('删除会话失败');
-    }
-  };
-  
-  /**
-   * 删除消息内容
-   * 1. 调用API删除指定内容
-   * 2. 刷新当前选中消息的内容列表
-   */
-  const handleDeleteContent = async (contentId: string) => {
-    try {
-      await mockApi.deleteMessageContent(contentId);
-      message.success('内容删除成功');
-      if (selectedMessage) {
-        fetchMessageContents(selectedMessage.id);
-      }
-    } catch (error) {
-      message.error('删除内容失败');
-    }
-  };
-  
-  /**
-   * 删除消息
-   * 1. 调用API删除指定消息
-   * 2. 刷新当前会话的消息列表
-   * 3. 清除选中的消息状态
-   */
-  const handleDeleteMessage = async (messageId: string) => {
-    try {
-        await deleteMessage({
-        message_id: parseInt(messageId),
-        user_id: 1, // 这里假设用户ID为1，实际应该从登录状态获取
-      });
-      message.success('消息删除成功');
-      // 刷新消息列表
-      if (selectedSession) {
-        fetchMessages(selectedSession.id);
-      }
-      // 清除选中的消息
-      setSelectedMessage(null);
-    } catch (error) {
-      message.error('删除消息失败');
-    }
-  };
-  
-  /**
-   * 打开添加内容模态框
-   * 1. 检查是否已选择消息
-   * 2. 重置编辑状态和表单
-   * 3. 显示模态框
-   */
-  const handleAddContent = () => {
-    if (!selectedMessage) {
-      message.warning('请先选择一条消息');
-      return;
-    }
-    setEditingContent(null);
-    contentForm.resetFields();
-    setContentModalVisible(true);
-  };
-  
-  /**
-   * 打开编辑内容模态框
-   * 1. 设置编辑内容
-   * 2. 填充表单数据
-   * 3. 显示模态框
-   */
-  const handleEditContent = (content: MessageContent) => {
-    setEditingContent(content);
-    contentForm.setFieldsValue(content);
-    setContentModalVisible(true);
-  };
-  
-  /**
-   * 保存内容
-   * 1. 验证表单
-   * 2. 根据模式选择更新或添加内容
-   * 3. 关闭模态框并刷新内容列表
-   */
-  const handleSaveContent = async () => {
-    try {
-      const values = await contentForm.validateFields();
-      
-      if (editingContent) {
-        // 编辑模式
-        await mockApi.updateMessageContent(editingContent.id, values);
-        message.success('内容更新成功');
+      if (response.success) {
+        const deleteType = hardDelete ? '硬删除' : '软删除（归档）';
+        message.success(`会话${deleteType}成功`);
+        
+        // 刷新会话列表
+        fetchConversations();
+        
+        // 如果删除的是当前选中的会话，清除选中状态
+        if (selectedConversation?.id === conversationId) {
+          setSelectedConversation(null);
+          setMessages([]);
+          setTotalMessages(0);
+          setSelectedMessage(null);
+        }
       } else {
-        // 添加模式
-        if (!selectedMessage) return;
-        await mockApi.addMessageContent(selectedMessage.id, values);
-        message.success('内容添加成功');
+        throw new Error(response.message || '删除失败');
       }
+    } catch (error: any) {
+      console.error('删除会话失败:', error);
       
-      setContentModalVisible(false);
-      if (selectedMessage) {
-        fetchMessageContents(selectedMessage.id);
+      // 检查是否是会话不存在错误
+      if (error?.data?.error_code === 'CONVERSATION_NOT_FOUND') {
+        message.error('会话不存在');
+      } else {
+        message.error('删除会话失败');
+      }
+    }
+  };
+  
+  /**
+   * 编辑会话
+   * 打开编辑模态框
+   */
+  const handleEditConversation = (conversation: SpokenConversation) => {
+    setEditingConversation(conversation);
+    editForm.setFieldsValue({
+      title: conversation.title,
+      status: conversation.status
+    });
+    setEditModalVisible(true);
+  };
+  
+  /**
+   * 保存会话编辑
+   */
+  const handleSaveConversation = async () => {
+    try {
+      const values = await editForm.validateFields();
+      
+      if (editingConversation) {
+        await updateSpokenConversation(editingConversation.id, values);
+        message.success('会话更新成功');
+        setEditModalVisible(false);
+        fetchConversations();
       }
     } catch (error) {
-      message.error('保存内容失败');
+      message.error('保存会话失败');
     }
   };
   
@@ -526,26 +369,50 @@ const MessagesManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 180,
       align: 'center',
-      render: (_: any, record: Session) => (
+      render: (_: any, record: SpokenConversation) => (
         <Space size="small">
           <Button 
             type="text" 
             icon={<EyeOutlined />} 
             size="small"
-            onClick={() => setSelectedSession(record)}
+            onClick={() => setSelectedConversation(record)}
           >
             查看
           </Button>
-          <Button type="text" icon={<EditOutlined />} size="small">
+          <Button 
+            type="text" 
+            icon={<EditOutlined />} 
+            size="small"
+            onClick={() => handleEditConversation(record)}
+          >
             编辑
           </Button>
           <Popconfirm
-            title="确定要删除这个会话吗？666"
-            onConfirm={() => handleDeleteSession(record.id)}
-            okText="确定"
-            cancelText="取消"
+            title="选择删除方式"
+            description={
+              <div style={{ maxWidth: 300 }}>
+                <p style={{ marginBottom: 10 }}>请选择删除方式：</p>
+                <ul style={{ paddingLeft: 20, margin: 0 }}>
+                  <li style={{ marginBottom: 5 }}><strong>软删除（归档）：</strong>会话状态设置为 archived，数据保留</li>
+                  <li><strong>硬删除：</strong>物理删除会话及所有关联消息</li>
+                </ul>
+              </div>
+            }
+            onConfirm={() => handleDeleteConversation(record.id, false)}
+            onCancel={() => {
+              Modal.confirm({
+                title: '确定硬删除？',
+                content: '硬删除将永久删除会话及所有消息，此操作不可恢复！',
+                okText: '确定硬删除',
+                cancelText: '取消',
+                okType: 'danger',
+                onOk: () => handleDeleteConversation(record.id, true),
+              });
+            }}
+            okText="软删除（归档）"
+            cancelText="硬删除"
           >
             <Button type="text" danger icon={<DeleteOutlined />} size="small">
               删除
@@ -566,83 +433,72 @@ const MessagesManagement: React.FC = () => {
       key: 'id',
       width: 120,
       ellipsis: true,
-      render: (text: string) => <span className="message-id">{text}</span>
+      render: (text: number) => <span className="message-id">{text}</span>
     },
     {
-      title: '角色',
-      dataIndex: 'role',
-      key: 'role',
+      title: '发送者',
+      dataIndex: 'sender',
+      key: 'sender',
       width: 80,
       align: 'center',
-      render: (role: MessageRole) => {
-        let className = 'role-tag';
-        let text = '';
-        
-        switch (role) {
-          case MessageRole.USER:
-            className += ' role-user';
-            text = '用户';
-            break;
-          case MessageRole.ASSISTANT:
-            className += ' role-assistant';
-            text = '助手';
-            break;
-          case MessageRole.SYSTEM:
-            className += ' role-system';
-            text = '系统';
-            break;
-        }
-        
-        return <span className={className}>{text}</span>;
-      }
+      render: (sender: 'user' | 'ai') => (
+        <span className={`role-tag role-${sender}`}>
+          {sender === 'user' ? '用户' : 'AI'}
+        </span>
+      )
     },
     {
-      title: '序号',
-      dataIndex: 'sequence',
-      key: 'sequence',
+      title: '轮次',
+      dataIndex: 'round_num',
+      key: 'round_num',
       width: 60,
       align: 'center',
-      render: (seq: number) => <span className="sequence-number">#{seq}</span>
+      render: (num: number) => <span className="sequence-number">#{num || 0}</span>
     },
     {
       title: '内容预览',
-      dataIndex: 'preview',
-      key: 'preview',
+      dataIndex: 'content',
+      key: 'content',
       flex: 1,
       ellipsis: {
         showTitle: true
       },
-      render: (text: string, record: Message) => (
+      render: (text: string, record: SpokenMessage) => (
         <div className="message-preview">
-          {record.type === MessageType.IMAGE && (
+          {record.message_type === 'image' && record.image_url && (
             <img 
-              src="https://via.placeholder.com/60x40" 
+              src={record.image_url} 
               alt="预览" 
               className="image-preview"
+              style={{maxHeight: '40px'}}
             />
           )}
-          {text}
+          {record.message_type === 'voice' && record.transcription_text && (
+            <span>[语音] {record.transcription_text.substring(0, 50)}...</span>
+          )}
+          {record.message_type === 'text' && text.substring(0, 100)}
+          {record.message_type === 'score' && '[评分消息]'}
         </div>
       )
     },
     {
       title: '类型',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'message_type',
+      key: 'message_type',
       width: 80,
       align: 'center',
-      render: (type: MessageType) => (
+      render: (type: string) => (
         <span className="message-type">
-          {type === MessageType.TEXT ? '文本' : 
-           type === MessageType.IMAGE ? '图片' : 
-           type === MessageType.AUDIO ? '音频' : '视频'}
+          {type === 'text' ? '文本' : 
+           type === 'voice' ? '语音' : 
+           type === 'image' ? '图片' : '评分'}
         </span>
       )
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
       width: 140,
       ellipsis: true,
       render: (text: string) => <span className="create-time">{new Date(text).toLocaleString()}</span>
@@ -650,9 +506,9 @@ const MessagesManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 80,
       align: 'center',
-      render: (_: any, record: Message) => (
+      render: (_: any, record: SpokenMessage) => (
         <Space size="small">
           <Button 
             type="text" 
@@ -662,19 +518,6 @@ const MessagesManagement: React.FC = () => {
           >
             查看
           </Button>
-          <Button type="text" icon={<EditOutlined />} size="small">
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定要删除这条消息吗？88"
-            onConfirm={() => handleDeleteMessage(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small">
-              删除
-            </Button>
-          </Popconfirm>
         </Space>
       )
     }
@@ -759,25 +602,77 @@ const MessagesManagement: React.FC = () => {
         <div className="session-list">
           <div className="list-header">会话列表</div>
           <div className="list-content">
-            {sessions.map(session => (
+            {conversations.map(conversation => (
               <div
-                key={session.id}
-                className={`session-item ${selectedSession?.id === session.id ? 'selected' : ''}`}
-                onClick={() => setSelectedSession(session)}
+                key={conversation.id}
+                className={`session-item ${selectedConversation?.id === conversation.id ? 'selected' : ''}`}
+                onClick={() => setSelectedConversation(conversation)}
               >
                 <div className="session-header">
-                  <div className="session-title">{session.title}</div>
-                  <div className={`session-status ${session.status === SessionStatus.ACTIVE ? 'status-active' : 'status-deleted'}`}>
-                    {session.status === SessionStatus.ACTIVE ? '有效' : '已删除'}
+                  <div className="session-title">{conversation.title}</div>
+                  <div className="session-actions">
+                    <Space size="small">
+                      <Button 
+                        type="text" 
+                        icon={<EditOutlined />} 
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 阻止事件冒泡
+                          handleEditConversation(conversation);
+                        }}
+                        title="编辑会话"
+                      />
+                      <Popconfirm
+                        title="选择删除方式"
+                        description={
+                          <div style={{ maxWidth: 300 }}>
+                            <p style={{ marginBottom: 10 }}>请选择删除方式：</p>
+                            <ul style={{ paddingLeft: 20, margin: 0 }}>
+                              <li style={{ marginBottom: 5 }}><strong>软删除（归档）：</strong>会话状态设置为 archived，数据保留</li>
+                              <li><strong>硬删除：</strong>物理删除会话及所有关联消息</li>
+                            </ul>
+                          </div>
+                        }
+                        onConfirm={(e) => {
+                          e?.stopPropagation(); // 阻止事件冒泡
+                          handleDeleteConversation(conversation.id, false);
+                        }}
+                        onCancel={(e) => {
+                          e?.stopPropagation(); // 阻止事件冒泡
+                          Modal.confirm({
+                            title: '确定硬删除？',
+                            content: '硬删除将永久删除会话及所有消息，此操作不可恢复！',
+                            okText: '确定硬删除',
+                            cancelText: '取消',
+                            okType: 'danger',
+                            onOk: () => handleDeleteConversation(conversation.id, true),
+                          });
+                        }}
+                        okText="软删除（归档）"
+                        cancelText="硬删除"
+                      >
+                        <Button 
+                          type="text" 
+                          danger 
+                          icon={<DeleteOutlined />} 
+                          size="small"
+                          onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
+                          title="删除会话"
+                        />
+                      </Popconfirm>
+                    </Space>
                   </div>
                 </div>
                 <div className="session-meta">
-                  <div className="session-id">{session.id}</div>
-                  <div className="user-id">{session.userId}</div>
+                  <div className={`session-status ${conversation.status === 'active' ? 'status-active' : 'status-deleted'}`}>
+                    {conversation.status === 'active' ? '活跃' : conversation.status === 'completed' ? '已完成' : '已归档'}
+                  </div>
+                  <div className="session-id">{conversation.id}</div>
+                  <div className="user-id">{conversation.user_id}</div>
                 </div>
                 <div className="session-footer">
-                  <div className="message-count">{session.messageCount} 条消息</div>
-                  <div className="update-time">{new Date(session.updatedAt).toLocaleString()}</div>
+                  <div className="message-count">{conversation.total_messages} 条消息 / {conversation.total_rounds} 轮</div>
+                  <div className="update-time">{new Date(conversation.last_message_time || conversation.created_at).toLocaleString()}</div>
                 </div>
               </div>
             ))}
@@ -786,7 +681,7 @@ const MessagesManagement: React.FC = () => {
             <Pagination
               current={sessionPagination.page}
               pageSize={sessionPagination.pageSize}
-              total={totalSessions}
+              total={totalConversations}
               onChange={(page, pageSize) => setSessionPagination({ page, pageSize })}
               showSizeChanger
               pageSizeOptions={['10', '20', '50']}
@@ -801,47 +696,50 @@ const MessagesManagement: React.FC = () => {
           <div className="list-header">
             <div className="header-title">
               消息列表
-              {selectedSession && (
+              {selectedConversation && (
                 <span className="session-info">
-                  会话: {selectedSession.title}
+                  会话: {selectedConversation.title}
                 </span>
               )}
             </div>
           </div>
           <div className="list-content">
-            {messages.map(message => (
+            {messages.map(msg => (
               <div
-                key={message.id}
-                className={`message-item ${selectedMessage?.id === message.id ? 'selected' : ''}`}
-                onClick={() => setSelectedMessage(message)}
+                key={msg.id}
+                className={`message-item ${selectedMessage?.id === msg.id ? 'selected' : ''}`}
+                onClick={() => setSelectedMessage(msg)}
               >
                 <div className="message-header">
-                  <div className="message-id">{message.id}</div>
+                  <div className="message-id">{msg.id}</div>
                   <div className="message-meta">
-                    <span className={`role-tag role-${message.role}`}>
-                      {message.role === MessageRole.USER ? '用户' : 
-                       message.role === MessageRole.ASSISTANT ? '助手' : '系统'}
+                    <span className={`role-tag role-${msg.sender}`}>
+                      {msg.sender === 'user' ? '用户' : 'AI'}
                     </span>
-                    <span className="sequence-number">#{message.sequence}</span>
+                    <span className="sequence-number">#{msg.round_num || 0}</span>
                   </div>
                 </div>
                 <div className="message-preview">
-                  {message.type === MessageType.IMAGE && (
+                  {msg.message_type === 'image' && msg.image_url && (
                     <img 
-                      src="https://via.placeholder.com/60x40" 
+                      src={msg.image_url} 
                       alt="预览" 
                       className="image-preview"
                     />
                   )}
-                  {message.preview}
+                  {msg.message_type === 'voice' && msg.transcription_text && (
+                    <span>[语音] {msg.transcription_text.substring(0, 50)}...</span>
+                  )}
+                  {msg.message_type === 'text' && msg.content.substring(0, 100)}
+                  {msg.message_type === 'score' && '[评分消息]'}
                 </div>
                 <div className="message-footer">
                   <div className="message-type">
-                    {message.type === MessageType.TEXT ? '文本' : 
-                     message.type === MessageType.IMAGE ? '图片' : 
-                     message.type === MessageType.AUDIO ? '音频' : '视频'}
+                    {msg.message_type === 'text' ? '文本' : 
+                     msg.message_type === 'voice' ? '语音' : 
+                     msg.message_type === 'image' ? '图片' : '评分'}
                   </div>
-                  <div className="create-time">{new Date(message.createdAt).toLocaleString()}</div>
+                  <div className="create-time">{new Date(msg.timestamp).toLocaleString()}</div>
                 </div>
               </div>
             ))}
@@ -860,37 +758,10 @@ const MessagesManagement: React.FC = () => {
           </div>
         </div>
         
-        {/* 右侧内容详情 */}
+        {/* 右侧消息详情 */}
         <div className="content-detail">
           <div className="detail-header">
-            <span>内容详情</span>
-            {selectedMessage && (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />} 
-                  size="small"
-                  onClick={handleAddContent}
-                >
-                  添加内容
-                </Button>
-                {/*添加二次确认删除逻辑*/}
-                <Popconfirm
-                  title="确定要删除这个消息吗？"
-                  onConfirm={() => handleDeleteMessage(selectedMessage.id)}
-                  okText="确定"
-                  cancelText="取消"
-                >
-                  <Button 
-                    danger 
-                    icon={<DeleteOutlined />} 
-                    size="small"
-                  >
-                    删除消息 01
-                  </Button>
-                </Popconfirm>
-              </div>
-            )}
+            <span>消息详情</span>
           </div>
           <div className="detail-content">
             {selectedMessage ? (
@@ -902,84 +773,109 @@ const MessagesManagement: React.FC = () => {
                     <div className="info-value">{selectedMessage.id}</div>
                   </div>
                   <div className="info-item">
-                    <div className="info-label">角色:</div>
+                    <div className="info-label">发送者:</div>
                     <div className="info-value">
-                      {selectedMessage.role === MessageRole.USER ? '用户' : 
-                       selectedMessage.role === MessageRole.ASSISTANT ? '助手' : '系统'}
+                      {selectedMessage.sender === 'user' ? '用户' : 'AI'}
                     </div>
                   </div>
                   <div className="info-item">
-                    <div className="info-label">序号:</div>
-                    <div className="info-value">#{selectedMessage.sequence}</div>
+                    <div className="info-label">轮次:</div>
+                    <div className="info-value">#{selectedMessage.round_num || 0}</div>
                   </div>
                   <div className="info-item">
                     <div className="info-label">类型:</div>
                     <div className="info-value">
-                      {selectedMessage.type === MessageType.TEXT ? '文本' : 
-                       selectedMessage.type === MessageType.IMAGE ? '图片' : 
-                       selectedMessage.type === MessageType.AUDIO ? '音频' : '视频'}
+                      {selectedMessage.message_type === 'text' ? '文本' : 
+                       selectedMessage.message_type === 'voice' ? '语音' : 
+                       selectedMessage.message_type === 'image' ? '图片' : '评分'}
                     </div>
                   </div>
                   <div className="info-item">
                     <div className="info-label">创建时间:</div>
-                    <div className="info-value">{new Date(selectedMessage.createdAt).toLocaleString()}</div>
+                    <div className="info-value">{new Date(selectedMessage.timestamp).toLocaleString()}</div>
                   </div>
                 </div>
                 
-                {/* 消息内容列表 */}
+                {/* 消息内容显示 */}
                 <div className="content-section">
                   <div className="section-header">
-                    <span>内容列表 ({messageContents.length} 项)</span>
+                    <span>消息内容</span>
                   </div>
-                  <div className="content-list">
-                    {messageContents.map(content => (
-                      <div key={content.id} className="content-item">
-                        <div className="content-header">
-                          <span className="content-sequence">序列 #{content.sequence}</span>
-                          <div className="content-actions">
-                            <Button 
-                              type="text" 
-                              icon={<EditOutlined />} 
-                              size="small"
-                              onClick={() => handleEditContent(content)}
-                            >
-                              编辑
-                            </Button>
-                            <Popconfirm
-                              title="确定要删除这个内容吗？666"
-                              onConfirm={() => handleDeleteMessage(selectedMessage.id)}
-                              okText="确定"
-                              cancelText="取消"
-                            >
-                              <Button type="text" danger icon={<DeleteOutlined />} size="small">
-                                删除
-                              </Button>
-                            </Popconfirm>
-                          </div>
+                  
+                  {/* 文本消息 */}
+                  {selectedMessage.message_type === 'text' && (
+                    <div className="text-content">
+                      <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word'}}>{selectedMessage.content}</pre>
+                    </div>
+                  )}
+                  
+                  {/* 语音消息 */}
+                  {selectedMessage.message_type === 'voice' && (
+                    <div className="voice-content">
+                      {selectedMessage.audio_url && (
+                        <div className="audio-player" style={{marginBottom: '10px'}}>
+                          <audio controls src={selectedMessage.audio_url} style={{width: '100%'}}></audio>
                         </div>
-                        <div className="content-body">
-                          <span className="content-type">
-                            {content.type === MessageType.TEXT ? '文本' : 
-                             content.type === MessageType.IMAGE ? '图片' : 
-                             content.type === MessageType.AUDIO ? '音频' : '视频'}
-                          </span>
-                          {content.type === MessageType.IMAGE ? (
-                            <img 
-                              src={content.content} 
-                              alt="内容" 
-                              className="image-content"
-                            />
-                          ) : (
-                            <div className="text-content">{content.content}</div>
-                          )}
+                      )}
+                      {selectedMessage.transcription_text && (
+                        <div className="transcription">
+                          <div style={{fontWeight: 'bold', marginBottom: '5px'}}>转写文本:</div>
+                          <div>{selectedMessage.transcription_text}</div>
                         </div>
+                      )}
+                      <div className="transcription-status" style={{marginTop: '10px', color: '#666'}}>
+                        转写状态: {selectedMessage.transcription_status || 'pending'}
                       </div>
-                    ))}
-                    
-                    {messageContents.length === 0 && (
-                      <div className="empty-state">暂无内容</div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  
+                  {/* 图片消息 */}
+                  {selectedMessage.message_type === 'image' && selectedMessage.image_url && (
+                    <div className="image-content">
+                      <img src={selectedMessage.image_url} alt="消息图片" style={{maxWidth: '100%'}} />
+                    </div>
+                  )}
+                  
+                  {/* 评分消息 */}
+                  {selectedMessage.message_type === 'score' && (
+                    <div className="score-content">
+                      {selectedMessage.total_score && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>总分:</strong> {selectedMessage.total_score}
+                        </div>
+                      )}
+                      {selectedMessage.dimension_scores && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>维度评分:</strong>
+                          <pre style={{whiteSpace: 'pre-wrap', marginTop: '5px'}}>{selectedMessage.dimension_scores}</pre>
+                        </div>
+                      )}
+                      {selectedMessage.advantages && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>优点:</strong>
+                          <pre style={{whiteSpace: 'pre-wrap', marginTop: '5px'}}>{selectedMessage.advantages}</pre>
+                        </div>
+                      )}
+                      {selectedMessage.disadvantages && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>缺点:</strong>
+                          <pre style={{whiteSpace: 'pre-wrap', marginTop: '5px'}}>{selectedMessage.disadvantages}</pre>
+                        </div>
+                      )}
+                      {selectedMessage.suggestions && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>建议:</strong>
+                          <pre style={{whiteSpace: 'pre-wrap', marginTop: '5px'}}>{selectedMessage.suggestions}</pre>
+                        </div>
+                      )}
+                      {selectedMessage.improved_answer && (
+                        <div style={{marginBottom: '10px'}}>
+                          <strong>改进答案:</strong>
+                          <pre style={{whiteSpace: 'pre-wrap', marginTop: '5px'}}>{selectedMessage.improved_answer}</pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -987,52 +883,39 @@ const MessagesManagement: React.FC = () => {
             )}
           </div>
           <div className="detail-footer">
-            <Button>关闭</Button>
+            <Button onClick={() => setSelectedMessage(null)}>关闭</Button>
           </div>
         </div>
       </div>
       
-      {/* 内容编辑模态框 */}
+      {/* 会话编辑模态框 */}
       <Modal
-        title={editingContent ? '编辑内容' : '添加内容'}
-        visible={contentModalVisible}
-        onOk={handleSaveContent}
-        onCancel={() => setContentModalVisible(false)}
+        title="编辑会话"
+        open={editModalVisible}
+        onOk={handleSaveConversation}
+        onCancel={() => setEditModalVisible(false)}
+        afterClose={() => editForm.resetFields()}
         width={500}
       >
-        <Form form={contentForm} layout="vertical">
+        <Form form={editForm} layout="vertical">
           <Form.Item
-            name="sequence"
-            label="序列"
-            rules={[{ required: true, message: '请输入序列' }]}
+            name="title"
+            label="会话标题"
+            rules={[{ required: true, message: '请输入会话标题' }]}
           >
-            <Input type="number" placeholder="请输入序列" />
+            <Input placeholder="请输入会话标题" />
           </Form.Item>
           
           <Form.Item
-            name="type"
-            label="类型"
-            rules={[{ required: true, message: '请选择类型' }]}
+            name="status"
+            label="会话状态"
+            rules={[{ required: true, message: '请选择会话状态' }]}
           >
-            <Select placeholder="请选择类型">
-              <Option value={MessageType.TEXT}>文本</Option>
-              <Option value={MessageType.IMAGE}>图片</Option>
-              <Option value={MessageType.AUDIO}>音频</Option>
-              <Option value={MessageType.VIDEO}>视频</Option>
+            <Select placeholder="请选择会话状态">
+              <Option value="active">活跃</Option>
+              <Option value="completed">已完成</Option>
+              <Option value="archived">已归档</Option>
             </Select>
-          </Form.Item>
-          
-          <Form.Item
-            name="content"
-            label="内容"
-            rules={[{ required: true, message: '请输入内容' }]}
-          >
-            <TextArea 
-              rows={4} 
-              placeholder="请输入内容"
-              showCount
-              maxLength={1000}
-            />
           </Form.Item>
         </Form>
       </Modal>
