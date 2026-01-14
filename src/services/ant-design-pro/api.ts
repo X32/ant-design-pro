@@ -2593,6 +2593,7 @@ export interface CreateTextMessageParams {
   sender: 'user' | 'ai';
   content: string;
   round_num?: number;
+  created_at?: string;
 }
 
 /** 创建语音消息请求参数 */
@@ -2600,8 +2601,10 @@ export interface CreateVoiceMessageParams {
   sender: 'user' | 'ai';
   audio_file_path?: string;
   audio_url?: string;
+  transcription_text?: string; // ⭐ 新增：转写文本
   round_num?: number;
   task_id?: string;
+  created_at?: string;
 }
 
 /** 创建图片消息请求参数 */
@@ -2610,6 +2613,7 @@ export interface CreateImageMessageParams {
   round_num?: number;
   image_width?: number;
   image_height?: number;
+  created_at?: string;
 }
 
 /** 创建评分消息请求参数 */
@@ -2622,6 +2626,7 @@ export interface CreateScoreMessageParams {
   disadvantages?: string;
   suggestions?: string;
   improved_answer?: string;
+  created_at?: string;
 }
 
 /** 更新转写请求参数 */

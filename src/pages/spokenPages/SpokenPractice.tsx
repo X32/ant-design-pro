@@ -79,7 +79,8 @@ interface Message {
   id: number;           // 消息ID
   content: string | ScoreContent; // 消息内容（文本或评分对象）
   sender: 'user' | 'ai'; // 发送者角色
-  timestamp: string;    // 发送时间戳
+  timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
+  fullTimestamp?: Date; // 完整时间戳（保存用）
   audioFilePath?: string; // 音频文件路径（用户语音消息）
   messageType?: 'text' | 'voice' | 'image' | 'score' | 'finish'; // 消息类型（新增 finish 类型）
   transcriptionText?: string; // 转写文本（语音消息专用）
@@ -106,6 +107,24 @@ const AI_AUDIO_BASE_URL = 'http://192.168.4.30:9002';
 const SpokenPractice: React.FC = () => {
   // 获取URL参数
   const [searchParams] = useSearchParams();
+  
+  /**
+   * 将前端 timestamp 转换为 ISO 8601 格式
+   * @param timestamp 显示时间戳（HH:mm）或完整时间戳
+   * @param fullTimestamp 完整时间对象（优先使用）
+   * @returns ISO 8601 格式字符串（如 2026-01-10T15:30:00）
+   */
+  const convertTimestampToISO = (timestamp: string, fullTimestamp?: Date): string => {
+    if (fullTimestamp) {
+      return fullTimestamp.toISOString().slice(0, 19); // 格式：2026-01-10T15:30:00
+    }
+    
+    // 如果没有完整时间戳，使用当前日期 + 显示时间
+    const now = new Date();
+    const [hours, minutes] = timestamp.split(':').map(Number);
+    now.setHours(hours, minutes, 0, 0);
+    return now.toISOString().slice(0, 19);
+  };
   
   // 对话区域的引用，用于滚动到最新消息
   const conversationEndRef = useRef<HTMLDivElement>(null);
@@ -205,29 +224,53 @@ const SpokenPractice: React.FC = () => {
       }
       
       console.log(`💾 开始批量保存 ${messages.length} 条消息...`);
+      console.log('🕒 消息时间顺序:', messages.map(m => ({
+        id: m.id,
+        type: m.messageType,
+        timestamp: m.timestamp,
+        fullTimestamp: m.fullTimestamp?.toISOString(),
+        sender: m.sender
+      })));
       
-      // 按类型分组保存
-      const savePromises = messages.map(msg => {
+      // ⭐ 并发保存所有消息，使用缓存的精确时间戳
+      const savePromises = messages.map((msg, index) => {
+        // 将前端的 timestamp 转换为 ISO 8601 格式
+        const createdAt = convertTimestampToISO(msg.timestamp, msg.fullTimestamp);
+        console.log(`💾 [${index + 1}/${messages.length}] 准备保存消息: ${msg.messageType}, sender: ${msg.sender}, created_at: ${createdAt}`);
+        
         if (msg.messageType === 'text' || !msg.messageType) {
           // 文本消息
           return createSpokenTextMessage(conversationId, {
             sender: msg.sender,
             content: typeof msg.content === 'string' ? msg.content : '',
             round_num: msg.roundNum,
-          }).catch(err => console.error('保存文本消息失败:', err));
+            created_at: createdAt, // ⭐ 传入精确时间戳
+          }).catch(err => {
+            console.error(`❌ 保存文本消息失败 [${index + 1}/${messages.length}]:`, err);
+            return null;
+          });
         } else if (msg.messageType === 'voice') {
-          // 语音消息（注意：接口不支持 transcription_text）
+          // 语音消息
           return createSpokenVoiceMessage(conversationId, {
             sender: msg.sender,
             audio_file_path: msg.audioFilePath,
             round_num: msg.roundNum,
-          }).catch(err => console.error('保存语音消息失败:', err));
+            transcription_text: msg.transcriptionText || '',
+            created_at: createdAt, // ⭐ 传入精确时间戳
+          }).catch(err => {
+            console.error(`❌ 保存语音消息失败 [${index + 1}/${messages.length}]:`, err);
+            return null;
+          });
         } else if (msg.messageType === 'image') {
           // 图片消息
           return createSpokenImageMessage(conversationId, {
             image_url: msg.imageUrl!,
             round_num: msg.roundNum,
-          }).catch(err => console.error('保存图片消息失败:', err));
+            created_at: createdAt, // ⭐ 传入精确时间戳
+          }).catch(err => {
+            console.error(`❌ 保存图片消息失败 [${index + 1}/${messages.length}]:`, err);
+            return null;
+          });
         } else if (msg.messageType === 'score') {
           // 评分消息
           const content = msg.content as ScoreContent;
@@ -240,13 +283,17 @@ const SpokenPractice: React.FC = () => {
             disadvantages: content.disadvantages,
             suggestions: content.suggestions,
             improved_answer: content.improvedAnswer,
-          }).catch(err => console.error('保存评分消息失败:', err));
+            created_at: createdAt, // ⭐ 传入精确时间戳
+          }).catch(err => {
+            console.error(`❌ 保存评分消息失败 [${index + 1}/${messages.length}]:`, err);
+            return null;
+          });
         }
-        return Promise.resolve();
+        return Promise.resolve(null);
       });
       
       // 并发保存所有消息
-      await Promise.all(savePromises.filter(p => p !== undefined));
+      await Promise.all(savePromises);
       
       console.log('✅ 所有消息保存完成');
     };
@@ -452,14 +499,16 @@ const SpokenPractice: React.FC = () => {
               setIsAuthenticated(false);
               
               // 6. 插入结束消息到消息列表
+              const now = new Date();
               const finishMessage: Message = {
                 id: generateMessageId(),
                 content: '🎉 对话已结束，您的口语练习已完成，成绩已保存！',
                 sender: 'ai',
-                timestamp: new Date().toLocaleTimeString([], {
+                timestamp: now.toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
                 }),
+                fullTimestamp: now, // ⭐ 保存完整时间戳
                 messageType: 'finish',
               };
               
@@ -483,14 +532,16 @@ const SpokenPractice: React.FC = () => {
           // 判断消息类型
           if (data.type === 'image_url') {
             // 图片消息
+            const now = new Date();
             const imageMessage: Message = {
               id: messageId,
               content: data.content,
               sender: 'ai',
-              timestamp: new Date().toLocaleTimeString([], {
+              timestamp: now.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
+              fullTimestamp: now, // ⭐ 保存完整时间戳
               messageType: 'image',
               imageUrl: data.content,
               roundNum: data.round_num,
@@ -576,14 +627,16 @@ const SpokenPractice: React.FC = () => {
             
             const parsedContent = parseScoreContent(contentText);
             
+            const now = new Date();
             const scoreMessage: Message = {
               id: messageId,
               content: parsedContent,
               sender: 'ai',
-              timestamp: new Date().toLocaleTimeString([], {
+              timestamp: now.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
+              fullTimestamp: now, // ⭐ 保存完整时间戳
               messageType: 'score',
               score: data.score,
               roundNum: data.round_num,
@@ -602,14 +655,16 @@ const SpokenPractice: React.FC = () => {
             }
             
             // 创建AI回复消息
+            const now = new Date();
             const aiMessage: Message = {
               id: messageId,
               content: typeof data.content === 'string' ? data.content : '我收到了你的消息！',
               sender: 'ai',
-              timestamp: new Date().toLocaleTimeString([], {
+              timestamp: now.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
+              fullTimestamp: now, // ⭐ 保存完整时间戳
               audioUrl: fullAudioUrl,
               audioLoaded: false,
               roundNum: data.round_num,
@@ -1082,14 +1137,16 @@ const SpokenPractice: React.FC = () => {
     const currentRoundNum = Math.floor(messages.length / 2) + 1; // 简单计算轮次
     
     // 创建用户消息
+    const now = new Date();
     const userMessage: Message = {
       id: generateMessageId(),
       content: currentInputValue,
       sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], {
+      timestamp: now.toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      fullTimestamp: now, // ⭐ 保存完整时间戳
       messageType: 'text',
       roundNum: currentRoundNum,
     };
@@ -1293,14 +1350,16 @@ const SpokenPractice: React.FC = () => {
     
     // 创建语音消息（本地播放用）
     const newMessageId = Date.now() + Math.floor(Math.random() * 1000);
+    const now = new Date();
     const newMessage: Message = {
       id: newMessageId,
       content: '（语音消息）',
       sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], {
+      timestamp: now.toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      fullTimestamp: now, // ⭐ 保存完整时间戳
       audioFilePath: filePath,
       messageType: 'voice',
       transcriptionStatus: 'pending',
@@ -1347,6 +1406,18 @@ const SpokenPractice: React.FC = () => {
               )
             );
             
+            // ⭐ 同步更新缓存中的消息
+            messageCacheRef.current = messageCacheRef.current.map(msg =>
+              msg.id === newMessageId
+                ? {
+                    ...msg,
+                    transcriptionText: transcriptionText,
+                    transcriptionStatus: 'done' as const
+                  }
+                : msg
+            );
+            console.log('✅ 已更新缓存中的转写文本:', transcriptionText);
+            
             // 可以将转写结果通过WebSocket发送给服务器
             if (isConnected && socket) {
               try {
@@ -1374,6 +1445,18 @@ const SpokenPractice: React.FC = () => {
                   : msg
               )
             );
+            
+            // ⭐ 同步更新缓存中的消息
+            messageCacheRef.current = messageCacheRef.current.map(msg =>
+              msg.id === newMessageId
+                ? {
+                    ...msg,
+                    transcriptionText: '转写失败',
+                    transcriptionStatus: 'failed' as const
+                  }
+                : msg
+            );
+            console.log('❌ 转写失败，已更新缓存');
           }
         }
       }
@@ -1391,6 +1474,18 @@ const SpokenPractice: React.FC = () => {
             : msg
         )
       );
+      
+      // ⭐ 同步更新缓存中的消息
+      messageCacheRef.current = messageCacheRef.current.map(msg =>
+        msg.id === newMessageId
+          ? {
+              ...msg,
+              transcriptionText: '上传失败',
+              transcriptionStatus: 'failed' as const
+            }
+          : msg
+      );
+      console.log('❌ 上传失败，已更新缓存');
     }
   };
 
