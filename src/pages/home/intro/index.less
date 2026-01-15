@@ -1,0 +1,483 @@
+.exam-intro-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding-bottom: 60px;
+
+  .exam-intro-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    h2 {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .ant-btn {
+      color: #667eea;
+      
+      &:hover {
+        color: #764ba2;
+        background: rgba(102, 126, 234, 0.1);
+      }
+    }
+  }
+
+  .exam-intro-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  // 卡片通用样式
+  .ant-card {
+    margin-bottom: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-icon {
+      font-size: 32px;
+      color: #667eea;
+      margin-right: 12px;
+    }
+
+    h3 {
+      margin: 0;
+      color: #333;
+      font-weight: 600;
+    }
+  }
+
+  // 基本信息卡片
+  .info-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .info-icon {
+        font-size: 36px;
+        color: #667eea;
+        margin-right: 16px;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+      }
+
+      .info-content {
+        flex: 1;
+
+        .ant-typography {
+          margin: 0;
+          display: block;
+        }
+
+        h4 {
+          margin-top: 4px;
+          color: #667eea;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // 流程卡片
+  .flow-card {
+    background: white;
+
+    .flow-description {
+      padding: 16px;
+      background: #f8f9ff;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      margin-bottom: 32px;
+      color: #555;
+    }
+
+    .exam-timeline {
+      margin-top: 32px;
+
+      .ant-timeline-item {
+        padding-bottom: 40px;
+      }
+
+      .timeline-dot {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      .timeline-content {
+        .timeline-header {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 16px;
+
+          h4 {
+            margin: 0;
+            color: #333;
+            font-weight: 600;
+          }
+
+          .ant-tag {
+            font-size: 12px;
+            padding: 2px 12px;
+            border-radius: 12px;
+          }
+        }
+
+        p {
+          color: #666;
+          line-height: 1.8;
+          margin-bottom: 12px;
+
+          strong {
+            color: #333;
+          }
+        }
+
+        .topic-list {
+          padding-left: 20px;
+          margin: 8px 0;
+
+          li {
+            color: #666;
+            line-height: 2;
+            position: relative;
+
+            &::marker {
+              color: #667eea;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 评分卡片
+  .scoring-card {
+    background: white;
+
+    .scoring-description {
+      padding: 16px;
+      background: #f8f9ff;
+      border-radius: 8px;
+      text-align: center;
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+
+    .scoring-items {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .scoring-item {
+      padding: 24px;
+      background: #fafbff;
+      border-radius: 12px;
+      border: 2px solid #e8ebf7;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+      }
+
+      &.highlight {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+        border-color: #ff4d4f;
+
+        .scoring-number {
+          background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+        }
+
+        .scoring-title h4 {
+          color: #ff4d4f;
+        }
+      }
+
+      .scoring-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        .scoring-number {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 20px;
+          flex-shrink: 0;
+        }
+
+        .scoring-title {
+          flex: 1;
+          min-width: 200px;
+
+          h4 {
+            margin: 0 0 4px 0;
+            color: #333;
+            font-weight: 600;
+          }
+
+          .ant-typography {
+            color: #999;
+            font-size: 13px;
+          }
+        }
+
+        .ant-tag {
+          font-size: 13px;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-weight: 500;
+        }
+      }
+
+      .scoring-points {
+        padding-left: 20px;
+        margin: 12px 0 0 0;
+
+        li {
+          color: #666;
+          line-height: 2;
+          position: relative;
+
+          &::marker {
+            color: #667eea;
+          }
+
+          strong {
+            color: #333;
+          }
+        }
+      }
+    }
+
+    .scoring-formula {
+      margin-top: 32px;
+      padding: 24px;
+      background: linear-gradient(135deg, #f8f9ff 0%, #fff5f5 100%);
+      border-radius: 12px;
+
+      h4 {
+        margin-bottom: 20px;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .formula-items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .formula-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: white;
+          border-radius: 8px;
+
+          &.total {
+            margin-top: 8px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+
+            .ant-typography {
+              color: white;
+            }
+
+            h3 {
+              color: white !important;
+            }
+          }
+
+          .ant-typography-mark {
+            background: #ff4d4f;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+
+  // 底部操作按钮
+  .exam-intro-footer {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 40px;
+    padding: 0 24px;
+
+    .ant-btn {
+      min-width: 140px;
+      height: 48px;
+      font-size: 16px;
+      border-radius: 24px;
+      font-weight: 500;
+
+      &.ant-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+
+        &:hover {
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+          transform: translateY(-2px);
+        }
+      }
+
+      &:not(.ant-btn-primary) {
+        border-color: #667eea;
+        color: #667eea;
+
+        &:hover {
+          border-color: #764ba2;
+          color: #764ba2;
+          background: rgba(102, 126, 234, 0.05);
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .exam-intro-container {
+    .exam-intro-header {
+      padding: 16px;
+
+      h2 {
+        font-size: 18px;
+      }
+    }
+
+    .exam-intro-content {
+      padding: 20px 16px;
+    }
+
+    .card-header {
+      .header-icon {
+        font-size: 24px;
+      }
+
+      h3 {
+        font-size: 18px;
+      }
+    }
+
+    .info-card {
+      .info-item {
+        padding: 16px;
+
+        .info-icon {
+          font-size: 28px;
+          width: 50px;
+          height: 50px;
+        }
+      }
+    }
+
+    .flow-card {
+      .exam-timeline {
+        .timeline-dot {
+          width: 32px;
+          height: 32px;
+          font-size: 14px;
+        }
+
+        .timeline-content {
+          .timeline-header {
+            h4 {
+              font-size: 16px;
+            }
+          }
+        }
+      }
+    }
+
+    .scoring-card {
+      .scoring-item {
+        padding: 16px;
+
+        .scoring-header {
+          .scoring-number {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+          }
+
+          .scoring-title h4 {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+
+    .exam-intro-footer {
+      flex-direction: column;
+
+      .ant-btn {
+        width: 100%;
+      }
+    }
+  }
+}

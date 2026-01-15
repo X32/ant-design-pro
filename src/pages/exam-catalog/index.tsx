@@ -1,7 +1,8 @@
-import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, UserOutlined } from '@ant-design/icons';
-import { App, Avatar, Button, Card, Spin, Tag } from 'antd';
+import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, TrophyOutlined } from '@ant-design/icons';
+import { App, Button, Card, Spin, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
+import UserAvatar from '@/components/UserAvatar';
 import {
   getPublicExamCategories,
   getPublicExamPaperQuestions,
@@ -25,23 +26,24 @@ const ExamCatalog: React.FC = () => {
   const [categories, setCategories] = useState<ExamCategoryWithPapers[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 跳转到我的练习记录页面
+  const handleMyPracticeRecords = () => {
+    if (!isLoggedIn) {
+      message.warning('请先登录后查看练习记录');
+      history.push('/user/login');
+      return;
+    }
+    history.push('/messages/userpractice');
+  };
+
   // 返回首页
   const handleBackToHome = () => {
-    history.push('/home');
+    history.back();
   };
 
   // 登录
   const handleLogin = () => {
     history.push('/user/login');
-  };
-
-  // 点击头像
-  const handleUserClick = () => {
-    if (currentUser?.access === 'admin') {
-      history.push('/back/welcome');
-    } else {
-      history.push('/exam-catalog');
-    }
   };
 
   // 加载考试分类
@@ -364,17 +366,22 @@ const ExamCatalog: React.FC = () => {
             onClick={handleBackToHome}
             size="large"
           >
-            返回首页
+            返回
           </Button>
         </div>
         <div className="nav-right">
+          {isLoggedIn && (
+            <Button 
+              type="default" 
+              icon={<TrophyOutlined />}
+              onClick={handleMyPracticeRecords}
+              style={{ marginRight: 12 }}
+            >
+              我的练习记录
+            </Button>
+          )}
           {isLoggedIn ? (
-            <Avatar 
-              size="large" 
-              icon={<UserOutlined />} 
-              onClick={handleUserClick}
-              style={{ cursor: 'pointer', backgroundColor: '#1890ff' }}
-            />
+            <UserAvatar showName size="large" />
           ) : (
             <Button type="primary" onClick={handleLogin}>
               登录

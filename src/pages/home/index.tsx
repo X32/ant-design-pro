@@ -1,9 +1,7 @@
 import { history, useModel } from '@umijs/max';
-import { Avatar, Button, Card, Col, Dropdown, Row, Typography } from 'antd';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import { Button, Card, Col, Row, Typography } from 'antd';
 import React from 'react';
-import { TOKEN_KEY } from '@/config/apiConfig';
+import UserAvatar from '@/components/UserAvatar';
 import './index.less';
 
 const { Title, Paragraph } = Typography;
@@ -14,42 +12,12 @@ const HomePage: React.FC = () => {
   const isLoggedIn = !!currentUser;
 
   const handleLogin = () => {
-    history.push('/user/login');
+    history.push('home/intro');
   };
 
   const handleStart = () => {
     history.push('/exam-catalog');
   };
-
-  // 退出登录
-  const handleLogout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    window.location.href = '/home';
-  };
-
-  // 个人中心
-  const handleProfile = () => {
-    history.push('/user/profile');
-  };
-
-  // 用户菜单
-  const userMenuItems: MenuProps['items'] = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: '个人中心',
-      onClick: handleProfile,
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: '退出登录',
-      onClick: handleLogout,
-    },
-  ];
 
   return (
     <div className="home-container">
@@ -61,13 +29,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="header-actions">
             {isLoggedIn ? (
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-                <Avatar 
-                  size="large" 
-                  icon={<UserOutlined />} 
-                  style={{ cursor: 'pointer', backgroundColor: '#1890ff' }}
-                />
-              </Dropdown>
+              <UserAvatar showName size="large" />
             ) : (
               <Button type="primary" onClick={handleLogin}>
                 登录

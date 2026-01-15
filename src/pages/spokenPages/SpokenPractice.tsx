@@ -3,7 +3,6 @@ import {
   AudioOutlined,  // 音频图标
   SendOutlined,   // 发送图标
   SettingOutlined,// 设置图标
-  UserOutlined,   // 用户图标
   PlayCircleOutlined,
   PauseOutlined
 } from '@ant-design/icons';
@@ -12,6 +11,7 @@ import {
 import { Avatar, Button, Input, Layout, Progress, Space, Modal, App } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from '@umijs/max'; // 导入useSearchParams用于获取URL参数
+import UserAvatar from '@/components/UserAvatar';
 
 // 导入AudioRecorder06组件
 import AudioRecorderInline from '@/pages/AudioRecorder06/AudioRecorderInline';
@@ -1015,10 +1015,23 @@ const SpokenPractice: React.FC = () => {
       console.log('🧹 页面关闭/刷新，已清除 conversationId');
     };
     
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    // 监听浏览器返回/前进事件（使用 popstate）
+    const handlePopState = () => {
+      console.log('🔙 检测到浏览器返回操作，清除 conversationId');
+      localStorage.removeItem(CONVERSATION_ID_KEY);
+    };
     
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    
+    // 组件卸载时也清除（路由跳转时）
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      
+      // 组件卸载时清除 conversationId
+      console.log('🧹 组件卸载，清除 conversationId');
+      localStorage.removeItem(CONVERSATION_ID_KEY);
     };
   }, [conversationFinished]);
 
@@ -1608,7 +1621,7 @@ const SpokenPractice: React.FC = () => {
               onClick={() => setShowTextInput(!showTextInput)}
               title={showTextInput ? "隐藏文本输入" : "显示文本输入"}
             />
-            <Avatar size={40} icon={<UserOutlined />} className="user-avatar" />
+            <UserAvatar showName={false} size={40} />
           </Space>
         </div>
       </Header>

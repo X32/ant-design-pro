@@ -2517,6 +2517,8 @@ export async function getCoinPackages(
 export interface SpokenConversation {
   id: number;
   user_id: number;
+  user_email?: string;              // 🆕 管理员接口返回：用户邮箱
+  user_is_superuser?: boolean;      // 🆕 管理员接口返回：是否超级用户
   exercise_id?: number;
   workflow_type?: string;
   title?: string;
@@ -2665,18 +2667,45 @@ export async function createSpokenConversation(
 /**
  * 获取口语练习会话列表
  * GET /api/spoken/conversations
+ * @param user_id 管理员可传入指定用户ID获取其他用户数据
  */
 export async function getSpokenConversations(
   params?: {
     status_filter?: 'active' | 'completed' | 'archived';
     limit?: number;
     offset?: number;
+    user_id?: number;  // 👑 管理员可传入用户ID获取其他用户数据
   },
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
   
   return request<GetSpokenConversationsResponse>(API_ENDPOINTS.SPOKEN_CONVERSATIONS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 管理员获取所有用户的口语练习会话列表（包含用户信息）
+ * GET /api/admin/conversations
+ */
+export async function getAdminSpokenConversations(
+  params?: {
+    status_filter?: 'active' | 'completed' | 'archived';
+    limit?: number;
+    offset?: number;
+    user_id?: number;  // 🆕 支持按用户 ID 搜索
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GetSpokenConversationsResponse>(API_ENDPOINTS.ADMIN_CONVERSATIONS, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,

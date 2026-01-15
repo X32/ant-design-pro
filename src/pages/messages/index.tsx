@@ -20,6 +20,7 @@ import { mockApi } from './mockData';
 // 导入API服务
 import { 
   getSpokenConversations,
+  getAdminSpokenConversations,  // 💡 新增：管理员接口
   getSpokenMessages,
   updateSpokenConversation,
   createSpokenConversation,
@@ -72,8 +73,9 @@ const MessagesManagement: React.FC = () => {
   
   /**
    * 获取口语练习会话列表
-   * 1. 调用API获取真实数据
-   * 2. 数据转换为组件所需格式
+   * 1. 管理员后台使用 getAdminSpokenConversations 接口，返回所有用户会话 + 用户信息
+   * 2. 支持按用户 ID 搜索
+   * 3. 数据转换为组件所需格式
    */
   const fetchConversations = useCallback(async () => {
     // 防止重复调用
@@ -82,18 +84,39 @@ const MessagesManagement: React.FC = () => {
     isFetchingConversationsRef.current = true;
     
     try {
-      // 使用口语练习会话接口
-      const response = await getSpokenConversations({
+      // 🔍 构建请求参数
+      const params: {
+        status_filter?: 'active' | 'completed' | 'archived';
+        limit?: number;
+        offset?: number;
+        user_id?: number;
+      } = {
         status_filter: filterParams.status as 'active' | 'completed' | 'archived' | undefined,
         limit: sessionPagination.pageSize,
         offset: (sessionPagination.page - 1) * sessionPagination.pageSize,
-      });
+      };
+      
+      // 如果有用户 ID 搜索条件，添加到参数中
+      if (searchParams.userId && searchParams.userId.trim()) {
+        const userId = parseInt(searchParams.userId.trim(), 10);
+        if (!isNaN(userId) && userId > 0) {
+          params.user_id = userId;
+          console.log('🔍 按用户ID搜索:', userId);
+        } else {
+          message.warning('请输入有效的用户 ID（正整数）');
+          isFetchingConversationsRef.current = false;
+          return;
+        }
+      }
+      
+      // 使用管理员接口，获取所有用户的会话（包含 user_email, user_is_superuser）
+      const response = await getAdminSpokenConversations(params);
       
       // 根据实际接口返回格式处理数据
       if (response.success && response.data) {
         setConversations(response.data);
         setTotalConversations(response.total || response.data.length);
-        message.success('获取会话列表成功');
+        message.success(`获取会话列表成功，共 ${response.data.length} 条`);
       } else {
         throw new Error('API返回数据格式错误');
       }
@@ -331,6 +354,21 @@ const MessagesManagement: React.FC = () => {
       render: (text: string) => <span className="user-id">{text}</span>
     },
     {
+      title: '用户邮箱',
+      dataIndex: 'user_email',
+      key: 'user_email',
+      width: 180,
+      ellipsis: true,
+      render: (text: string, record: SpokenConversation) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="user-email">{text || '-'}</span>
+          {record.user_is_superuser && (
+            <Tag color="red" style={{ margin: 0 }}>超级管理员</Tag>
+          )}
+        </div>
+      )
+    },
+    {
       title: '标题',
       dataIndex: 'title',
       key: 'title',
@@ -531,25 +569,17 @@ const MessagesManagement: React.FC = () => {
         <div className="search-filter-row">
           <div className="search-group">
             <Input
-              placeholder="搜索会话标题"
-              prefix={<SearchOutlined />}
-              value={searchParams.sessionTitle || ''}
-              onChange={(e) => handleSearch('sessionTitle', e.target.value)}
-              style={{ width: 200 }}
-            />
-            <Input
-              placeholder="搜索消息内容"
-              prefix={<SearchOutlined />}
-              value={searchParams.messageContent || ''}
-              onChange={(e) => handleSearch('messageContent', e.target.value)}
-              style={{ width: 200 }}
-            />
-            <Input
               placeholder="搜索用户 ID"
               prefix={<SearchOutlined />}
               value={searchParams.userId || ''}
               onChange={(e) => handleSearch('userId', e.target.value)}
-              style={{ width: 150 }}
+              style={{ width: 200 }}
+              onPressEnter={fetchConversations}
+            />
+            <RangePicker
+              placeholder={['开始日期', '结束日期']}
+              onChange={handleDateRangeChange}
+              style={{ width: 280 }}
             />
           </div>
           
@@ -559,38 +589,26 @@ const MessagesManagement: React.FC = () => {
               value={filterParams.status || undefined}
               onChange={(value) => handleFilter('status', value)}
               style={{ width: 120 }}
+              allowClear
             >
               <Option value={SessionStatus.ACTIVE}>有效</Option>
               <Option value={SessionStatus.DELETED}>已删除</Option>
             </Select>
-            
-            <Select
-              placeholder="选择角色"
-              value={filterParams.role || undefined}
-              onChange={(value) => handleFilter('role', value)}
-              style={{ width: 120 }}
-            >
-              <Option value={MessageRole.USER}>用户</Option>
-              <Option value={MessageRole.ASSISTANT}>助手</Option>
-              <Option value={MessageRole.SYSTEM}>系统</Option>
-            </Select>
-            
-            <RangePicker
-              placeholder={['开始日期', '结束日期']}
-              onChange={handleDateRangeChange}
-              style={{ width: 240 }}
-            />
           </div>
           
           <div className="action-group">
+            <Button 
+              type="primary" 
+              icon={<SearchOutlined />} 
+              onClick={fetchConversations}
+            >
+              搜索
+            </Button>
             <Button icon={<ReloadOutlined />} onClick={handleReset}>
               重置
             </Button>
             <Button icon={<ExportOutlined />} onClick={handleExport}>
               导出
-            </Button>
-            <Button type="primary" danger icon={<DeleteOutlined />}>
-              批量删除
             </Button>
           </div>
         </div>
@@ -669,6 +687,14 @@ const MessagesManagement: React.FC = () => {
                   </div>
                   <div className="session-id">{conversation.id}</div>
                   <div className="user-id">{conversation.user_id}</div>
+                  {conversation.user_email && (
+                    <div className="user-email" style={{ fontSize: '12px', color: '#666' }}>
+                      {conversation.user_email}
+                    </div>
+                  )}
+                  {conversation.user_is_superuser && (
+                    <Tag color="red" style={{ margin: 0, fontSize: '12px' }}>超级管理员</Tag>
+                  )}
                 </div>
                 <div className="session-footer">
                   <div className="message-count">{conversation.total_messages} 条消息 / {conversation.total_rounds} 轮</div>

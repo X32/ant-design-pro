@@ -36,6 +36,14 @@ export default [
     component: './home',
     layout: false,
   },
+  
+  // ========== 考试介绍页面（公开访问，无需登录）==========
+  {
+    path: '/home/intro',
+    name: 'exam-intro',
+    component: './home/intro',
+    layout: false,
+  },
 
   // ========== 考试目录（公开访问，无需登录，不显示菜单）==========
   {
@@ -191,6 +199,13 @@ export default [
     layout: false,  // 普通用户不显示侧边栏
   },
   
+  // ========== 用户练习记录页面（不显示侧边栏）==========
+  {
+    path: '/messages/userpractice',
+    name: 'user-practice',
+    component: './messages/userpractice',
+    layout: false,  // 不显示侧边栏
+  },
 
   // ========== 根路径重定向到首页 ==========
   {

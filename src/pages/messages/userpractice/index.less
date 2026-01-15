@@ -1,0 +1,290 @@
+// 用户练习记录页面布局
+.user-practice-layout {
+  min-height: 100vh;
+  background-color: #f0f2f5;
+
+  // 自定义顶部导航栏
+  .custom-header {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    height: 64px;
+    line-height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+
+      .header-left-section {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+
+        .back-button {
+          color: #666;
+          font-size: 14px;
+          
+          &:hover {
+            color: #1890ff;
+          }
+        }
+
+        .header-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 20px;
+          font-weight: 600;
+          color: #333;
+        }
+      }
+
+      .header-right-section {
+        display: flex;
+        gap: 12px;
+      }
+    }
+  }
+}
+
+.user-practice-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  // 页面标题卡片
+  .header-card {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .header-left {
+        flex: 1;
+        
+        .page-title {
+          font-size: 24px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
+          color: #1890ff;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .page-description {
+          margin: 0;
+          color: #666;
+          font-size: 14px;
+          
+          strong {
+            font-size: 16px;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .header-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        
+        .ant-tag {
+          margin: 0;
+          padding: 4px 12px;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+
+  // 会话列表卡片
+  .conversation-list-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .conversation-item {
+      padding: 16px;
+      background: #fff;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #1890ff;
+      }
+
+      .conversation-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .ant-list-item-meta-description {
+        margin-top: 8px;
+      }
+    }
+  }
+
+  // 消息详情弹窗
+  .message-detail-modal {
+    .message-item {
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      
+      &.message-user {
+        background: #e6f7ff;
+        border-left: 4px solid #1890ff;
+      }
+
+      &.message-ai {
+        background: #f6ffed;
+        border-left: 4px solid #52c41a;
+      }
+
+      .message-content {
+        .message-header {
+          margin-bottom: 8px;
+          
+          .message-time {
+            color: #999;
+            font-size: 12px;
+          }
+        }
+
+        .message-body {
+          p {
+            margin: 8px 0;
+            line-height: 1.6;
+          }
+
+          .transcription {
+            color: #666;
+            font-style: italic;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+          }
+
+          .score-content {
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #d9f7be;
+
+            p {
+              margin: 8px 0;
+            }
+
+            strong {
+              color: #52c41a;
+            }
+          }
+
+          audio {
+            margin-top: 8px;
+            width: 100%;
+            max-width: 400px;
+          }
+        }
+      }
+    }
+  }
+
+  // 空状态样式
+  .ant-empty {
+    padding: 40px 0;
+  }
+
+  // 响应式布局
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .header-card {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+
+        .header-left {
+          width: 100%;
+        }
+
+        .header-right {
+          width: 100%;
+          flex-wrap: wrap;
+          
+          .ant-tag {
+            flex: 1;
+            text-align: center;
+            min-width: 100px;
+          }
+          
+          button {
+            width: 100%;
+            margin-top: 8px;
+          }
+        }
+      }
+    }
+
+    .message-detail-modal {
+      .ant-modal {
+        max-width: 100%;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// 移动端导航栏适配
+@media (max-width: 768px) {
+  .user-practice-layout {
+    .custom-header {
+      .header-container {
+        padding: 0 16px;
+
+        .header-left-section {
+          gap: 12px;
+
+          .header-title {
+            font-size: 16px;
+            
+            span {
+              display: none; // 移动端隐藏标题文字，只显示图标
+            }
+          }
+
+          .back-button {
+            span {
+              display: none; // 隐藏按钮文字
+            }
+          }
+        }
+
+        .header-right-section {
+          button {
+            span:not(.anticon) {
+              display: none; // 移动端只显示图标
+            }
+          }
+        }
+      }
+    }
+  }
+}

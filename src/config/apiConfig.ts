@@ -92,6 +92,9 @@ export const API_ENDPOINTS = {
   SPOKEN_MESSAGE_SCORE: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}/messages/score
   SPOKEN_MESSAGE_DETAIL: `${API_BASE_URL}/api/spoken/messages`,  // 动态拼接 /{message_id}
   SPOKEN_TRANSCRIPTION: `${API_BASE_URL}/api/spoken/messages`,  // 动态拼接 /{message_id}/transcription
+    
+  // 管理员口语会话管理（包含用户信息）
+  ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
   
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）

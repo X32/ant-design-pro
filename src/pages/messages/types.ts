@@ -36,6 +36,8 @@ export enum TranscriptionStatus {
 export interface SpokenConversation {
   id: number;
   user_id: number;
+  user_email?: string;              // 🆕 管理员接口返回：用户邮箱
+  user_is_superuser?: boolean;      // 🆕 管理员接口返回：是否超级用户
   exercise_id?: number;
   workflow_type?: string;
   title?: string;

@@ -26,7 +26,8 @@ const UserProfile: React.FC = () => {
 
   // 返回首页
   const handleBack = () => {
-    history.push('/home');
+    //返回上一页
+    history.back();
   };
 
   // 跳转到充值页面
@@ -106,7 +107,7 @@ const UserProfile: React.FC = () => {
           onClick={handleBack}
           size="large"
         >
-          返回首页
+          返回
         </Button>
       </div>
 
