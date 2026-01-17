@@ -112,6 +112,85 @@ export async function updateUserPassword(
   });
 }
 
+/**
+ * 设置/修改密码（支持两种方式）
+ * POST /api/auth/set-password
+ * 
+ * 方式1：首次设置密码（不需要旧密码）
+ * 参数：{ new_password: string }
+ * 
+ * 方式2：修改密码（需要旧密码）
+ * 参数：{ old_password: string, new_password: string }
+ */
+export async function setPassword(
+  data: {
+    new_password: string;
+    old_password?: string;  // 可选，如果提供则会验证旧密码
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      is_first_set?: boolean;  // 是否首次设置密码
+    };
+  }>(API_ENDPOINTS.SET_PASSWORD, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 修改用户名
+ * POST /api/auth/change-username
+ * 
+ * @param data.new_username - 新的用户名
+ */
+export async function changeUsername(
+  data: {
+    new_username: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      user: {
+        id: number;
+        email: string;
+        username: string;
+        phone: string | null;
+        is_active: number;
+        is_superuser: number;
+        created_at: string;
+        updated_at: string;
+      };
+      username_updated: boolean;
+      old_username: string;
+      new_username: string;
+    };
+  }>(API_ENDPOINTS.CHANGE_USERNAME, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
 /** 退出登录接口 POST /api/login/outLogin */
 export async function outLogin(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/login/outLogin', {
@@ -122,9 +201,8 @@ export async function outLogin(options?: { [key: string]: any }) {
 
 /** 登录接口 POST /api/auth/login */
 export async function login(body: API.LoginParams, options?: { [key: string]: any }) {
-  // 将username转换为email以兼容旧表单
   const loginData = {
-    email: body.email || body.username,
+    username: body.email,  // 表单字段名仍为email，但发送时使用username
     password: body.password,
   };
   
@@ -134,6 +212,171 @@ export async function login(body: API.LoginParams, options?: { [key: string]: an
       'Content-Type': 'application/json',
     },
     data: loginData,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 发送短信验证码
+ * POST /api/auth/sms/send
+ */
+export async function sendSmsCode(
+  params: {
+    phone_number: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      phone_number: string;
+      expire_minutes: number;      // 验证码有效期（分钟）
+      remaining_seconds: number;   // 剩余有效时间（秒）
+    };
+  }>(API_ENDPOINTS.SMS_SEND_CODE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 短信验证码登录
+ * POST /api/auth/sms/login
+ */
+export async function smsLogin(
+  params: {
+    phone_number: string;
+    code: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message: string;
+    data: {
+      access_token: string;
+      token_type: string;
+      user: {
+        id: number;
+        email: string;
+        is_active: boolean;
+        is_superuser: boolean;
+      };
+      phone_number: string;
+      login_method: string;
+      auto_registered?: boolean; // 是否首次登录自动注册
+    };
+  }>(API_ENDPOINTS.SMS_LOGIN, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 忘记密码 Step1: 验证手机号并发送验证码
+ * POST /api/auth/forgot-password/step1
+ */
+export async function forgotPasswordStep1(
+  params: {
+    phone_number: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      phone_number: string;
+      user_id: number;
+      expire_minutes: number;
+      remaining_seconds: number;
+      next_step: string;
+    };
+  }>(API_ENDPOINTS.FORGOT_PASSWORD_STEP1, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 忘记密码 Step2: 验证短信验证码
+ * POST /api/auth/forgot-password/step2
+ */
+export async function forgotPasswordStep2(
+  params: {
+    phone_number: string;
+    code: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      phone_number: string;
+      user_id: number;
+      verified: boolean;
+      next_step: string;
+    };
+  }>(API_ENDPOINTS.FORGOT_PASSWORD_STEP2, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 忘记密码 Step3: 设置新密码
+ * POST /api/auth/forgot-password/step3
+ */
+export async function forgotPasswordStep3(
+  params: {
+    phone_number: string;
+    code: string;
+    new_password: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      access_token: string;
+      token_type: string;
+      user: {
+        id: number;
+        email: string;
+        phone: string;
+        is_active: boolean;
+        is_superuser: boolean;
+        created_at: string;
+        updated_at: string;
+      };
+      phone_number: string;
+      password_reset: boolean;
+    };
+  }>(API_ENDPOINTS.FORGOT_PASSWORD_STEP3, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: params,
     ...(options || {}),
   });
 }

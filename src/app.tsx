@@ -38,9 +38,19 @@ export async function getInitialState(): Promise<{
       // 返回 msg.data.user 并处理字段映射
       const user = msg.data?.user;
       if (user) {
+        // 确定显示名称的优先级：username > phone > email前缀 > 'User'
+        let displayName = 'User';
+        if (user.username) {
+          displayName = user.username;
+        } else if (user.phone) {
+          displayName = user.phone;
+        } else if (user.email) {
+          displayName = user.email.split('@')[0];
+        }
+        
         return {
           ...user,
-          name: user.email?.split('@')[0] || 'User',
+          name: displayName,
           userid: user.id?.toString(),
           access: user.is_superuser ? 'admin' : 'user',
         };

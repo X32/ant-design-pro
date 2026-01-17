@@ -1,8 +1,8 @@
-import { ArrowLeftOutlined, LockOutlined, MailOutlined, UserOutlined, CreditCardOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LockOutlined, UserOutlined, CreditCardOutlined, PhoneOutlined } from '@ant-design/icons';
 import { App, Avatar, Button, Card, Form, Input } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
-import { currentUser, updateUserProfile, updateUserPassword } from '@/services/ant-design-pro/api';
+import { currentUser, updateUserProfile, updateUserPassword, changeUsername } from '@/services/ant-design-pro/api';
 import './index.less';
 
 const UserProfile: React.FC = () => {
@@ -11,18 +11,18 @@ const UserProfile: React.FC = () => {
   const { currentUser: user } = initialState || {};
 
   const [loading, setLoading] = useState(false);
+  const [usernameLoading, setUsernameLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [profileForm] = Form.useForm();
+  const [usernameForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
   useEffect(() => {
     if (user) {
-      profileForm.setFieldsValue({
-        email: user.email,
-        name: user.name || user.email?.split('@')[0],
+      usernameForm.setFieldsValue({
+        username: user.name || user.email?.split('@')[0],
       });
     }
-  }, [user, profileForm]);
+  }, [user, usernameForm]);
 
   // 返回首页
   const handleBack = () => {
@@ -35,37 +35,36 @@ const UserProfile: React.FC = () => {
     history.push('/orders/recharge');
   };
 
-  // 更新个人信息
-  const handleUpdateProfile = async (values: any) => {
+  // 修改用户名
+  const handleUpdateUsername = async (values: any) => {
     try {
-      setLoading(true);
-      const response = await updateUserProfile({
-        email: values.email,
-        name: values.name,
+      setUsernameLoading(true);
+      const response = await changeUsername({
+        new_username: values.username,
       });
 
       if (response.success) {
-        message.success('个人信息更新成功');
+        message.success('用户名修改成功');
         // 重新加载用户信息
         const userResponse = await currentUser();
         if (userResponse.success && userResponse.data) {
           const userData = userResponse.data.user;
           const updatedUser = {
             ...userData,
-            name: userData.email?.split('@')[0] || 'User',
+            name: userData.username || userData.email?.split('@')[0] || 'User',
             userid: userData.id?.toString(),
             access: userData.is_superuser ? 'admin' : 'user',
           };
           setInitialState((s) => ({ ...s, currentUser: updatedUser }));
         }
       } else {
-        message.error(response.message || '更新失败');
+        message.error(response.message || '用户名修改失败');
       }
     } catch (error) {
-      message.error('更新失败，请重试');
-      console.error('更新个人信息失败:', error);
+      message.error('用户名修改失败，请重试');
+      console.error('修改用户名失败:', error);
     } finally {
-      setLoading(false);
+      setUsernameLoading(false);
     }
   };
 
@@ -116,7 +115,13 @@ const UserProfile: React.FC = () => {
         <div className="profile-sidebar">
           <Avatar size={80} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
           <h2 className="user-name">{user?.name || user?.email?.split('@')[0]}</h2>
-          <p className="user-email">{user?.email}</p>
+          {user?.email && user.email.includes('@sms.local') ? (
+            <p className="user-phone">
+              <PhoneOutlined /> {user.email.split('@')[0]}
+            </p>
+          ) : (
+            <p className="user-email">{user?.email}</p>
+          )}
           <p className="user-role">{user?.access === 'admin' ? '管理员' : '普通用户'}</p>
           {/* 充值入口按钮 */}
           <Button 
@@ -130,33 +135,21 @@ const UserProfile: React.FC = () => {
         </div>
 
         <div className="profile-main">
-          {/* 个人信息表单 */}
-          <Card title="个人信息" style={{ marginBottom: 24 }}>
+          {/* 修改用户名表单 */}
+          <Card title="修改用户名" style={{ marginBottom: 24 }}>
             <Form
-              form={profileForm}
+              form={usernameForm}
               layout="vertical"
-              onFinish={handleUpdateProfile}
+              onFinish={handleUpdateUsername}
             >
               <Form.Item
-                name="email"
-                label="邮箱"
+                name="username"
+                label="用户名(修改后登录用户名也修改为此用户名)"
                 rules={[
-                  { required: true, message: '请输入邮箱' },
-                  { type: 'email', message: '请输入有效的邮箱地址' },
+                  { required: true, message: '请输入用户名' },
+                  { min: 3, message: '用户名至少3个字符' },
+                  { max: 20, message: '用户名最多20个字符' },
                 ]}
-              >
-                <Input 
-                  prefix={<MailOutlined />} 
-                  placeholder="请输入邮箱" 
-                  size="large"
-                  disabled // 邮箱通常不允许修改
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="name"
-                label="用户名"
-                rules={[{ required: true, message: '请输入用户名' }]}
               >
                 <Input 
                   prefix={<UserOutlined />} 
@@ -166,7 +159,7 @@ const UserProfile: React.FC = () => {
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={loading} size="large">
+                <Button type="primary" htmlType="submit" loading={usernameLoading} size="large">
                   保存修改
                 </Button>
               </Form.Item>

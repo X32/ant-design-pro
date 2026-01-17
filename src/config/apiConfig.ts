@@ -18,6 +18,17 @@ export const API_ENDPOINTS = {
   CURRENT_USER: `${API_BASE_URL}/api/auth/user`,
   UPDATE_USER_PROFILE: `${API_BASE_URL}/api/auth/user/profile`,
   UPDATE_USER_PASSWORD: `${API_BASE_URL}/api/auth/user/password`,
+  SET_PASSWORD: `${API_BASE_URL}/api/auth/set-password`,  // 设置/修改密码（支持两种方式）
+  CHANGE_USERNAME: `${API_BASE_URL}/api/auth/change-username`,  // 修改用户名
+  
+  // 短信验证码登录
+  SMS_LOGIN: `${API_BASE_URL}/api/auth/sms/login`,
+  SMS_SEND_CODE: `${API_BASE_URL}/api/auth/sms/send`,
+  
+  // 忘记密码
+  FORGOT_PASSWORD_STEP1: `${API_BASE_URL}/api/auth/forgot-password/step1`,  // 验证手机号并发送验证码
+  FORGOT_PASSWORD_STEP2: `${API_BASE_URL}/api/auth/forgot-password/step2`,  // 验证短信验证码
+  FORGOT_PASSWORD_STEP3: `${API_BASE_URL}/api/auth/forgot-password/step3`,  // 设置新密码
 
   // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
   UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
@@ -81,6 +92,12 @@ export const API_ENDPOINTS = {
   
   // 创建金币订单
   CREATE_COIN_ORDER: `${API_BASE_URL}/api/order/coin/create`,
+  
+  // 模拟支付
+  MOCK_PAY_ORDER: `${API_BASE_URL}/api/order/coin/mock_pay`,
+  
+  // 查询订单详情
+  ORDER_DETAIL: `${API_BASE_URL}/api/order`,
   
   // 口语练习会话管理 - 开发环境通过proxy代理到 http://127.0.0.1:9002
   SPOKEN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/conversations`,

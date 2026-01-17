@@ -26,6 +26,12 @@ export default [
         path: '/user/profile',
         component: './user/profile',
       },
+      {
+        name: 'forgetpsw',
+        path: '/user/forgetpsw',
+        component: './user/forgetpsw',
+        layout: false,
+      },
     ],
   },
 
@@ -206,13 +212,13 @@ export default [
     component: './messages/userpractice',
     layout: false,  // 不显示侧边栏
   },
-
+ 
   // ========== 根路径重定向到首页 ==========
   {
     path: '/',
     redirect: '/home',
   },
-
+  
   // ========== 404 页面 ==========
   {
     component: './404',

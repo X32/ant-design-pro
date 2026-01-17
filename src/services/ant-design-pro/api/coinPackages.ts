@@ -45,6 +45,29 @@ export interface CreateOrderResponse {
   data: OrderData;
 }
 
+/** 模拟支付请求参数 */
+export interface MockPayRequest {
+  order_no: string;
+}
+
+/** 模拟支付响应类型 */
+export interface MockPayResponse {
+  success: boolean;
+  message: string;
+  data: {
+    order_no: string;
+    status: string;
+    paid_at: string;
+  };
+}
+
+/** 查询订单响应类型 */
+export interface QueryOrderResponse {
+  success: boolean;
+  message: string;
+  data: OrderData;
+}
+
 /** 获取金币套餐列表
  * GET /api/order/coin/packages
  */
@@ -75,6 +98,42 @@ export async function createCoinOrder(
        'Authorization': `Bearer ${token}`
     },
     data: params,
+    ...(options || {}),
+  });
+}
+
+/** 模拟支付
+ * POST /api/order/coin/mock_pay
+ */
+export async function mockPayOrder(
+  params: MockPayRequest,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return request<MockPayResponse>(API_ENDPOINTS.MOCK_PAY_ORDER, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/** 查询订单详情
+ * GET /api/order/{order_no}
+ */
+export async function getOrderDetail(
+  orderNo: string,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return request<QueryOrderResponse>(`${API_ENDPOINTS.ORDER_DETAIL}/${orderNo}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
     ...(options || {}),
   });
 }

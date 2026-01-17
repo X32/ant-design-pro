@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin } from 'antd';
+import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App } from 'antd';
 import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { getCoinPackages, CoinPackage, createCoinOrder } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
+import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
 
 import './index.less'; // 引入样式文件
 
@@ -17,6 +17,7 @@ interface PackageItem {
 }
 
 const RechargePage: React.FC = () => {
+  const { modal } = App.useApp();  // 使用 App 组件提供的 modal API
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null); // 初始不选择任何套餐
   const [loading, setLoading] = useState(false);
@@ -121,8 +122,8 @@ const RechargePage: React.FC = () => {
 
       if (response.success && response.data) {
         const order = response.data;
-        Modal.success({
-          title: '订单创建成功！',
+        modal.success({
+          title: '订单创建成功！666',
           content: (
             <div>
               <p>订单号：{order.order_no}</p>
@@ -132,11 +133,51 @@ const RechargePage: React.FC = () => {
               <p>状态：{order.status}</p>
             </div>
           ),
-          onOk: () => {
-            // 这里可以跳转到支付页面或打开支付窗口
-            console.log('订单创建成功，跳转到支付页面', order);
-            // TODO: 实际的支付流程，例如跳转到支付页面
-            // window.location.href = `/payment/${order.order_no}`;
+          okText: '去支付',  // 自定义按钮文字
+          onOk: async () => {
+            try {
+              // 1. 调用模拟支付接口
+              console.log('开始模拟支付，订单号:', order.order_no);
+              const payResponse = await mockPayOrder({ order_no: order.order_no });
+              
+              if (payResponse.success) {
+                message.success('支付成功！');
+                
+                // 2. 查询订单详情确认状态
+                console.log('查询订单详情...');
+                const orderDetailResponse = await getOrderDetail(order.order_no);
+                
+                if (orderDetailResponse.success) {
+                  const updatedOrder = orderDetailResponse.data;
+                  console.log('订单详情:', updatedOrder);
+                  
+                  // 3. 显示支付成功的订单信息
+                  modal.success({
+                    title: '支付成功！',
+                    content: (
+                      <div>
+                        <p>订单号：{updatedOrder.order_no}</p>
+                        <p>商品：{updatedOrder.item_name}</p>
+                        <p>金币数量：{updatedOrder.coin_amount}</p>
+                        <p>支付金额：¥{updatedOrder.total_amount}</p>
+                        <p>订单状态：{updatedOrder.status === 'paid' ? '已支付' : updatedOrder.status}</p>
+                        <p style={{ color: '#52c41a', fontWeight: 'bold', marginTop: 12 }}>
+                          金币已充值到账，请到个人中心查看！
+                        </p>
+                      </div>
+                    ),
+                    okText: '知道了',
+                  });
+                } else {
+                  message.error('查询订单详情失败');
+                }
+              } else {
+                message.error(payResponse.message || '支付失败');
+              }
+            } catch (error: any) {
+              console.error('支付流程错误:', error);
+              message.error('支付失败，请稍后重试');
+            }
           }
         });
       } else {

@@ -20,12 +20,12 @@ import {
   useModel,
   history,
 } from '@umijs/max';
-import { Alert, App, Tabs } from 'antd';
+import { App, Tabs, Modal, Form, Input, Alert } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Footer } from '@/components';
-import { login } from '@/services/ant-design-pro/api';
+import { login, sendSmsCode, smsLogin, setPassword } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import { TOKEN_KEY, USER_ID_KEY } from '@/config/apiConfig';
 import Settings from '../../../../config/defaultSettings';
@@ -114,11 +114,25 @@ const LoginMessage: React.FC<{
 
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type, setType] = useState<string>('account');
+  const [type, setType] = useState<string>('account'); // 默认用户名密码登录
   const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const intl = useIntl();
+  
+  // 设置密码模态框状态
+  const [setPasswordModalVisible, setSetPasswordModalVisible] = useState(false);
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [passwordForm] = Form.useForm();
+  const [countdown, setCountdown] = useState(0);
+
+  // 倒计时逻辑
+  React.useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const fetchUserInfo = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
@@ -131,80 +145,202 @@ const Login: React.FC = () => {
       });
     }
   };
-
-  const handleSubmit = async (values: API.LoginParams) => {
+  
+  /**
+   * 处理登录成功后的逻辑
+   */
+  const handleLoginSuccess = (result: any, isAutoRegistered: boolean = false) => {
+    const { access_token, user } = result.data;
+    
+    // 保存token
+    if (access_token) {
+      localStorage.setItem(TOKEN_KEY, access_token);
+    }
+    
+    // 保存用户ID
+    if (user && user.id) {
+      localStorage.setItem(USER_ID_KEY, user.id.toString());
+    }
+    
+    // 更新用户信息到state
+    if (user) {
+      flushSync(() => {
+        setInitialState((s) => ({
+          ...s,
+          currentUser: {
+            ...user,
+            name: user.email?.split('@')[0] || 'User',
+            userid: user.id?.toString(),
+            access: user.is_superuser ? 'admin' : 'user',
+          },
+        }));
+      });
+    }
+    
+    // 如果是手机号自动注册，提示设置密码
+    if (isAutoRegistered) {
+      message.success('登录成功（首次登录已自动注册）');
+      setCurrentUserData(result.data);
+      setSetPasswordModalVisible(true);
+    } else {
+      const successMessage = result.message || '登录成功！';
+      message.success(successMessage);
+      
+      // 跳转逻辑
+      const urlParams = new URL(window.location.href).searchParams;
+      const redirect = urlParams.get('redirect');
+      let defaultPath = '/home';
+      if (user && user.is_superuser) {
+        defaultPath = '/back/welcome';
+      }
+      
+      setTimeout(() => {
+        history.push(redirect || defaultPath);
+      }, 100);
+    }
+  };
+  
+  /**
+   * 处理邮箱密码登录
+   */
+  const handleEmailLogin = async (values: API.LoginParams) => {
     try {
-      // 登录
       const result = await login({ ...values, type });
       
-      // 新接口格式判断
       if (result.success && result.data) {
-        const { access_token, user } = result.data;
-        
-        // 保存token到localStorage
-        if (access_token) {
-          localStorage.setItem(TOKEN_KEY, access_token);
+        handleLoginSuccess(result, false);
+        return;
+      }
+      
+      const errorMessage = result.error || '登录失败，请重试！';
+      message.error(errorMessage);
+      setUserLoginState({ status: 'error', type });
+    } catch (error: any) {
+      const errorMessage = error?.message || '登录失败，请重试！';
+      console.error(error);
+      message.error(errorMessage);
+      setUserLoginState({ status: 'error', type });
+    }
+  };
+  
+  /**
+   * 处理手机号验证码登录
+   */
+  const handleSmsLogin = async (values: { mobile: string; captcha: string }) => {
+    try {
+      const result = await smsLogin({
+        phone_number: values.mobile,
+        code: values.captcha,
+      });
+      
+      if (result.success && result.data) {
+        const isAutoRegistered = result.data.auto_registered || false;
+        handleLoginSuccess(result, isAutoRegistered);
+        return;
+      }
+      
+      const errorMessage = result.message || '登录失败，请检查验证码';
+      message.error(errorMessage);
+      setUserLoginState({ status: 'error', type: 'mobile' });
+    } catch (error: any) {
+      const errorMessage = error?.message || '登录失败，请重试！';
+      console.error(error);
+      message.error(errorMessage);
+      setUserLoginState({ status: 'error', type: 'mobile' });
+    }
+  };
+  
+  /**
+   * 处理表单提交
+   */
+  const handleSubmit = async (values: any) => {
+    if (type === 'account') {
+      await handleEmailLogin(values);
+    } else {
+      await handleSmsLogin(values);
+    }
+  };
+  
+  /**
+   * 发送短信验证码
+   */
+  const handleSendSmsCode = async (phoneNumber: string) => {
+    try {
+      const result = await sendSmsCode({ phone_number: phoneNumber });
+      
+      if (result.success) {
+        message.success(result.message || '验证码发送成功');
+        // 设置倒计时
+        if (result.data?.remaining_seconds) {
+          setCountdown(result.data.remaining_seconds);
+        } else {
+          setCountdown(60);
         }
+      } else {
+        message.error(result.message || '验证码发送失败');
+      }
+    } catch (error: any) {
+      message.error(error?.message || '验证码发送失败');
+    }
+  };
+  
+  /**
+   * 处理设置密码
+   */
+  const handleSetPassword = async () => {
+    try {
+      const values = await passwordForm.validateFields();
+      
+      const result = await setPassword({
+        new_password: values.password,
+      });
+      
+      if (result.success) {
+        message.success('密码设置成功，下次可以使用用户名密码登录');
+        setSetPasswordModalVisible(false);
+        passwordForm.resetFields();
         
-        // 保存用户ID到localStorage
-        if (user && user.id) {
-          localStorage.setItem(USER_ID_KEY, user.id.toString());
-        }
-        
-        const defaultLoginSuccessMessage = result.message || intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
-        });
-        message.success(defaultLoginSuccessMessage);
-        
-        // 获取用户信息并更新到state
-        if (user) {
-          flushSync(() => {
-            setInitialState((s) => ({
-              ...s,
-              currentUser: {
-                ...user,
-                name: user.email?.split('@')[0] || 'User',
-                userid: user.id?.toString(),
-                access: user.is_superuser ? 'admin' : 'user',
-              },
-            }));
-          });
-        }
-        
-        // 使用 history.push 进行跳转，避免页面刷新
+        // 跳转到首页
         const urlParams = new URL(window.location.href).searchParams;
         const redirect = urlParams.get('redirect');
-        
-        // 根据用户角色跳转：管理员跳转到后台，普通用户跳转到首页
-        let defaultPath = '/home';  // 普通用户默认跳转到首页
-        if (user && user.is_superuser) {
-          defaultPath = '/back/welcome';  // 管理员跳转到后台工作台
+        let defaultPath = '/home';
+        if (currentUserData?.user?.is_superuser) {
+          defaultPath = '/back/welcome';
         }
         
         setTimeout(() => {
           history.push(redirect || defaultPath);
         }, 100);
-        
+      } else {
+        message.error(result.message || '密码设置失败');
+      }
+    } catch (error: any) {
+      if (error.errorFields) {
+        // 表单验证错误
         return;
       }
-      
-      // 处理错误情况
-      const errorMessage = result.error || intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
-      message.error(errorMessage);
-      setUserLoginState({ status: 'error', type });
-    } catch (error: any) {
-      const defaultLoginFailureMessage = error?.message || intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
-      console.error(error);
-      message.error(defaultLoginFailureMessage);
-      setUserLoginState({ status: 'error', type });
+      message.error(error?.message || '密码设置失败');
     }
+  };
+  
+  /**
+   * 跳过设置密码
+   */
+  const handleSkipSetPassword = () => {
+    setSetPasswordModalVisible(false);
+    passwordForm.resetFields();
+    
+    // 跳转到首页
+    const urlParams = new URL(window.location.href).searchParams;
+    const redirect = urlParams.get('redirect');
+    let defaultPath = '/home';
+    if (currentUserData?.user?.is_superuser) {
+      defaultPath = '/back/welcome';
+    }
+    
+    setTimeout(() => {
+      history.push(redirect || defaultPath);
+    }, 100);
   };
   const { status, type: loginType } = userLoginState;
 
@@ -232,7 +368,7 @@ const Login: React.FC = () => {
             maxWidth: '75vw',
           }}
           logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
+          title="英语口语学习平台"
           subTitle={intl.formatMessage({
             id: 'pages.layouts.userLayout.title',
           })}
@@ -263,28 +399,17 @@ const Login: React.FC = () => {
             items={[
               {
                 key: 'account',
-                label: intl.formatMessage({
-                  id: 'pages.login.accountLogin.tab',
-                  defaultMessage: '账户密码登录',
-                }),
+                label: '用户名密码登录',
               },
               {
                 key: 'mobile',
-                label: intl.formatMessage({
-                  id: 'pages.login.phoneLogin.tab',
-                  defaultMessage: '手机号登录',
-                }),
+                label: '手机号登录',
               },
             ]}
           />
 
           {status === 'error' && loginType === 'account' && (
-            <LoginMessage
-              content={intl.formatMessage({
-                id: 'pages.login.accountLogin.errorMessage',
-                defaultMessage: '邮箱或密码错误',
-              })}
-            />
+            <LoginMessage content="用户名或密码错误" />
           )}
           {type === 'account' && (
             <>
@@ -294,28 +419,11 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <UserOutlined />,
                 }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.email.placeholder',
-                  defaultMessage: '邮箱: user@example.com',
-                })}
+                placeholder="请输入用户名"
                 rules={[
                   {
                     required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.email.required"
-                        defaultMessage="请输入邮箱！"
-                      />
-                    ),
-                  },
-                  {
-                    type: 'email',
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.email.invalid"
-                        defaultMessage="邮箱格式不正确！"
-                      />
-                    ),
+                    message: '请输入用户名！',
                   },
                 ]}
               />
@@ -345,7 +453,7 @@ const Login: React.FC = () => {
           )}
 
           {status === 'error' && loginType === 'mobile' && (
-            <LoginMessage content="验证码错误" />
+            <LoginMessage content="验证码错误或已过期" />
           )}
           {type === 'mobile' && (
             <>
@@ -355,28 +463,15 @@ const Login: React.FC = () => {
                   prefix: <MobileOutlined />,
                 }}
                 name="mobile"
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.phoneNumber.placeholder',
-                  defaultMessage: '手机号',
-                })}
+                placeholder="请输入手机号"
                 rules={[
                   {
                     required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.phoneNumber.required"
-                        defaultMessage="请输入手机号！"
-                      />
-                    ),
+                    message: '请输入手机号！',
                   },
                   {
                     pattern: /^1\d{10}$/,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.phoneNumber.invalid"
-                        defaultMessage="手机号格式错误！"
-                      />
-                    ),
+                    message: '手机号格式错误！',
                   },
                 ]}
               />
@@ -388,44 +483,40 @@ const Login: React.FC = () => {
                 captchaProps={{
                   size: 'large',
                 }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.captcha.placeholder',
-                  defaultMessage: '请输入验证码',
-                })}
+                placeholder="请输入验证码"
                 captchaTextRender={(timing, count) => {
-                  if (timing) {
-                    return `${count} ${intl.formatMessage({
-                      id: 'pages.getCaptchaSecondText',
-                      defaultMessage: '获取验证码',
-                    })}`;
+                  if (countdown > 0) {
+                    return `${countdown} 秒后重试`;
                   }
-                  return intl.formatMessage({
-                    id: 'pages.login.phoneLogin.getVerificationCode',
-                    defaultMessage: '获取验证码',
-                  });
+                  if (timing) {
+                    return `${count} 秒后重试`;
+                  }
+                  return '获取验证码';
                 }}
                 name="captcha"
+                phoneName="mobile"
                 rules={[
                   {
                     required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.captcha.required"
-                        defaultMessage="请输入验证码！"
-                      />
-                    ),
+                    message: '请输入验证码！',
+                  },
+                  {
+                    len: 6,
+                    message: '验证码为6位数字',
                   },
                 ]}
-                onGetCaptcha={async (phone) => {
-                  const result = await getFakeCaptcha({
-                    phone,
-                  });
-                  if (!result) {
-                    return;
+                onGetCaptcha={async (mobile) => {
+                  if (!mobile) {
+                    message.error('请先输入手机号');
+                    throw new Error('请先输入手机号');
                   }
-                  message.success('获取验证码成功！验证码为：1234');
+                  console.log('发送验证码到手机号:', mobile);
+                  await handleSendSmsCode(mobile);
                 }}
               />
+              <div style={{ marginBottom: 16, color: '#666', fontSize: 12 }}>
+                <span>提示：首次使用手机号登录将自动注册账号</span>
+              </div>
             </>
           )}
           <div
@@ -443,6 +534,7 @@ const Login: React.FC = () => {
               style={{
                 float: 'right',
               }}
+              onClick={() => history.push('/user/forgetpsw')}
             >
               <FormattedMessage
                 id="pages.login.forgotPassword"
@@ -453,6 +545,63 @@ const Login: React.FC = () => {
         </LoginForm>
       </div>
       <Footer />
+      
+      {/* 设置密码模态框 */}
+      <Modal
+        title="设置登录密码"
+        open={setPasswordModalVisible}
+        onOk={handleSetPassword}
+        onCancel={handleSkipSetPassword}
+        okText="设置密码"
+        cancelText="跳过"
+        width={500}
+        maskClosable={false}
+      >
+        <div style={{ marginBottom: 24 }}>
+          <Alert
+            message="欢迎使用！"
+            description="您是首次使用手机号登录，建议设置一个密码，以便下次使用邮箱密码登录。也可以选择跳过，稍后在个人中心设置。"
+            type="info"
+            showIcon
+          />
+        </div>
+        <Form form={passwordForm} layout="vertical">
+          <Form.Item
+            label="设置密码"
+            name="password"
+            rules={[
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码至少6位' },
+              { max: 20, message: '密码最多20位' },
+            ]}
+          >
+            <Input.Password placeholder="请输入密码（至少6位）" size="large" />
+          </Form.Item>
+          
+          <Form.Item
+            label="确认密码"
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: '请确认密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入密码" size="large" />
+          </Form.Item>
+          
+          <div style={{ color: '#666', fontSize: 12, marginTop: -8 }}>
+            提示：设置密码后，您可以使用用户名和密码登录,用户名默认为手机号。
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 };
