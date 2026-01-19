@@ -381,6 +381,209 @@ export async function forgotPasswordStep3(
   });
 }
 
+/**
+ * 查询金币余额
+ * GET /api/order/wallet/balance
+ */
+export async function getWalletBalance(
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    data: {
+      user_id: number;
+      balance: number;          // 可用余额（金币数量）
+      frozen_balance: number;   // 冻结余额
+      exists: boolean;          // 钱包是否存在
+    };
+  }>(API_ENDPOINTS.WALLET_BALANCE, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 金币支付
+ * POST /api/order/wallet/consume
+ * 
+ * @param params.coin_amount - 消费金币数量（必须大于0）
+ * @param params.biz_type - 业务类型：consume_conversation | consume_practice | consume_exam
+ * @param params.biz_id - 业务ID（关联的业务记录ID）
+ * @param params.remark - 备注说明（可选）
+ */
+export async function consumeCoins(
+  params: {
+    coin_amount: number;
+    biz_type: 'consume_conversation' | 'consume_practice' | 'consume_exam';
+    biz_id: number;
+    remark?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    data: {
+      user_id: number;
+      consumed_amount: number;   // 本次消费的金币数量
+      balance_before: number;    // 消费前余额
+      balance_after: number;     // 消费后余额
+      log_id: number;            // 钱包流水记录ID
+      biz_type: string;          // 业务类型
+      biz_id: number;            // 业务ID
+    };
+  }>(API_ENDPOINTS.WALLET_CONSUME, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 查询充值记录
+ * GET /api/order/wallet/recharge_logs
+ * 
+ * 只返回 change_amount > 0 的充值流水
+ * 
+ * @param params.page - 页码（从1开始，默认1）
+ * @param params.page_size - 每页数量（默认20，最大100）
+ */
+export async function getRechargeLog(
+  params?: {
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    logs: Array<{
+      id: number;
+      change_amount: number;      // 变动金额（正数=充值）
+      balance_before: number;     // 变动前余额
+      balance_after: number;      // 变动后余额
+      biz_type: string;           // 业务类型（recharge_order）
+      remark: string;             // 备注说明
+      created_at: string;         // 创建时间
+    }>;
+    total: number;               // 充值记录总数
+    page: number;                // 当前页码
+    page_size: number;           // 每页数量
+  }>(API_ENDPOINTS.WALLET_RECHARGE_LOGS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 查询消费记录
+ * GET /api/order/wallet/consume_logs
+ * 
+ * 只返回 change_amount < 0 的消费流水
+ * 
+ * @param params.page - 页码（从1开始，默认1）
+ * @param params.page_size - 每页数量（默认20，最大100）
+ */
+export async function getConsumeLog(
+  params?: {
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    logs: Array<{
+      id: number;
+      change_amount: number;      // 变动金额（负数=消费）
+      balance_before: number;     // 变动前余额
+      balance_after: number;      // 变动后余额
+      biz_type: string;           // 业务类型（consume_*）
+      remark: string;             // 备注说明
+      created_at: string;         // 创建时间
+    }>;
+    total: number;               // 消费记录总数
+    page: number;                // 当前页码
+    page_size: number;           // 每页数量
+  }>(API_ENDPOINTS.WALLET_CONSUME_LOGS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 查询所有流水
+ * GET /api/order/wallet/all_logs
+ * 
+ * 返回所有流水记录（包括充值和消费）
+ * 
+ * @param params.page - 页码（从1开始，默认1）
+ * @param params.page_size - 每页数量（默认20，最大100）
+ */
+export async function getAllWalletLog(
+  params?: {
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{
+    success: boolean;
+    message: string;
+    logs: Array<{
+      id: number;
+      change_amount: number;      // 变动金额（正数=充值，负数=消费）
+      balance_before: number;     // 变动前余额
+      balance_after: number;      // 变动后余额
+      biz_type: string;           // 业务类型
+      remark: string;             // 备注说明
+      created_at: string;         // 创建时间
+    }>;
+    total: number;               // 记录总数
+    page: number;                // 当前页码
+    page_size: number;           // 每页数量
+  }>(API_ENDPOINTS.WALLET_ALL_LOGS, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
 /** 此处后端没有提供注释 GET /api/notices */
 export async function getNotices(options?: { [key: string]: any }) {
   return request<API.NoticeIconList>('/api/notices', {
@@ -3208,4 +3411,113 @@ export async function getSpokenMessageDetail(
       ...(options || {}),
     }
   );
+}
+
+// ==================== 工作流类型管理 ====================
+
+/**
+ * 获取工作流类型列表（分页）
+ * GET /api/workflow-types
+ */
+export async function getWorkflowTypes(
+  params?: {
+    only_active?: boolean;
+    page?: number;
+    page_size?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  const requestConfig = {
+    method: 'GET',
+    params,
+    ...(options || {}),
+  };
+
+  return request<API.WorkflowTypeListResponse>(API_ENDPOINTS.WORKFLOW_TYPES, requestConfig);
+}
+
+/**
+ * 获取工作流类型详情
+ * GET /api/workflow-types/{option_id}
+ */
+export async function getWorkflowTypeDetail(
+  optionId: number,
+  options?: { [key: string]: any },
+) {
+  // 不需要在这里手动设置 token，请求拦截器会自动添加
+  return request<API.WorkflowTypeDetailResponse>(
+    `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
+    {
+      method: 'GET',
+      ...(options || {}),
+    },
+  );
+}
+
+/**
+ * 创建工作流类型选项
+ * POST /api/workflow-types
+ */
+export async function createWorkflowType(
+  data: {
+    label: string;
+    value: string;
+    price: number;
+    description?: string;
+    sort?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  return request<API.WorkflowTypeDetailResponse>(API_ENDPOINTS.WORKFLOW_TYPES, {
+    method: 'POST',
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新工作流类型选项
+ * PUT /api/workflow-types/{option_id}
+ */
+export async function updateWorkflowType(
+  optionId: number,
+  data: {
+    label?: string;
+    price?: number;
+    description?: string;
+    sort?: number;
+    is_active?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  return request<API.WorkflowTypeDetailResponse>(
+    `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
+    {
+      method: 'PUT',
+      data,
+      ...(options || {}),
+    },
+  );
+}
+
+/**
+ * 删除工作流类型选项（软删除）
+ * DELETE /api/workflow-types/{option_id}
+ */
+export async function deleteWorkflowType(
+  optionId: number,
+  options?: { [key: string]: any },
+) {
+  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  return request<{
+    success: boolean;
+    message?: string;
+    data: null;
+  }>(`${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`, {
+    method: 'DELETE',
+    ...(options || {}),
+  });
 }

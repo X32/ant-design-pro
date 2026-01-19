@@ -190,4 +190,34 @@ declare namespace API {
     original_filename: string;
     file_path: string;
   };
+
+  /** 工作流类型选项 */
+  type WorkflowTypeOption = {
+    id: number;
+    label: string;
+    value: string;
+    price: number;
+    description?: string;
+    sort: number;
+    is_active: number;
+    create_time: string;
+    update_time: string;
+  };
+
+  /** 工作流类型列表响应 */
+  type WorkflowTypeListResponse = {
+    success: boolean;
+    message?: string;
+    data: WorkflowTypeOption[];
+    total: number;
+    page: number;
+    page_size: number;
+  };
+
+  /** 工作流类型详情响应 */
+  type WorkflowTypeDetailResponse = {
+    success: boolean;
+    message?: string;
+    data: WorkflowTypeOption;
+  };
 }

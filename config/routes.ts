@@ -32,6 +32,18 @@ export default [
         component: './user/forgetpsw',
         layout: false,
       },
+      {
+        name: 'orderlog',
+        path: '/user/orderlog',
+        component: './user/orderlog',
+        layout: false,
+      },
+      {
+        name: 'test-auth',
+        path: '/user/test-auth',
+        component: './test-auth',
+        layout: false,
+      },
     ],
   },
 
@@ -89,18 +101,6 @@ export default [
         component: './user/manager',
       },
       {
-        name: 'topics',
-        icon: 'appstore',
-        path: '/back/topics',
-        component: './topics',
-      },
-      {
-        name: 'exercises',
-        icon: 'book',
-        path: '/back/exercises',
-        component: './exercises',
-      },
-      {
         name: 'messages',
         icon: 'message',
         path: '/back/messages',
@@ -123,6 +123,24 @@ export default [
         icon: 'fileText',
         path: '/back/exam',
         routes: [
+          {
+            name: 'topics',
+            icon: 'appstore',
+            path: '/back/exam/topics',
+            component: './exam/topics',
+          },
+          {
+            name: 'exercises',
+            icon: 'book',
+            path: '/back/exam/exercises',
+            component: './exam/exercises',
+          },
+          {
+            name: 'workflow-type',
+            icon: 'setting',
+            path: '/back/exam/workflow-type',
+            component: './exam/workflowType',
+          },
           {
             path: '/back/exam',
             redirect: '/back/exam/list',

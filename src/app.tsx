@@ -224,6 +224,8 @@ export const layout: RunTimeLayoutConfig = ({
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: RequestConfig = {
-  baseURL: isDev ? '' : 'https://proapi.azurewebsites.net',
+  // 开发环境不设置 baseURL，确保使用相对路径，走 webpack 代理
+  ...(isDev ? {} : { baseURL: 'https://proapi.azurewebsites.net' }),
+  timeout: 60000,
   ...errorConfig,
 };

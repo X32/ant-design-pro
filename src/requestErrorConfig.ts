@@ -94,16 +94,30 @@ export const errorConfig: RequestConfig = {
 
   // 请求拦截器
   requestInterceptors: [
+    // 第一个拦截器：打印请求信息
     (config: RequestOptions) => {
-      // 从localStorage获取token
+      console.log('\n=== [requestErrorConfig.ts] Request Interceptor ===');
+      console.log('1. URL:', config.url);
+      console.log('2. Method:', config.method);
+      console.log('3. Headers:', config.headers);
+      console.log('4. BaseURL:', config.baseURL);
+      console.log('====================================================\n');
+      return config;
+    },
+    // 第二个拦截器：添加 Authorization
+    (config: RequestOptions) => {
+      // 从 localStorage 获取 token
       const token = localStorage.getItem(TOKEN_KEY);
       
-      // 如果有token,添加到请求头
+      // 如果有 token，添加到请求头
       if (token) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-        };
+        // 处理 umi-request 的 headers 结构
+        if (!config.headers) {
+          config.headers = {};
+        }
+
+        // 直接设置 Authorization，umi-request 会正确处理
+        (config.headers as any)['Authorization'] = `Bearer ${token}`;
       }
       
       return config;

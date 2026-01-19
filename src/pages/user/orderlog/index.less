@@ -1,0 +1,80 @@
+.order-log-container {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.log-header {
+  background: #fff;
+  padding: 12px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #262626;
+
+    .anticon {
+      color: #faad14;
+      margin-right: 8px;
+    }
+  }
+}
+
+.log-content {
+  max-width: 1400px;
+  margin: 24px auto;
+  padding: 0 24px;
+
+  .ant-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 24px;
+  }
+
+  .ant-tabs-tab {
+    font-size: 16px;
+    padding: 12px 16px;
+
+    .anticon {
+      margin-right: 6px;
+    }
+  }
+
+  .ant-table {
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #f5f5f5;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .log-header {
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  .log-content {
+    padding: 0 12px;
+
+    .ant-tabs-tab {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+  }
+}

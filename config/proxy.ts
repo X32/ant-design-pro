@@ -17,20 +17,48 @@ const getCurrentPort = () => {
 export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调 /api/spoken/
   dev: {
+    // 工作流类型代理 - 最高优先级
+    '/api/workflow-types': {
+      target: 'http://localhost:9002',
+      changeOrigin: true,
+      pathRewrite: { '^/api/workflow-types': '/api/workflow-types' },
+      onProxyReq: (proxyReq: any, req: any, res: any) => {
+        console.log('\n=== Workflow Types Proxy ===');
+        console.log('[Proxy] 请求:', req.method, req.url);
+        console.log('[Proxy] 代理到:', proxyReq.path);
+        console.log('[Proxy] Target:', 'http://localhost:9002');
+        console.log('===========================\n');
+      },
+      onProxyRes: (proxyRes: any, req: any, res: any) => {
+        console.log('[Proxy Response] Status:', proxyRes.statusCode);
+      },
+      onError: (err: any, req: any, res: any) => {
+        console.error('[Proxy Error]:', err.message);
+      },
+    },
       // 认证服务代理 - 最高优先级
     '/api/spoken/**': {
       target: 'http://localhost:9002',
       changeOrigin: true,
+      onProxyReq: (proxyReq: any, req: any) => {
+        console.log('[Spoken Proxy]', req.method, req.url);
+      },
     },
       // 认证服务代理 - 最高优先级
     '/api/order/**': {
       target: 'http://localhost:9002',
       changeOrigin: true,
+      onProxyReq: (proxyReq: any, req: any) => {
+        console.log('[Order Proxy]', req.method, req.url);
+      },
     },
     // 认证服务代理 - 最高优先级
     '/api/exam/**': {
       target: 'http://localhost:9002',
       changeOrigin: true,
+      onProxyReq: (proxyReq: any, req: any) => {
+        console.log('[Exam Proxy]', req.method, req.url);
+      },
     },
     // 认证服务代理 - 最高优先级
     '/api/oral/**': {
@@ -76,24 +104,11 @@ export default {
       pathRewrite: { '^/api/v1': '/api/v1' },
     },
     // localhost:8001/api/** -> http://localhost:8001/api/
-    '/api/': {
-      // 要代理的地址 - 指向开发服务器自身
-      target: `http://localhost:${getCurrentPort()}`,
-      // 配置了这个可以从 http 代理到 https
-      // 依赖 origin 的功能可能需要这个，比如 cookie
-      changeOrigin: true,
-      // 添加路径排除，确保/api/upload、/api/upload_audio、/api/transcription_status和/api/auth请求不会被此规则捕获
-      bypass: (req: any) => {
-        if (
-          req.url.startsWith('/api/upload') ||
-          req.url.startsWith('/api/transcription_status') ||
-          req.url.startsWith('/api/auth')
-        ) {
-          return false; // 不绕过，让更具体的规则处理
-        }
-        return undefined; // 使用默认代理行为
-      },
-    },
+    // 注意：这个规则优先级最低，仅处理未被其他规则匹配的请求
+    // '/api/': {
+    //   target: `http://localhost:${getCurrentPort()}`,
+    //   changeOrigin: true,
+    // },
     // 将ws://localhost:8001/ws?userId=1&conversationId=1代理到ws://localhost:9001
     // '/ws': {
     //   target: 'ws://192.168.4.30:9001',

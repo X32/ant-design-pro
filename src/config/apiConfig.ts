@@ -99,6 +99,13 @@ export const API_ENDPOINTS = {
   // 查询订单详情
   ORDER_DETAIL: `${API_BASE_URL}/api/order`,
   
+  // 钱包相关
+  WALLET_BALANCE: `${API_BASE_URL}/api/order/wallet/balance`,  // 查询金币余额
+  WALLET_CONSUME: `${API_BASE_URL}/api/order/wallet/consume`,  // 金币支付
+  WALLET_RECHARGE_LOGS: `${API_BASE_URL}/api/order/wallet/recharge_logs`,  // 查询充值记录
+  WALLET_CONSUME_LOGS: `${API_BASE_URL}/api/order/wallet/consume_logs`,  // 查询消费记录
+  WALLET_ALL_LOGS: `${API_BASE_URL}/api/order/wallet/all_logs`,  // 查询所有流水
+  
   // 口语练习会话管理 - 开发环境通过proxy代理到 http://127.0.0.1:9002
   SPOKEN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/conversations`,
   SPOKEN_CONVERSATION_DETAIL: `${API_BASE_URL}/api/spoken/conversations`,  // 动态拼接 /{conversation_id}
@@ -112,6 +119,9 @@ export const API_ENDPOINTS = {
     
   // 管理员口语会话管理（包含用户信息）
   ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
+  
+  // 工作流类型管理
+  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflow-types/`,
   
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）

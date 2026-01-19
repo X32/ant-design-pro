@@ -65,6 +65,7 @@ import {
   getOralExerciseDetail,
   searchOralExercises,
   uploadFile,
+  getWorkflowTypes,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -160,6 +161,10 @@ const ExercisesManagement: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   // 图片输入模式：'upload' 本地上传 | 'link' 链接输入
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'link'>('upload');
+
+  // 工作流类型选项（从API动态获取）
+  const [workflowTypeOptions, setWorkflowTypeOptions] = useState<Array<{label: string; value: string}>>([]);
+  const [workflowTypeLoading, setWorkflowTypeLoading] = useState(false);
 
   /**
    * 获取分类列表
@@ -1161,6 +1166,40 @@ const ExercisesManagement: React.FC = () => {
                     {getWorkflowTypeName(currentExercise.workflow_type)}
                   </Tag>
                 </div>
+                <div className="detail-item">
+                  <span className="item-label">状态：</span>
+                  <Tag color={currentExercise.is_active === 1 ? 'green' : 'default'}>
+                    {currentExercise.is_active === 1 ? '启用' : '禁用'}
+                  </Tag>
+                </div>
+              </Space>
+            </div>
+
+            <div className="detail-section">
+              <div className="section-title">时间信息</div>
+              <Space size="large">
+                {currentExercise.create_time && (
+                  <div className="detail-item">
+                    <span className="item-label">创建时间：</span>
+                    <span className="item-value">{currentExercise.create_time}</span>
+                  </div>
+                )}
+                {currentExercise.update_time && (
+                  <div className="detail-item">
+                    <span className="item-label">更新时间：</span>
+                    <span className="item-value">{currentExercise.update_time}</span>
+                  </div>
+                )}
+              </Space>
+            </div>
+          </>
+        )}
+      </Modal>
+    </div>
+  );
+};
+
+export default ExercisesManagement;
                 <div className="detail-item">
                   <span className="item-label">状态：</span>
                   <Tag color={currentExercise.is_active === 1 ? 'green' : 'default'}>

@@ -285,9 +285,22 @@ export const WORKFLOW_TYPE_OPTIONS = [
 
 /**
  * 获取工作流类型名称
+ * @param type 工作流类型值
+ * @param options 工作流类型选项列表（可选，用于动态获取的选项）
  */
-export const getWorkflowTypeName = (type?: string): string => {
+export const getWorkflowTypeName = (
+  type?: string, 
+  options?: Array<{ label: string; value: string }>
+): string => {
   if (!type) return '-';
+  
+  // 如果提供了选项列表，从中查找
+  if (options && options.length > 0) {
+    const option = options.find(opt => opt.value === type);
+    return option ? option.label : type;
+  }
+  
+  // 兼容旧的固定选项（备用方案）
   const option = WORKFLOW_TYPE_OPTIONS.find(opt => opt.value === type);
   return option ? option.label : type;
 };

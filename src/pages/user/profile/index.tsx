@@ -1,8 +1,9 @@
-import { ArrowLeftOutlined, LockOutlined, UserOutlined, CreditCardOutlined, PhoneOutlined } from '@ant-design/icons';
-import { App, Avatar, Button, Card, Form, Input } from 'antd';
+import { ArrowLeftOutlined, LockOutlined, UserOutlined, CreditCardOutlined, PhoneOutlined, WalletOutlined, HistoryOutlined } from '@ant-design/icons';
+import { App, Avatar, Button, Card, Form, Input, Spin, Statistic } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
 import { currentUser, updateUserProfile, updateUserPassword, changeUsername } from '@/services/ant-design-pro/api';
+import { useWallet } from '@/hooks/useWallet';
 import './index.less';
 
 const UserProfile: React.FC = () => {
@@ -15,6 +16,9 @@ const UserProfile: React.FC = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [usernameForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
+  
+  // 使用钱包 Hook
+  const { balance, loading: walletLoading, fetchBalance } = useWallet();
 
   useEffect(() => {
     if (user) {
@@ -23,6 +27,11 @@ const UserProfile: React.FC = () => {
       });
     }
   }, [user, usernameForm]);
+  
+  // 查询钱包余额
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   // 返回首页
   const handleBack = () => {
@@ -33,6 +42,11 @@ const UserProfile: React.FC = () => {
   // 跳转到充值页面
   const handleRecharge = () => {
     history.push('/orders/recharge');
+  };
+  
+  // 跳转到流水记录页面
+  const handleViewLog = () => {
+    history.push('/user/orderlog');
   };
 
   // 修改用户名
@@ -123,14 +137,52 @@ const UserProfile: React.FC = () => {
             <p className="user-email">{user?.email}</p>
           )}
           <p className="user-role">{user?.access === 'admin' ? '管理员' : '普通用户'}</p>
+          
+          {/* 钱包余额显示 */}
+          <Card 
+            className="wallet-card"
+            style={{ marginTop: 24, width: '100%' }}
+            bodyStyle={{ padding: '16px' }}
+          >
+            <Spin spinning={walletLoading}>
+              <div style={{ textAlign: 'center' }}>
+                <WalletOutlined style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }} />
+                <div style={{ marginBottom: 8 }}>
+                  <Statistic
+                    title="金币余额"
+                    value={balance?.balance || 0}
+                    suffix="金币"
+                    valueStyle={{ color: '#faad14', fontSize: 28, fontWeight: 'bold' }}
+                  />
+                </div>
+                {balance && !balance.exists && (
+                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                    钱包未创建，请先充值
+                  </div>
+                )}
+              </div>
+            </Spin>
+          </Card>
+          
           {/* 充值入口按钮 */}
           <Button 
             type="primary" 
             icon={<CreditCardOutlined />} 
             onClick={handleRecharge}
-            style={{ marginTop: 24, width: '100%' }}
+            style={{ marginTop: 16, width: '100%' }}
+            size="large"
           >
             账户充值
+          </Button>
+          
+          {/* 流水记录入口按钮 */}
+          <Button 
+            icon={<HistoryOutlined />} 
+            onClick={handleViewLog}
+            style={{ marginTop: 12, width: '100%' }}
+            size="large"
+          >
+            流水记录
           </Button>
         </div>
 
