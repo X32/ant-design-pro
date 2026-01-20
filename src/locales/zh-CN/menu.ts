@@ -71,4 +71,6 @@ export default {
   'menu.editor.mind': '脑图编辑器',
   'menu.editor.koni': '拓扑编辑器',
   'menu.audio-recorder': '录音器',
+  'menu.coin-drop-demo': '金币掉落动画演示',
+  'menu.firework-demo': '烟花动画演示',
 };

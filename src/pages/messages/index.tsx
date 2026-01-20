@@ -838,9 +838,18 @@ const MessagesManagement: React.FC = () => {
                   {/* 语音消息 */}
                   {selectedMessage.message_type === 'voice' && (
                     <div className="voice-content">
-                      {selectedMessage.audio_url && (
+                      {/* 🔥 优先使用 audio_file_path，没有再用 audio_url */}
+                      {(selectedMessage.audio_file_path || selectedMessage.audio_url) && (
                         <div className="audio-player" style={{marginBottom: '10px'}}>
-                          <audio controls src={selectedMessage.audio_url} style={{width: '100%'}}></audio>
+                          <audio 
+                            controls 
+                            src={selectedMessage.audio_file_path || selectedMessage.audio_url} 
+                            style={{width: '100%'}}
+                          ></audio>
+                          {/* 📝 显示使用的音频源 */}
+                          <div style={{fontSize: '11px', color: '#999', marginTop: '5px'}}>
+                            {selectedMessage.audio_file_path ? '💾 服务器路径' : '🌐 音频链接'}
+                          </div>
                         </div>
                       )}
                       {selectedMessage.transcription_text && (

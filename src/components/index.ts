@@ -10,4 +10,11 @@ import { Question, SelectLang } from './RightContent';
 import { AvatarDropdown, AvatarName } from './RightContent/AvatarDropdown';
 import UserAvatar from './UserAvatar';
 
-export { AvatarDropdown, AvatarName, Footer, Question, SelectLang, UserAvatar };
+/**
+ * 功能组件
+ */
+import CoinDropAnimation from './CoinDropAnimation';
+import FireworkAnimation from './fireworkAnimation';
+
+export { AvatarDropdown, AvatarName, Footer, Question, SelectLang, UserAvatar, CoinDropAnimation, FireworkAnimation };
+export { AvatarDropdown, AvatarName, Footer, Question, SelectLang, UserAvatar, CoinDropAnimation, FireworkAnimation };

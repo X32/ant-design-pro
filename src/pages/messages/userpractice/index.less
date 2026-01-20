@@ -180,6 +180,48 @@
             background: rgba(0, 0, 0, 0.05);
             border-radius: 4px;
           }
+          
+          // 🔊 新增：语音消息容器样式
+          .voice-message-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            
+            .voice-info {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              
+              span {
+                font-size: 14px;
+                font-weight: 500;
+                color: #333;
+              }
+            }
+            
+            .audio-controls {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 12px;
+              background: rgba(24, 144, 255, 0.05);
+              border-radius: 8px;
+              border: 1px dashed #1890ff;
+              
+              .ant-btn-circle {
+                transition: all 0.3s ease;
+                
+                &:hover {
+                  transform: scale(1.1);
+                  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+                }
+                
+                &:active {
+                  transform: scale(0.95);
+                }
+              }
+            }
+          }
 
           .score-content {
             padding: 12px;

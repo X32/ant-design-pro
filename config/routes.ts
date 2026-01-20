@@ -214,6 +214,21 @@ export default [
     component: './tts_mobile_pro',
     layout: false,
   },
+  
+  // ========== 组件演示页面（开发测试）==========
+  {
+    path: '/demo/coin-drop',
+    name: 'coin-drop-demo',
+    component: '@/components/CoinDropAnimation/demo',
+    layout: false,  // 不显示侧边栏，全屏演示
+  },
+  {
+    path: '/demo/firework',
+    name: 'firework-demo',
+    component: '@/components/fireworkAnimation/demo',
+    layout: false,  // 不显示侧边栏，全屏演示
+  },
+  
   // ========== 口语练习页面（普通用户，不显示侧边栏）==========
   {
     name: 'spoken-practice',

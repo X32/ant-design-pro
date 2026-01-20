@@ -10,7 +10,9 @@ import {
   ClockCircleOutlined,
   TrophyOutlined,
   HomeOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  PlayCircleOutlined,  // 新增：播放图标
+  PauseCircleOutlined  // 新增：暂停图标
 } from '@ant-design/icons';
 // 导入API服务
 import { 
@@ -41,6 +43,10 @@ const UserPractice: React.FC = () => {
   const [messages, setMessages] = useState<SpokenMessage[]>([]);
   const [messageModalVisible, setMessageModalVisible] = useState<boolean>(false);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
+  
+  // 🔊 新增：音频播放状态
+  const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   
   // 统计数据
   const [statistics, setStatistics] = useState({
@@ -120,9 +126,61 @@ const UserPractice: React.FC = () => {
    * 关闭消息详情弹窗
    */
   const handleCloseModal = () => {
+    // 停止播放音频
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      setAudioElement(null);
+    }
+    setPlayingAudioId(null);
+    
     setMessageModalVisible(false);
     setSelectedConversation(null);
     setMessages([]);
+  };
+  
+  /**
+   * 🔊 播放或暂停音频
+   */
+  const handlePlayAudio = (messageId: number, audioUrl: string) => {
+    // 如果当前正在播放该音频，则暂停
+    if (playingAudioId === messageId && audioElement) {
+      audioElement.pause();
+      setPlayingAudioId(null);
+      return;
+    }
+    
+    // 停止其他音频
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+    
+    // 创建新的音频元素
+    const audio = new Audio(audioUrl);
+    
+    // 监听播放结束
+    audio.onended = () => {
+      setPlayingAudioId(null);
+      setAudioElement(null);
+    };
+    
+    // 监听错误
+    audio.onerror = () => {
+      message.error('音频播放失败');
+      setPlayingAudioId(null);
+      setAudioElement(null);
+    };
+    
+    // 开始播放
+    audio.play().catch(err => {
+      console.error('播放失败:', err);
+      message.error('音频播放失败');
+      setPlayingAudioId(null);
+    });
+    
+    setAudioElement(audio);
+    setPlayingAudioId(messageId);
   };
 
   /**
@@ -347,13 +405,35 @@ const UserPractice: React.FC = () => {
                         <p>{msg.content}</p>
                       )}
                       {msg.message_type === 'voice' && (
-                        <div>
-                          <p>🎤 语音消息</p>
-                          {msg.transcription_text && (
-                            <p className="transcription">转写: {msg.transcription_text}</p>
-                          )}
-                          {msg.audio_url && (
-                            <audio controls src={msg.audio_url} />
+                        <div className="voice-message-container">
+                          <div className="voice-info">
+                            <span>🎤 语音消息</span>
+                            {msg.transcription_text && (
+                              <p className="transcription">转写: {msg.transcription_text}</p>
+                            )}
+                          </div>
+                          {/* 🔥 优先使用 audio_file_path，没有再使用 audio_url */}
+                          {(msg.audio_file_path || msg.audio_url) && (
+                            <div className="audio-controls">
+                              <Button
+                                type="primary"
+                                shape="circle"
+                                size="large"
+                                icon={playingAudioId === msg.id ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                                onClick={() => handlePlayAudio(msg.id, msg.audio_file_path || msg.audio_url!)}
+                                style={{
+                                  backgroundColor: playingAudioId === msg.id ? '#ff4d4f' : '#1890ff',
+                                  borderColor: playingAudioId === msg.id ? '#ff4d4f' : '#1890ff',
+                                }}
+                              />
+                              <span style={{ marginLeft: '8px', color: '#999', fontSize: '12px' }}>
+                                {playingAudioId === msg.id ? '正在播放...' : '点击播放'}
+                              </span>
+                              {/* 📝 显示使用的音频源 */}
+                              <span style={{ marginLeft: 'auto', color: '#999', fontSize: '11px' }}>
+                                {msg.audio_file_path ? '💾 服务器路径' : '🌐 音频链接'}
+                              </span>
+                            </div>
                           )}
                         </div>
                       )}

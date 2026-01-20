@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App } from 'antd';
 import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
+import CoinDropAnimation from '@/components/CoinDropAnimation';  // 导入金币雨动画组件
+import coinSound from '@/components/CoinDropAnimation/corns.mp3';  // 导入音频文件
 
 import './index.less'; // 引入样式文件
 
@@ -22,6 +24,7 @@ const RechargePage: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null); // 初始不选择任何套餐
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true); // 页面加载状态
+  const [showCoinAnimation, setShowCoinAnimation] = useState(false);  // 控制金币雨动画显示
 
   // 获取金币套餐数据
   useEffect(() => {
@@ -129,7 +132,7 @@ const RechargePage: React.FC = () => {
               <p>订单号：{order.order_no}</p>
               <p>商品：{order.item_name}</p>
               <p>金币数量：{order.coin_amount}</p>
-              <p>金额：¥{order.total_amount}</p>
+              <p>金额：¥{(order.total_amount/100).toFixed(2)}</p>
               <p>状态：{order.status}</p>
             </div>
           ),
@@ -142,6 +145,9 @@ const RechargePage: React.FC = () => {
               
               if (payResponse.success) {
                 message.success('支付成功！');
+                
+                // 🎉 触发金币雨动画
+                setShowCoinAnimation(true);
                 
                 // 2. 查询订单详情确认状态
                 console.log('查询订单详情...');
@@ -159,7 +165,7 @@ const RechargePage: React.FC = () => {
                         <p>订单号：{updatedOrder.order_no}</p>
                         <p>商品：{updatedOrder.item_name}</p>
                         <p>金币数量：{updatedOrder.coin_amount}</p>
-                        <p>支付金额：¥{updatedOrder.total_amount}</p>
+                        <p>支付金额：¥{(updatedOrder.total_amount/100).toFixed(2)}</p>
                         <p>订单状态：{updatedOrder.status === 'paid' ? '已支付' : updatedOrder.status}</p>
                         <p style={{ color: '#52c41a', fontWeight: 'bold', marginTop: 12 }}>
                           金币已充值到账，请到个人中心查看！
@@ -345,6 +351,22 @@ const RechargePage: React.FC = () => {
           </Row>
         </div>
       </div>
+      
+      {/* 金币雨动画 */}
+      <CoinDropAnimation
+        visible={showCoinAnimation}
+        spawnRate={30}  // 密集金币雨
+        duration={4000}  // 持续4秒
+        playSound={true}
+        soundUrl={coinSound}
+        fallSpeed={6}
+        width={window.innerWidth}  // 全屏宽度
+        height={window.innerHeight}  // 全屏高度
+        onComplete={() => {
+          setShowCoinAnimation(false);
+          console.log('金币雨动画完成');
+        }}
+      />
     </div>
   );
 };
