@@ -1,10 +1,7 @@
 import { history, useModel } from '@umijs/max';
-import { Button, Card, Col, Row, Typography } from 'antd';
+import { Button } from 'antd';
 import React from 'react';
-import UserAvatar from '@/components/UserAvatar';
 import './index.less';
-
-const { Title, Paragraph } = Typography;
 
 const HomePage: React.FC = () => {
   const { initialState } = useModel('@@initialState');
@@ -12,136 +9,221 @@ const HomePage: React.FC = () => {
   const isLoggedIn = !!currentUser;
 
   const handleLogin = () => {
-    history.push('home/intro');
+    history.push('/user/login');
   };
 
   const handleStart = () => {
     history.push('/exam-catalog');
   };
 
+  const handleLearnMore = () => {
+    history.push('/home/intro');
+  };
+
+  const handleProfile = () => {
+    history.push('/user/profile');
+  };
+
   return (
-    <div className="home-container">
-      {/* 顶部导航 */}
-      <div className="home-header">
-        <div className="header-content">
-          <div className="logo">
-            <span className="logo-text">英语学习平台</span>
-          </div>
-          <div className="header-actions">
-            {isLoggedIn ? (
-              <UserAvatar showName size="large" />
-            ) : (
-              <Button type="primary" onClick={handleLogin}>
-                登录
-              </Button>
-            )}
+    <div className="home-page">
+      {/* 导航栏 */}
+      <nav className="navbar">
+        <div className="nav-container">
+          <div className="logo">🎤 SpeakCube AI 口语练习</div>
+          <ul className="nav-links">
+            <li>
+              <a href="#features">特性</a>
+            </li>
+            <li>
+              <a href="#advantages">优势</a>
+            </li>
+            <li>
+              <a href="#stats">数据</a>
+            </li>
+          </ul>
+          {isLoggedIn ? (
+            <Button className="cta-button" onClick={handleProfile}>
+              个人中心
+            </Button>
+          ) : (
+            <Button className="cta-button" onClick={handleLogin}>
+              立即开始
+            </Button>
+          )}
+        </div>
+      </nav>
+
+      {/* 英雄区域 */}
+      <section className="hero">
+        <div className="hero-content">
+          <h1 className="hero-main-title">解锁每一环 · 流利不一般</h1>
+          <p className="hero-subtitle">Unlock every part · speak with art.</p>
+          <p className="hero-description">
+            让 AI 成为你的口语教练 · 24小时随时随地练习 · 智能评分反馈 ·
+            快速提升口语水平
+          </p>
+          <div className="hero-buttons">
+            <Button
+              className="primary-button"
+              size="large"
+              onClick={handleStart}
+            >
+              免费体验
+            </Button>
+            <Button
+              className="secondary-button"
+              size="large"
+              onClick={handleLearnMore}
+            >
+              了解更多
+            </Button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 主内容区 */}
-      <div className="home-content">
-        {/* Hero 区域 */}
-        <div className="hero-section">
-          <div className="hero-content">
-            <Title level={1} className="hero-title">
-              欢迎来到英语学习平台
-            </Title>
-            <Paragraph className="hero-description">
-              提供专业的口语练习、智能评测和个性化学习方案
-            </Paragraph>
-            <div className="hero-actions">
-              <Button type="primary" size="large" onClick={handleStart}>
-                开始练习
-              </Button>
-              <Button size="large" onClick={handleLogin} style={{ marginLeft: 16 }}>
-                了解更多
-              </Button>
-            </div>
+      {/* 特性区域 */}
+      <section id="features" className="features">
+        <h2 className="section-title">核心特性</h2>
+        <p className="section-subtitle">
+          强大的 AI 技术，为你提供专业的口语训练
+        </p>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">🤖</div>
+            <h3>智能 AI 对话</h3>
+            <p>
+              先进的 AI 技术，提供真实自然的对话体验，就像与真人交流一样流畅
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🎯</div>
+            <h3>精准评分反馈</h3>
+            <p>
+              实时语音识别与分析，从发音、流利度、语法等多维度给出专业评分和建议
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📊</div>
+            <h3>个性化学习</h3>
+            <p>根据你的水平和需求，智能推荐练习内容，制定专属学习计划</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🎤</div>
+            <h3>语音识别</h3>
+            <p>高精度语音识别技术，准确捕捉你的发音细节，提供针对性改进建议</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📱</div>
+            <h3>随时随地练习</h3>
+            <p>支持手机、平板、电脑多端使用，利用碎片时间，随时随地提升口语</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">💰</div>
+            <h3>经济实惠</h3>
+            <p>比传统外教课程更实惠，无需预约排课，想练就练，性价比超高</p>
           </div>
         </div>
+      </section>
 
-        {/* 功能特性区域 */}
-        <div className="features-section">
-          <Title level={2} className="section-title">
-            核心功能
-          </Title>
-          <Row gutter={[24, 24]}>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">🎤</div>
-                <Title level={4}>口语练习</Title>
-                <Paragraph>
-                  真实场景模拟，多样化的口语练习题型，帮助你快速提升口语表达能力
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">🤖</div>
-                <Title level={4}>AI 智能评测</Title>
-                <Paragraph>
-                  先进的语音识别和自然语言处理技术，实时评估你的发音、语法和流利度
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">📊</div>
-                <Title level={4}>学习分析</Title>
-                <Paragraph>
-                  详细的学习报告和数据分析，帮助你了解学习进度，发现薄弱环节
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">📚</div>
-                <Title level={4}>丰富题库</Title>
-                <Paragraph>
-                  涵盖日常对话、商务英语、旅游英语等多个场景的海量练习题库
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">🎯</div>
-                <Title level={4}>个性化学习</Title>
-                <Paragraph>
-                  根据你的水平和学习目标，智能推荐适合的学习内容和练习计划
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={8}>
-              <Card className="feature-card" hoverable>
-                <div className="feature-icon">⏰</div>
-                <Title level={4}>随时随地</Title>
-                <Paragraph>
-                  支持多设备访问，无论在家还是在外，都能轻松进行英语学习
-                </Paragraph>
-              </Card>
-            </Col>
-          </Row>
+      {/* 优势区域 */}
+      <section id="advantages" className="advantages">
+        <div className="advantages-container">
+          <div>
+            <h2 className="section-title">为什么选择我们？</h2>
+            <ul className="advantages-list">
+              <li className="advantage-item">
+                <div className="advantage-icon">⚡</div>
+                <div className="advantage-content">
+                  <h3>即时反馈</h3>
+                  <p>
+                    每次练习后立即获得详细的评分和改进建议，不用等待，高效学习
+                  </p>
+                </div>
+              </li>
+              <li className="advantage-item">
+                <div className="advantage-icon">🌟</div>
+                <div className="advantage-content">
+                  <h3>零压力环境</h3>
+                  <p>与 AI 对话，无需担心说错，可以大胆练习，建立口语自信</p>
+                </div>
+              </li>
+              <li className="advantage-item">
+                <div className="advantage-icon">🎓</div>
+                <div className="advantage-content">
+                  <h3>专业系统</h3>
+                  <p>科学的学习方法和丰富的练习场景，系统化提升口语能力</p>
+                </div>
+              </li>
+              <li className="advantage-item">
+                <div className="advantage-icon">🔒</div>
+                <div className="advantage-content">
+                  <h3>隐私保护</h3>
+                  <p>你的练习数据完全保密，安全可靠，可以放心使用</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div className="advantages-image">🎯</div>
         </div>
+      </section>
 
-        {/* CTA 区域 */}
-        <div className="cta-section">
-          <Title level={2}>开始你的英语学习之旅</Title>
-          <Paragraph className="cta-description">
-            立即注册，获得专业的学习指导和个性化学习方案
-          </Paragraph>
-          <Button type="primary" size="large" onClick={handleStart}>
-            立即开始
+      {/* 统计数据 */}
+      <section id="stats" className="stats">
+        <h2 className="section-title">用数据说话</h2>
+        <p className="section-subtitle">
+          已有数千名用户通过我们的平台提升了口语水平
+        </p>
+        <div className="stats-grid">
+          <div className="stat-item">
+            <div className="stat-number">10K+</div>
+            <div className="stat-label">活跃用户</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">100K+</div>
+            <div className="stat-label">练习对话</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">95%</div>
+            <div className="stat-label">用户满意度</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">24/7</div>
+            <div className="stat-label">全天候服务</div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA 区域 */}
+      <section className="cta-section">
+        <h2>准备好开始你的口语提升之旅了吗？</h2>
+        <p>现在注册，免费体验 AI 口语练习</p>
+        <div className="hero-buttons">
+          <Button className="primary-button" size="large" onClick={handleLogin}>
+            立即注册
           </Button>
         </div>
-      </div>
+      </section>
 
       {/* 页脚 */}
-      <div className="home-footer">
-        <div className="footer-content">
-          <Paragraph>© 2024 英语学习平台. All rights reserved.</Paragraph>
+      <footer className="footer">
+        <div className="footer-content">{/* 预留的页脚链接区域 */}</div>
+        <div className="footer-bottom">
+          <p>&copy; 2026 AI 口语练习平台. All rights reserved.</p>
+          <p style={{ marginTop: '0.5rem' }}>
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                textDecoration: 'none',
+              }}
+            >
+              京ICP备14038012号-2
+            </a>
+          </p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

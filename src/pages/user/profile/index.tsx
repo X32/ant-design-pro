@@ -1,9 +1,23 @@
-import { ArrowLeftOutlined, LockOutlined, UserOutlined, CreditCardOutlined, PhoneOutlined, WalletOutlined, HistoryOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CreditCardOutlined,
+  HistoryOutlined,
+  LockOutlined,
+  LogoutOutlined,
+  PhoneOutlined,
+  UserOutlined,
+  WalletOutlined,
+} from '@ant-design/icons';
+import { history, useModel } from '@umijs/max';
 import { App, Avatar, Button, Card, Form, Input, Spin, Statistic } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { history, useModel } from '@umijs/max';
-import { currentUser, updateUserProfile, updateUserPassword, changeUsername } from '@/services/ant-design-pro/api';
 import { useWallet } from '@/hooks/useWallet';
+import {
+  changeUsername,
+  currentUser,
+  updateUserPassword,
+  updateUserProfile,
+} from '@/services/ant-design-pro/api';
 import './index.less';
 
 const UserProfile: React.FC = () => {
@@ -16,7 +30,7 @@ const UserProfile: React.FC = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [usernameForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
-  
+
   // 使用钱包 Hook
   const { balance, loading: walletLoading, fetchBalance } = useWallet();
 
@@ -27,7 +41,7 @@ const UserProfile: React.FC = () => {
       });
     }
   }, [user, usernameForm]);
-  
+
   // 查询钱包余额
   useEffect(() => {
     fetchBalance();
@@ -43,10 +57,17 @@ const UserProfile: React.FC = () => {
   const handleRecharge = () => {
     history.push('/orders/recharge');
   };
-  
+
   // 跳转到流水记录页面
   const handleViewLog = () => {
     history.push('/user/orderlog');
+  };
+
+  // 退出登录
+  const handleLogout = () => {
+    localStorage.clear();
+    message.success('已退出登录');
+    history.push('/user/login');
   };
 
   // 修改用户名
@@ -114,9 +135,9 @@ const UserProfile: React.FC = () => {
     <div className="user-profile-container">
       {/* 顶部导航 */}
       <div className="profile-header">
-        <Button 
-          type="text" 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
           onClick={handleBack}
           size="large"
         >
@@ -127,8 +148,14 @@ const UserProfile: React.FC = () => {
       {/* 主内容 */}
       <div className="profile-content">
         <div className="profile-sidebar">
-          <Avatar size={80} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
-          <h2 className="user-name">{user?.name || user?.email?.split('@')[0]}</h2>
+          <Avatar
+            size={80}
+            icon={<UserOutlined />}
+            style={{ backgroundColor: '#1890ff' }}
+          />
+          <h2 className="user-name">
+            {user?.name || user?.email?.split('@')[0]}
+          </h2>
           {user?.email && user.email.includes('@sms.local') ? (
             <p className="user-phone">
               <PhoneOutlined /> {user.email.split('@')[0]}
@@ -136,23 +163,31 @@ const UserProfile: React.FC = () => {
           ) : (
             <p className="user-email">{user?.email}</p>
           )}
-          <p className="user-role">{user?.access === 'admin' ? '管理员' : '普通用户'}</p>
-          
+          <p className="user-role">
+            {user?.access === 'admin' ? '管理员' : '普通用户'}
+          </p>
+
           {/* 钱包余额显示 */}
-          <Card 
+          <Card
             className="wallet-card"
             style={{ marginTop: 24, width: '100%' }}
             bodyStyle={{ padding: '16px' }}
           >
             <Spin spinning={walletLoading}>
               <div style={{ textAlign: 'center' }}>
-                <WalletOutlined style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }} />
+                <WalletOutlined
+                  style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }}
+                />
                 <div style={{ marginBottom: 8 }}>
                   <Statistic
                     title="金币余额"
                     value={balance?.balance || 0}
                     suffix="金币"
-                    valueStyle={{ color: '#faad14', fontSize: 28, fontWeight: 'bold' }}
+                    valueStyle={{
+                      color: '#faad14',
+                      fontSize: 28,
+                      fontWeight: 'bold',
+                    }}
                   />
                 </div>
                 {balance && !balance.exists && (
@@ -163,26 +198,37 @@ const UserProfile: React.FC = () => {
               </div>
             </Spin>
           </Card>
-          
+
           {/* 充值入口按钮 */}
-          <Button 
-            type="primary" 
-            icon={<CreditCardOutlined />} 
+          <Button
+            type="primary"
+            icon={<CreditCardOutlined />}
             onClick={handleRecharge}
             style={{ marginTop: 16, width: '100%' }}
             size="large"
           >
             账户充值
           </Button>
-          
+
           {/* 流水记录入口按钮 */}
-          <Button 
-            icon={<HistoryOutlined />} 
+          <Button
+            icon={<HistoryOutlined />}
             onClick={handleViewLog}
             style={{ marginTop: 12, width: '100%' }}
             size="large"
           >
             流水记录
+          </Button>
+
+          {/* 退出登录按钮 */}
+          <Button
+            danger
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            style={{ marginTop: 12, width: '100%' }}
+            size="large"
+          >
+            退出登录
           </Button>
         </div>
 
@@ -203,15 +249,20 @@ const UserProfile: React.FC = () => {
                   { max: 20, message: '用户名最多20个字符' },
                 ]}
               >
-                <Input 
-                  prefix={<UserOutlined />} 
-                  placeholder="请输入用户名" 
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="请输入用户名"
                   size="large"
                 />
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={usernameLoading} size="large">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={usernameLoading}
+                  size="large"
+                >
                   保存修改
                 </Button>
               </Form.Item>
@@ -230,9 +281,9 @@ const UserProfile: React.FC = () => {
                 label="当前密码"
                 rules={[{ required: true, message: '请输入当前密码' }]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="请输入当前密码" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="请输入当前密码"
                   size="large"
                 />
               </Form.Item>
@@ -245,9 +296,9 @@ const UserProfile: React.FC = () => {
                   { min: 6, message: '密码至少6位' },
                 ]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="请输入新密码（至少6位）" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="请输入新密码（至少6位）"
                   size="large"
                 />
               </Form.Item>
@@ -268,15 +319,20 @@ const UserProfile: React.FC = () => {
                   }),
                 ]}
               >
-                <Input.Password 
-                  prefix={<LockOutlined />} 
-                  placeholder="请再次输入新密码" 
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="请再次输入新密码"
                   size="large"
                 />
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={passwordLoading} size="large">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={passwordLoading}
+                  size="large"
+                >
                   修改密码
                 </Button>
               </Form.Item>

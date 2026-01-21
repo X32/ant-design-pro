@@ -152,7 +152,7 @@ response = requests.get(
 | coin_amount | integer | ✅ 是 | 消费金币数量（必须大于0） | 50 |
 | biz_type | string | ✅ 是 | 业务类型（见下方业务类型说明） | "consume_conversation" |
 | biz_id | integer | ✅ 是 | 业务ID（关联的业务记录ID） | 100 |
-| remark | string | ❌ 否 | 备注说明 | "AI 对话练习会话" |
+|  | string | ❌ 否 | 备注说明 | "AI 对话练习会话" |
 
 **业务类型说明（biz_type）**
 
