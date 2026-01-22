@@ -1359,6 +1359,7 @@ export interface CreateExamPaperParams {
   paper_name: string;
   total_score?: number;
   apply_category_id?: number;
+  exam_category_id?: number;
   is_active?: number;
 }
 

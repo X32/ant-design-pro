@@ -54,6 +54,7 @@ import {
   getOralExercises,
   createExamPaper,
   batchAddQuestionsToPaper,
+  getExamCategories,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -123,6 +124,10 @@ const ExamPaperBuilder: React.FC = () => {
   const [paperName, setPaperName] = useState('');
   const [applyCategoryId, setApplyCategoryId] = useState<number>(0);
 
+  // 考试分类数据（适用分类）
+  const [examCategories, setExamCategories] = useState<any[]>([]);
+  const [examCategoriesLoading, setExamCategoriesLoading] = useState(false);
+
   // 分类数据
   const [categories, setCategories] = useState<Category[]>([]);
   const [treeData, setTreeData] = useState<CategoryTreeNode[]>([]);
@@ -160,6 +165,26 @@ const ExamPaperBuilder: React.FC = () => {
   const totalScore = useMemo(() => {
     return selectedQuestions.reduce((sum, q) => sum + q.question_score, 0);
   }, [selectedQuestions]);
+
+  /**
+   * 获取考试分类列表（适用分类）
+   */
+  const fetchExamCategories = useCallback(async () => {
+    setExamCategoriesLoading(true);
+    try {
+      const response = await getExamCategories({
+        only_active: true,
+      });
+      if (response && response.success && Array.isArray(response.data)) {
+        setExamCategories(response.data);
+      }
+    } catch (error: any) {
+      console.error('获取考试分类列表失败:', error);
+      message.error(error?.message || '获取考试分类列表失败');
+    } finally {
+      setExamCategoriesLoading(false);
+    }
+  }, []);
 
   /**
    * 获取分类列表
@@ -206,10 +231,11 @@ const ExamPaperBuilder: React.FC = () => {
     }
   }, []);
 
-  // 初始化加载分类
+  // 初始化加载考试分类和分类树
   useEffect(() => {
+    fetchExamCategories();
     fetchCategories();
-  }, [fetchCategories]);
+  }, [fetchExamCategories, fetchCategories]);
 
   // 分类选中后加载练习题
   useEffect(() => {
@@ -392,6 +418,7 @@ const ExamPaperBuilder: React.FC = () => {
         paper_name: paperName.trim(),
         total_score: totalScore,
         apply_category_id: applyCategoryId,
+        exam_category_id: applyCategoryId,
         is_active: 1,
       });
 
@@ -483,13 +510,14 @@ const ExamPaperBuilder: React.FC = () => {
           <div className="info-item">
             <span className="label">适用分类：</span>
             <Select
-              placeholder="选择一级分类"
+              placeholder="选择考试分类"
               value={applyCategoryId || undefined}
               onChange={(value) => setApplyCategoryId(value || 0)}
-              style={{ width: 150 }}
+              style={{ width: 180 }}
+              loading={examCategoriesLoading}
               allowClear
             >
-              {getLevel1Categories(categories).map(c => (
+              {examCategories.map(c => (
                 <Option key={c.id} value={c.id}>{c.name}</Option>
               ))}
             </Select>
