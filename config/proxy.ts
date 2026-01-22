@@ -13,7 +13,7 @@
 // ============ 后端服务地址配置 ============
 // 主后端服务（业务API、认证、考试等）
 // const MAIN_API_TARGET = 'http://localhost:9002';
-const MAIN_API_TARGET = 'http://api.qtoplay.com';
+const MAIN_API_TARGET = 'https://api.qtoplay.com';
 // 对话服务（AI 对话相关）
 const CONVERSATION_API_TARGET = 'http://localhost:9019';
 // WebSocket 服务
@@ -30,7 +30,7 @@ export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调 /api/spoken/
   dev: {
     // ============ 主后端服务代理 (9002) ============
-    
+
     // 工作流类型代理 - 最高优先级
     '/api/workflow-types': {
       target: MAIN_API_TARGET,
@@ -50,7 +50,7 @@ export default {
         console.error('[Proxy Error]:', err.message);
       },
     },
-    
+
     // 口语练习服务代理
     '/api/spoken/**': {
       target: MAIN_API_TARGET,
@@ -59,7 +59,7 @@ export default {
         console.log('[Spoken Proxy]', req.method, req.url);
       },
     },
-    
+
     // 订单服务代理
     '/api/order/**': {
       target: MAIN_API_TARGET,
@@ -68,7 +68,7 @@ export default {
         console.log('[Order Proxy]', req.method, req.url);
       },
     },
-    
+
     // 考试服务代理
     '/api/exam/**': {
       target: MAIN_API_TARGET,
@@ -77,61 +77,61 @@ export default {
         console.log('[Exam Proxy]', req.method, req.url);
       },
     },
-    
+
     // 口语服务代理
     '/api/oral/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // 管理员后台服务代理
     '/api/admin/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // 认证服务代理
     '/api/auth/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // 音频上传服务代理
     '/api/upload': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // 转写状态查询服务代理
     '/api/transcription_status': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // ============ 对话服务代理 (9019) ============
-    
+
     // 对话会话代理
     '/api/v1/conversations/**': {
       target: CONVERSATION_API_TARGET,
       changeOrigin: true,
     },
-    
+
     // 对话 API v1 代理
     '/api/v1/': {
       target: CONVERSATION_API_TARGET,
       changeOrigin: true,
       pathRewrite: { '^/api/v1': '/api/v1' },
     },
-    
+
     // ============ 其他代理配置（已注释） ============
-    
+
     // 通用 API 代理（优先级最低）
     // 注意：这个规则优先级最低，仅处理未被其他规则匹配的请求
     // '/api/': {
     //   target: `http://localhost:${getCurrentPort()}`,
     //   changeOrigin: true,
     // },
-    
+
     // WebSocket 代理（需要时取消注释）
     // '/ws': {
     //   target: WS_TARGET,  // 或使用 LAN_WS_TARGET 进行局域网调试
@@ -144,17 +144,17 @@ export default {
    * @name 详细的代理配置
    * @doc https://github.com/chimurai/http-proxy-middleware
    */
-  test: {
-    // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
-    '/api/': {
-      target: 'https://proapi.azurewebsites.net',
-      changeOrigin: true,
-      pathRewrite: { '^': '' },
-    },
-  },
+  // test: {
+  //   // localhost:8000/api/** -> https://preview.pro.ant.design/api/**
+  //   '/api/': {
+  //     target: 'https://proapi.azurewebsites.net',
+  //     changeOrigin: true,
+  //     pathRewrite: { '^': '' },
+  //   },
+  // },
   pre: {
     '/api/': {
-      target: 'your pre url',
+      target: 'https://api.qtoplay.com',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

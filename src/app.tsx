@@ -75,7 +75,7 @@ export async function getInitialState(): Promise<{
   ];
 
   // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
-  const publicRoutes = ['/home', '/exam-catalog'];
+  const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/'];
 
   if (!testRoutes.includes(location.pathname)) {
     // 对于公开页面，先检查是否有token
@@ -153,10 +153,17 @@ export const layout: RunTimeLayoutConfig = ({
         '/audio',
         '/audio-recorder',
       ];
+      
+      // 公开页面：允许匿名访问
+      const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/'];
+      
+      // 合并所有允许未登录访问的路由
+      const allowedRoutes = [...testRoutes, ...publicRoutes];
+      
       // 如果没有登录且路径不在白名单中，重定向到 login
       if (
         !initialState?.currentUser &&
-        !testRoutes.includes(location.pathname)
+        !allowedRoutes.includes(location.pathname)
       ) {
         history.push(loginPath);
       }
@@ -225,7 +232,7 @@ export const layout: RunTimeLayoutConfig = ({
  */
 export const request: RequestConfig = {
   // 开发环境不设置 baseURL，确保使用相对路径，走 webpack 代理
-  ...(isDev ? {} : { baseURL: 'https://proapi.azurewebsites.net' }),
+  ...(isDev ? {} : { baseURL: 'https://api.qtoplay.com' }),
   timeout: 60000,
   ...errorConfig,
 };
