@@ -9,6 +9,18 @@
  *
  * @doc https://umijs.org/docs/guides/proxy
  */
+
+// ============ 后端服务地址配置 ============
+// 主后端服务（业务API、认证、考试等）
+// const MAIN_API_TARGET = 'http://localhost:9002';
+const MAIN_API_TARGET = 'http://api.qtoplay.com';
+// 对话服务（AI 对话相关）
+const CONVERSATION_API_TARGET = 'http://localhost:9019';
+// WebSocket 服务
+const WS_TARGET = 'ws://localhost:9001';
+// 局域网调试地址（备用）
+const LAN_WS_TARGET = 'ws://192.168.4.30:9001';
+
 // 获取当前端口，默认8001
 const getCurrentPort = () => {
   return process.env.PORT || '8001';
@@ -17,16 +29,18 @@ const getCurrentPort = () => {
 export default {
   // 如果需要自定义本地开发服务器  请取消注释按需调 /api/spoken/
   dev: {
+    // ============ 主后端服务代理 (9002) ============
+    
     // 工作流类型代理 - 最高优先级
     '/api/workflow-types': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
       pathRewrite: { '^/api/workflow-types': '/api/workflow-types' },
       onProxyReq: (proxyReq: any, req: any, res: any) => {
         console.log('\n=== Workflow Types Proxy ===');
         console.log('[Proxy] 请求:', req.method, req.url);
         console.log('[Proxy] 代理到:', proxyReq.path);
-        console.log('[Proxy] Target:', 'http://localhost:9002');
+        console.log('[Proxy] Target:', MAIN_API_TARGET);
         console.log('===========================\n');
       },
       onProxyRes: (proxyRes: any, req: any, res: any) => {
@@ -36,85 +50,93 @@ export default {
         console.error('[Proxy Error]:', err.message);
       },
     },
-      // 认证服务代理 - 最高优先级
+    
+    // 口语练习服务代理
     '/api/spoken/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
       onProxyReq: (proxyReq: any, req: any) => {
         console.log('[Spoken Proxy]', req.method, req.url);
       },
     },
-      // 认证服务代理 - 最高优先级
+    
+    // 订单服务代理
     '/api/order/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
       onProxyReq: (proxyReq: any, req: any) => {
         console.log('[Order Proxy]', req.method, req.url);
       },
     },
-    // 认证服务代理 - 最高优先级
+    
+    // 考试服务代理
     '/api/exam/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
       onProxyReq: (proxyReq: any, req: any) => {
         console.log('[Exam Proxy]', req.method, req.url);
       },
     },
-    // 认证服务代理 - 最高优先级
+    
+    // 口语服务代理
     '/api/oral/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    // 管理员后台服务代理 - 最高优先级
+    
+    // 管理员后台服务代理
     '/api/admin/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    // 认证服务代理 - 最高优先级
+    
+    // 认证服务代理
     '/api/auth/**': {
-      target: 'http://localhost:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    // 音频上传服务代理 - 移到最前面，确保优先级高于通用的/api/代理
+    
+    // 音频上传服务代理
     '/api/upload': {
-      target: 'http://127.0.0.1:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
     },
+    
     // 转写状态查询服务代理
     '/api/transcription_status': {
-      target: 'http://127.0.0.1:9002',
+      target: MAIN_API_TARGET,
       changeOrigin: true,
     },
-    // localhost:8001/api/v1/conversations/ -> http://localhost:9019/api/v1/conversations/
+    
+    // ============ 对话服务代理 (9019) ============
+    
+    // 对话会话代理
     '/api/v1/conversations/**': {
-      // 要代理的地址 - 指向实际的后端服务器
-      target: 'http://localhost:9019',
-      // 配置了这个可以从 http 代理到 https
-      // 依赖 origin 的功能可能需要这个，比如 cookie
+      target: CONVERSATION_API_TARGET,
       changeOrigin: true,
     },
-    // localhost:8001/api/v1/ -> http://localhost:9019/api/v1/
+    
+    // 对话 API v1 代理
     '/api/v1/': {
-      // 要代理的地址 - 指向实际的后端服务器
-      target: 'http://localhost:9019',
-      // 配置了这个可以从 http 代理到 https
-      // 依赖 origin 的功能可能需要这个，比如 cookie
+      target: CONVERSATION_API_TARGET,
       changeOrigin: true,
-      // 路径重写：将 /api/v1/ 前缀保留，确保后端收到正确的路径
       pathRewrite: { '^/api/v1': '/api/v1' },
     },
-    // localhost:8001/api/** -> http://localhost:8001/api/
+    
+    // ============ 其他代理配置（已注释） ============
+    
+    // 通用 API 代理（优先级最低）
     // 注意：这个规则优先级最低，仅处理未被其他规则匹配的请求
     // '/api/': {
     //   target: `http://localhost:${getCurrentPort()}`,
     //   changeOrigin: true,
     // },
-    // 将ws://localhost:8001/ws?userId=1&conversationId=1代理到ws://localhost:9001
+    
+    // WebSocket 代理（需要时取消注释）
     // '/ws': {
-    //   target: 'ws://192.168.4.30:9001',
+    //   target: WS_TARGET,  // 或使用 LAN_WS_TARGET 进行局域网调试
     //   ws: true,
     //   changeOrigin: true,
-    //   // 保留原始路径和查询参数
     //   pathRewrite: { '^/ws': '' },
     // },
   },

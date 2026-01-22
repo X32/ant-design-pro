@@ -26,20 +26,26 @@ class WebSocketService {
   constructor() {
     // 根据当前页面协议自动选择 ws:// 或 wss://
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
+    const host = window.location.host; // 包含端口号
+    const isDev = process.env.NODE_ENV === 'development';
     
-    // 如果是通过 HTTPS 访问，使用 wss:// 连接到 Nginx 代理
-    // Nginx 会将请求转发到后端的 ws://localhost:9001/ws
-    if (protocol === 'wss:') {
-      // 通过 Nginx 代理
-      this.url = `${protocol}//${host}/api/ws`;
+    // 生产环境：统一通过 Nginx 代理访问
+    // 开发环境：根据需要选择直连或代理
+    if (isDev && protocol === 'ws:') {
+      // 开发环境 HTTP - 直连后端 WebSocket 服务
+      // this.url = 'ws://localhost:9001/ws';
+      // this.url = 'ws://localhost:9001/ws';
+      // this.url = 'ws://192.168.4.30:9001/ws'; // 局域网调试
+      this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
     } else {
-      // 直接连接
-      this.url = 'ws://localhost:9001/ws';
-      // this.url = 'ws://192.168.4.30:9001/ws';
+      // 生产环境或开发环境 HTTPS - 通过 Nginx 代理
+      // Nginx 会将请求转发到后端的 ws://localhost:9001/ws
+      this.url = `${protocol}//${host}/api/ws`;
+      this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
     }
     
-    console.log('WebSocket URL:', this.url);
+    
+    console.log('WebSocket URL:', this.url, '(环境:', isDev ? '开发' : '生产', ')');
   }
 
   connect(userId: number, conversationId: number, token?: string, workflowType: string = 'fce_part1', paperId?: number) {

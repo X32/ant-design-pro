@@ -5,9 +5,9 @@
 const isDev = process.env.NODE_ENV === 'development';
 
 // API基础地址
-// 开发环境使用代理，直接使用相对路径
-// 生产环境使用实际的API地址
-export const API_BASE_URL = isDev ? '' : 'https://your-production-api.com';
+// 开发环境：使用空字符串，通过 proxy.ts 代理到远程服务器
+// 生产环境：直接使用远程 API 地址
+export const API_BASE_URL = isDev ? '' : 'http://api.qtoplay.com';
 
 // API端点
 export const API_ENDPOINTS = {
@@ -30,7 +30,7 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD_STEP2: `${API_BASE_URL}/api/auth/forgot-password/step2`,  // 验证短信验证码
   FORGOT_PASSWORD_STEP3: `${API_BASE_URL}/api/auth/forgot-password/step3`,  // 设置新密码
 
-  // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9001
+  // 音频上传和转写 - 开发环境通过proxy代理到 http://127.0.0.1:9002
   UPLOAD_AUDIO: `${API_BASE_URL}/api/upload/upload_audio`,
   TRANSCRIPTION_STATUS: `${API_BASE_URL}/api/upload/transcription_status`,
 
