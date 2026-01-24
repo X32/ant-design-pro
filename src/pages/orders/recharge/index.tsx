@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App, Radio } from 'antd';
-import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined, AlipayOutlined, TransactionOutlined } from '@ant-design/icons';
+import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined, AlipayOutlined, TransactionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { history } from '@umijs/max';
 import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
 import CoinDropAnimation from '@/components/CoinDropAnimation';  // 导入金币雨动画组件
 import coinSound from '@/components/CoinDropAnimation/corns.mp3';  // 导入音频文件
 import { pollOrderStatus, handleAlipayPayment, checkPaymentResult } from './alipay-payment-methods';  // 导入支付宝支付方法
+import UserAvatar from '@/components/UserAvatar';  // 导入用户头像组件
 
 import './index.less'; // 引入样式文件
 
@@ -256,6 +258,20 @@ const RechargePage: React.FC = () => {
 
   return (
     <div className="recharge-page">
+      {/* 顶部导航栏 */}
+      <div className="recharge-navbar">
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => history.back()}
+          className="back-button"
+          size="large"
+        >
+          返回
+        </Button>
+        <UserAvatar showName={false} size={40} />
+      </div>
+
       <div className="recharge-container">
         <div className="recharge-header">
           <Title level={2} className="recharge-title">
@@ -349,11 +365,11 @@ const RechargePage: React.FC = () => {
                   <AlipayOutlined style={{ marginRight: '8px' }} />
                   支付宝支付
                 </Radio.Button>
-                <Radio.Button value="mock" style={{ minWidth: '150px', textAlign: 'center' }}>
+                 {/* <Radio.Button value="mock" style={{ minWidth: '150px', textAlign: 'center' }}>
                   <TransactionOutlined style={{ marginRight: '8px' }} />
                   模拟支付
-                </Radio.Button>
-              </Radio.Group>
+                </Radio.Button> */}
+              </Radio.Group> 
             </div>
             
             <Button
@@ -384,12 +400,12 @@ const RechargePage: React.FC = () => {
                 <Text strong>SSL加密</Text>
               </Space>
             </Col>
-            <Col>
+            {/* <Col>
               <Space direction="vertical" align="center">
                 <div style={{ fontSize: '24px', color: '#1890ff' }}>💳</div>
                 <Text strong>多种支付</Text>
               </Space>
-            </Col>
+            </Col> */}
             <Col>
               <Space direction="vertical" align="center">
                 <div style={{ fontSize: '24px', color: '#faad14' }}>⚡</div>

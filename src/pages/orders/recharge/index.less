@@ -1,14 +1,39 @@
 /* 充值页面样式 */
 
 .recharge-page {
-  padding: 24px;
   background: #f0f2f5;
   min-height: 100vh;
+}
+
+/* 顶部导航栏 */
+.recharge-navbar {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+
+  .back-button {
+    color: #666;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    
+    &:hover {
+      color: #1890ff;
+    }
+  }
 }
 
 .recharge-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 24px;
 }
 
 .recharge-header {

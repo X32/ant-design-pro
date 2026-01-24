@@ -120,6 +120,9 @@ export const checkPaymentResult = async (
     return;
   }
   
+  // 🔥 立即清理 URL 参数，避免用户刷新页面时重复查询
+  cleanUrlParams();
+  
   setLoading(true);
   
   try {
@@ -182,4 +185,14 @@ export const checkPaymentResult = async (
   } finally {
     setLoading(false);
   }
+};
+
+/**
+ * 清理 URL 参数（保留路径，移除查询参数）
+ * 避免用户刷新页面时重复触发支付结果查询
+ */
+const cleanUrlParams = () => {
+  const currentPath = window.location.pathname;
+  window.history.replaceState({}, document.title, currentPath);
+  console.log('已清理 URL 参数，当前路径:', currentPath);
 };
