@@ -94,7 +94,16 @@ export const errorConfig: RequestConfig = {
 
   // 请求拦截器
   requestInterceptors: [
-    // 第一个拦截器：打印请求信息
+    // 第一个拦截器：确保使用相对路径
+    (config: RequestOptions) => {
+      // 如果 URL 是完整的 https://api.qtoplay.com 地址，转换为相对路径
+      if (config.url && typeof config.url === 'string') {
+        config.url = config.url.replace('https://api.qtoplay.com', '');
+        config.url = config.url.replace('http://api.qtoplay.com', '');
+      }
+      return config;
+    },
+    // 第二个拦截器：打印请求信息
     (config: RequestOptions) => {
       console.log('\n=== [requestErrorConfig.ts] Request Interceptor ===');
       console.log('1. URL:', config.url);

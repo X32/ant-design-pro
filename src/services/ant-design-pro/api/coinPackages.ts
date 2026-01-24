@@ -24,6 +24,7 @@ export interface CoinPackageListResponse {
 /** 创建订单请求参数 */
 export interface CreateOrderRequest {
   item_id: number;
+  pay_channel?: 'alipay' | 'mock';  // 支付渠道：支付宝或模拟支付
 }
 
 /** 订单数据类型 */
@@ -66,6 +67,28 @@ export interface QueryOrderResponse {
   success: boolean;
   message: string;
   data: OrderData;
+}
+
+/** 支付宝支付请求参数 */
+export interface AlipayPayRequest {
+  order_no: string;
+}
+
+/** 支付宝支付响应类型 */
+export interface AlipayPayResponse {
+  success: boolean;
+  message: string;
+  pay_url: string;  // 支付宝支付链接
+  order_no: string;
+}
+
+/** 查询订单状态响应类型 */
+export interface OrderStatusResponse {
+  success: boolean;
+  message: string;
+  order_no: string;
+  status: string;  // CREATED | PAID | COMPLETED | CANCELLED
+  is_paid: boolean;
 }
 
 /** 获取金币套餐列表
@@ -130,6 +153,42 @@ export async function getOrderDetail(
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
   return request<QueryOrderResponse>(`${API_ENDPOINTS.ORDER_DETAIL}/${orderNo}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    ...(options || {}),
+  });
+}
+
+/** 获取支付宝支付链接
+ * POST /api/order/alipay/pay
+ */
+export async function getAlipayPayUrl(
+  params: AlipayPayRequest,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return request<AlipayPayResponse>('/api/order/alipay/pay', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    data: params,
+    ...(options || {}),
+  });
+}
+
+/** 查询订单状态（用于轮询）
+ * GET /api/order/status/{order_no}
+ */
+export async function getOrderStatus(
+  orderNo: string,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return request<OrderStatusResponse>(`/api/order/status/${orderNo}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`

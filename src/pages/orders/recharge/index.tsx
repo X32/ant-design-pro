@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App } from 'antd';
-import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App, Radio } from 'antd';
+import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined, AlipayOutlined, TransactionOutlined } from '@ant-design/icons';
 import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
 import CoinDropAnimation from '@/components/CoinDropAnimation';  // 导入金币雨动画组件
 import coinSound from '@/components/CoinDropAnimation/corns.mp3';  // 导入音频文件
+import { pollOrderStatus, handleAlipayPayment, checkPaymentResult } from './alipay-payment-methods';  // 导入支付宝支付方法
 
 import './index.less'; // 引入样式文件
 
@@ -25,6 +26,7 @@ const RechargePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true); // 页面加载状态
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);  // 控制金币雨动画显示
+  const [paymentMethod, setPaymentMethod] = useState<'mock' | 'alipay'>('alipay'); // 支付方式选择
 
   // 获取金币套餐数据
   useEffect(() => {
@@ -108,6 +110,12 @@ const RechargePage: React.FC = () => {
     };
 
     fetchPackages();
+    
+    // 检查是否从支付宝支付返回（通过URL参数判断）
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('from') === 'alipay') {
+      checkPaymentResult(modal, setShowCoinAnimation, setLoading);
+    }
   }, []);
 
   /**
@@ -120,8 +128,7 @@ const RechargePage: React.FC = () => {
     item_name: string;
     coin_amount: number;
     total_amount: number;
-  }) =>{ 
-    return
+  }) => {
     try {
       // 1. 调用模拟支付接口
       console.log('开始模拟支付，订单号:', orderNo);
@@ -181,9 +188,10 @@ const RechargePage: React.FC = () => {
 
     setLoading(true);
     try {
-      // 调用创建订单API
+      // 调用创建订单API，传递支付渠道参数
       const response = await createCoinOrder({
         item_id: selectedPackage,
+        pay_channel: paymentMethod, // 传递选择的支付方式
       });
 
       if (response.success && response.data) {
@@ -197,10 +205,18 @@ const RechargePage: React.FC = () => {
               <p>金币数量：{order.coin_amount}</p>
               <p>金额：¥{(order.total_amount/100).toFixed(2)}</p>
               <p>状态：{order.status}</p>
+              <p>支付方式：{paymentMethod === 'alipay' ? '支付宝支付' : '模拟支付'}</p>
             </div>
           ),
           okText: '去支付',
-          onOk: () => handlePayment(order.order_no, order),
+          onOk: () => {
+            // 根据支付方式调用不同的支付方法
+            if (paymentMethod === 'alipay') {
+              handleAlipayPayment(order.order_no, order, modal, setShowCoinAnimation);
+            } else {
+              handlePayment(order.order_no, order);
+            }
+          },
         });
       } else {
         message.error(response.message || '创建订单失败');
@@ -318,6 +334,28 @@ const RechargePage: React.FC = () => {
                 {selectedPackage && ` - ¥${packages.find(pkg => pkg.id === selectedPackage)?.price.toFixed(2)}`}
               </Text>
             </div>
+            
+            {/* 支付方式选择 */}
+            <div>
+              <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: '12px' }}>
+                选择支付方式：
+              </Text>
+              <Radio.Group 
+                value={paymentMethod} 
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                size="large"
+              >
+                <Radio.Button value="alipay" style={{ marginRight: '12px', minWidth: '150px', textAlign: 'center' }}>
+                  <AlipayOutlined style={{ marginRight: '8px' }} />
+                  支付宝支付
+                </Radio.Button>
+                <Radio.Button value="mock" style={{ minWidth: '150px', textAlign: 'center' }}>
+                  <TransactionOutlined style={{ marginRight: '8px' }} />
+                  模拟支付
+                </Radio.Button>
+              </Radio.Group>
+            </div>
+            
             <Button
               type="primary"
               size="large"

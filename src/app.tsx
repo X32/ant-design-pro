@@ -56,18 +56,22 @@ export async function getInitialState(): Promise<{
         };
       }
       return undefined;
-    } catch (_error) {
-      history.push(loginPath);
+    } catch (error) {
+      console.log('[fetchUserInfo] 获取用户信息失败，可能未登录');
+      return undefined;
     }
-    return undefined;
   };
   // 如果不是登录页面，执行
   const { location } = history;
+  
+  console.log('[getInitialState] 当前路径:', location.pathname);
+  
   // 为测试路由添加白名单，允许未登录访问
   const testRoutes = [
     loginPath,
     '/user/register',
     '/user/register-result',
+    '/user/forgetpsw',
     '/test-page',
     // '/audio-recorder-test',
     // '/audio',
@@ -77,45 +81,74 @@ export async function getInitialState(): Promise<{
   // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
   const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/'];
 
-  if (!testRoutes.includes(location.pathname)) {
-    // 对于公开页面，先检查是否有token
-    if (publicRoutes.includes(location.pathname)) {
-      const token = localStorage.getItem(TOKEN_KEY);
-      if (token) {
-        // 有token，尝试加载用户信息
-        try {
-          const currentUser = await fetchUserInfo();
+  // 如果是测试路由或登录相关页面，直接返回不加载用户信息
+  if (testRoutes.includes(location.pathname)) {
+    console.log('[getInitialState] 测试路由，不加载用户信息');
+    return {
+      fetchUserInfo,
+      settings: defaultSettings as Partial<LayoutSettings>,
+    };
+  }
+
+  // 如果是公开页面
+  if (publicRoutes.includes(location.pathname)) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    console.log('[getInitialState] 公开页面，token存在:', !!token);
+    
+    if (token) {
+      // 有token，尝试加载用户信息
+      try {
+        const currentUser = await fetchUserInfo();
+        console.log('[getInitialState] 用户信息加载成功:', !!currentUser);
+        
+        // 如果加载成功，返回用户信息
+        if (currentUser) {
           return {
             fetchUserInfo,
             currentUser,
             settings: defaultSettings as Partial<LayoutSettings>,
           };
-        } catch (error) {
-          // 加载失败，也允许访问
-          return {
-            fetchUserInfo,
-            settings: defaultSettings as Partial<LayoutSettings>,
-          };
         }
-      } else {
-        // 没有token，直接允许访问
+        
+        // 如果加载失败（返回 undefined），清除无效 token
+        console.log('[getInitialState] token可能已失效，清除token');
+        localStorage.removeItem(TOKEN_KEY);
+        return {
+          fetchUserInfo,
+          settings: defaultSettings as Partial<LayoutSettings>,
+        };
+      } catch (error) {
+        console.log('[getInitialState] 用户信息加载失败，清除无效token');
+        // 加载失败，清除可能无效的 token
+        localStorage.removeItem(TOKEN_KEY);
         return {
           fetchUserInfo,
           settings: defaultSettings as Partial<LayoutSettings>,
         };
       }
     } else {
-      // 非公开页面，必须登录
-      const currentUser = await fetchUserInfo();
+      console.log('[getInitialState] 无token，允许访问公开页面');
+      // 没有token，直接允许访问
       return {
         fetchUserInfo,
-        currentUser,
         settings: defaultSettings as Partial<LayoutSettings>,
       };
     }
   }
+
+  // 非公开页面，必须登录
+  console.log('[getInitialState] 非公开页面，需要登录');
+  const currentUser = await fetchUserInfo();
+  
+  // 如果获取用户信息失败，跳转到登录页
+  if (!currentUser) {
+    console.log('[getInitialState] 未登录，跳转到登录页');
+    history.push(loginPath);
+  }
+  
   return {
     fetchUserInfo,
+    currentUser,
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
@@ -143,11 +176,13 @@ export const layout: RunTimeLayoutConfig = ({
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
+      
       // 为测试路由添加白名单，允许未登录访问
       const testRoutes = [
         loginPath,
         '/user/register',
         '/user/register-result',
+        '/user/forgetpsw',
         '/test-page',
         '/audio-recorder-test',
         '/audio',
@@ -160,11 +195,22 @@ export const layout: RunTimeLayoutConfig = ({
       // 合并所有允许未登录访问的路由
       const allowedRoutes = [...testRoutes, ...publicRoutes];
       
+      console.log('[路由守卫] 当前路径:', location.pathname);
+      console.log('[路由守卫] 是否登录:', !!initialState?.currentUser);
+      console.log('[路由守卫] 是否在白名单中:', allowedRoutes.includes(location.pathname));
+      
+      // 特殊处理：如果是根路径 '/'，不进行任何拦截，让路由配置的 redirect 生效
+      if (location.pathname === '/') {
+        console.log('[路由守卫] 根路径，跳过拦截');
+        return;
+      }
+      
       // 如果没有登录且路径不在白名单中，重定向到 login
       if (
         !initialState?.currentUser &&
         !allowedRoutes.includes(location.pathname)
       ) {
+        console.log('[路由守卫] 重定向到登录页');
         history.push(loginPath);
       }
     },
