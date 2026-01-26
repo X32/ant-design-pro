@@ -228,7 +228,12 @@ export default [
     component: '@/components/fireworkAnimation/demo',
     layout: false,  // 不显示侧边栏，全屏演示
   },
-  
+   {
+    path: '/demo/loginmodel',
+    name: 'login-demo',
+    component: '@/components/LoginModal/demo',
+    layout: false,  // 不显示侧边栏，全屏演示
+  }, 
   // ========== 口语练习页面（普通用户，不显示侧边栏）==========
   {
     name: 'spoken-practice',

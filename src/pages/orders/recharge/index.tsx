@@ -198,7 +198,7 @@ const RechargePage: React.FC = () => {
 
       if (response.success && response.data) {
         const order = response.data;
-        modal.success({
+        modal.confirm({
           title: '订单创建成功！',
           content: (
             <div>
@@ -210,7 +210,8 @@ const RechargePage: React.FC = () => {
               <p>支付方式：{paymentMethod === 'alipay' ? '支付宝支付' : '模拟支付'}</p>
             </div>
           ),
-          okText: '去支付',
+          okText: '立即支付',
+          cancelText: '稍后支付',
           onOk: () => {
             // 根据支付方式调用不同的支付方法
             if (paymentMethod === 'alipay') {
@@ -218,6 +219,9 @@ const RechargePage: React.FC = () => {
             } else {
               handlePayment(order.order_no, order);
             }
+          },
+          onCancel: () => {
+            message.info('订单已创建，您可以稍后在订单列表中继续支付');
           },
         });
       } else {

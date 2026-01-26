@@ -36,12 +36,12 @@ class WebSocketService {
       // this.url = 'ws://localhost:9001/ws';
       this.url = 'ws://localhost:9001/ws';
       // this.url = 'ws://192.168.4.30:9001/ws'; // 局域网调试
-      // this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
+      this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
     } else {
       // 生产环境或开发环境 HTTPS - 通过 Nginx 代理
       // Nginx 会将请求转发到后端的 ws://localhost:9001/ws
       this.url = `${protocol}//${host}/api/ws`;
-      // this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
+      this.url = `wss://ws.qtoplay.com/ws`; // 通过 Nginx 代理
     }
     
     

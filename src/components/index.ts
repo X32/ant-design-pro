@@ -15,6 +15,17 @@ import UserAvatar from './UserAvatar';
  */
 import CoinDropAnimation from './CoinDropAnimation';
 import FireworkAnimation from './fireworkAnimation';
+import LoginModal from './LoginModal';
 
-export { AvatarDropdown, AvatarName, Footer, Question, SelectLang, UserAvatar, CoinDropAnimation, FireworkAnimation };
-export { AvatarDropdown, AvatarName, Footer, Question, SelectLang, UserAvatar, CoinDropAnimation, FireworkAnimation };
+export { 
+  AvatarDropdown, 
+  AvatarName, 
+  Footer, 
+  Question, 
+  SelectLang, 
+  UserAvatar, 
+  CoinDropAnimation, 
+  FireworkAnimation,
+  LoginModal
+};
+

@@ -1,15 +1,34 @@
 import { history, useModel } from '@umijs/max';
 import { Button } from 'antd';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import LoginModal from '@/components/LoginModal';
 import './index.less';
+import logoIcon from '@/img/icon_200.png';
 
 const HomePage: React.FC = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const isLoggedIn = !!currentUser;
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
+
+  // 检测URL中是否有微信登录的code参数
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    // 如果URL中有code参数且用户未登录，打开登录弹框处理微信登录
+    if (code && !isLoggedIn) {
+      setLoginModalVisible(true);
+    }
+  }, [isLoggedIn]);
 
   const handleLogin = () => {
-    history.push('/user/login');
+    setLoginModalVisible(true);
+  };
+
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+    // 登录成功后可以跳转或刷新
   };
 
   const handleStart = () => {
@@ -29,7 +48,10 @@ const HomePage: React.FC = () => {
       {/* 导航栏 */}
       <nav className="navbar">
         <div className="nav-container">
-          <div className="logo">🎤 SpeakCube AI 口语练习</div>
+          <div className="logo">
+            <img src={logoIcon} alt="SpeakCube Logo" className="logo-icon" />
+            <span className="logo-text">SpeakCube AI 口语练习</span>
+          </div>
           <ul className="nav-links">
             <li>
               <a href="#features">特性</a>
@@ -224,6 +246,13 @@ const HomePage: React.FC = () => {
           </p>
         </div>
       </footer>
+
+      {/* 登录弹框 */}
+      <LoginModal
+        visible={loginModalVisible}
+        onCancel={() => setLoginModalVisible(false)}
+        onSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

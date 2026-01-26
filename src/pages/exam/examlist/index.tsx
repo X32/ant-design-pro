@@ -328,7 +328,15 @@ const ExamPaperList: React.FC = () => {
   };
 
   /**
-   * 获取分类名称
+   * 获取考试分类名称
+   */
+  const getExamCategoryName = (categoryId: number): string => {
+    const category = examCategories.find(c => c.id === categoryId);
+    return category ? category.name : '-';
+  };
+
+  /**
+   * 获取分类名称（保留，用于其他地方）
    */
   const getCategoryName = (categoryId: number): string => {
     const category = getLevel1Categories(categories).find(c => c.id === categoryId);
@@ -361,12 +369,21 @@ const ExamPaperList: React.FC = () => {
       render: (score: number) => <span className="score">{score}分</span>,
     },
     {
+      title: '考试分类',
+      dataIndex: 'exam_category_id',
+      key: 'exam_category_id',
+      width: 120,
+      render: (categoryId: number) => (
+        categoryId ? <Tag color="blue">{getExamCategoryName(categoryId)}</Tag> : '-'
+      ),
+    },
+    {
       title: '适用分类',
       dataIndex: 'apply_category_id',
       key: 'apply_category_id',
       width: 120,
       render: (categoryId: number) => (
-        categoryId ? <Tag color="blue">{getCategoryName(categoryId)}</Tag> : '-'
+        categoryId ? <Tag color="green">{getCategoryName(categoryId)}</Tag> : '-'
       ),
     },
     {
@@ -615,6 +632,12 @@ const ExamPaperList: React.FC = () => {
                 <div className="detail-item">
                   <span className="label">总分：</span>
                   <span className="value">{detailPaper.total_score}分</span>
+                </div>
+                <div className="detail-item">
+                  <span className="label">考试分类：</span>
+                  <span className="value">
+                    {(detailPaper as any).exam_category_id ? getExamCategoryName((detailPaper as any).exam_category_id) : '-'}
+                  </span>
                 </div>
                 <div className="detail-item">
                   <span className="label">适用分类：</span>

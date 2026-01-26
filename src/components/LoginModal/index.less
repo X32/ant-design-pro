@@ -1,0 +1,296 @@
+/* 登录弹框样式 */
+
+.login-modal {
+  .ant-modal-content {
+    padding: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .ant-modal-body {
+    padding: 0;
+  }
+
+  .ant-modal-close {
+    top: 16px;
+    right: 16px;
+    color: #666;
+
+    &:hover {
+      color: #333;
+    }
+  }
+}
+
+.login-modal-content {
+  display: flex;
+  min-height: 500px;
+}
+
+/* 左侧品牌区域 */
+.login-modal-left {
+  flex: 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 48px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 70%
+    );
+    animation: rotate 20s linear infinite;
+  }
+
+  .brand-section {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .brand-logo {
+    margin-bottom: 24px;
+
+    img {
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+  }
+
+  .brand-title {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .brand-slogan {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .brand-features {
+    text-align: left;
+    margin-top: 40px;
+
+    .feature-item {
+      font-size: 16px;
+      margin-bottom: 16px;
+      padding-left: 8px;
+      color: rgba(255, 255, 255, 0.95);
+      transition: transform 0.3s;
+
+      &:hover {
+        transform: translateX(8px);
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 右侧登录区域 */
+.login-modal-right {
+  flex: 1;
+  padding: 48px 40px 32px;
+  background: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  .switch-button-container {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+
+    .switch-button {
+      color: #1890ff;
+      font-size: 14px;
+
+      &:hover {
+        color: #40a9ff;
+        background: rgba(24, 144, 255, 0.05);
+      }
+    }
+  }
+
+  .login-form-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .login-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 32px;
+    text-align: center;
+  }
+}
+
+/* 微信登录样式 */
+.wechat-login {
+  .qrcode-container {
+    text-align: center;
+    padding: 20px 0;
+
+    .wechat-qrcode-wrapper {
+      display: inline-block;
+      min-height: 300px;
+      
+      // 微信SDK会自动生成iframe，这里调整样式
+      iframe {
+        width: 300px !important;
+        height: 400px !important;
+        border: none !important;
+      }
+    }
+
+    .qrcode-desc {
+      font-size: 14px;
+      color: #999;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+  }
+}
+
+/* 手机号登录样式 */
+.mobile-login {
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+
+  .ant-input-affix-wrapper,
+  .ant-input {
+    height: 48px;
+    border-radius: 8px;
+  }
+
+  .login-tips {
+    text-align: center;
+    margin-top: -8px;
+  }
+}
+
+/* 其他登录方式 */
+.other-login-methods {
+  text-align: center;
+
+  .other-login-button {
+    color: #1890ff;
+    font-size: 14px;
+
+    &:hover {
+      color: #40a9ff;
+      background: rgba(24, 144, 255, 0.05);
+    }
+  }
+}
+
+/* 底部协议 */
+.agreement-section {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+
+  .agreement-text {
+    font-size: 12px;
+    color: #999;
+
+    .agreement-link {
+      color: #1890ff;
+      cursor: pointer;
+      margin: 0 4px;
+
+      &:hover {
+        color: #40a9ff;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .login-modal {
+    .ant-modal {
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+
+    .ant-modal-content {
+      border-radius: 0;
+    }
+  }
+
+  .login-modal-content {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .login-modal-left {
+    min-height: 200px;
+    padding: 32px 24px;
+
+    .brand-title {
+      font-size: 24px;
+    }
+
+    .brand-slogan {
+      font-size: 14px;
+    }
+
+    .brand-features {
+      display: none;
+    }
+  }
+
+  .login-modal-right {
+    padding: 32px 24px;
+
+    .login-title {
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+  }
+
+  .wechat-login {
+    .qrcode-container {
+      .qrcode-placeholder {
+        .qrcode-image img {
+          width: 160px;
+          height: 160px;
+        }
+      }
+    }
+  }
+}
