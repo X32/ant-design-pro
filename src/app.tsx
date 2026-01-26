@@ -69,6 +69,7 @@ export async function getInitialState(): Promise<{
   // 为测试路由添加白名单，允许未登录访问
   const testRoutes = [
     loginPath,
+    '/user/admin/login',      // 后台管理员登录页
     '/user/register',
     '/user/register-result',
     '/user/forgetpsw',
@@ -79,7 +80,16 @@ export async function getInitialState(): Promise<{
   ];
 
   // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
+  // 注意：使用 startsWith 匹配，支持带斜杠和不带斜杠的路径
   const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/'];
+  
+  // 检查是否为公开路由（支持末尾斜杠）
+  const isPublicRoute = (pathname: string) => {
+    return publicRoutes.some(route => {
+      if (route === '/') return pathname === '/';
+      return pathname === route || pathname === route + '/' || pathname.startsWith(route + '/');
+    });
+  };
 
   // 如果是测试路由或登录相关页面，直接返回不加载用户信息
   if (testRoutes.includes(location.pathname)) {
@@ -90,10 +100,11 @@ export async function getInitialState(): Promise<{
     };
   }
 
-  // 如果是公开页面
-  if (publicRoutes.includes(location.pathname)) {
+  // 如果是公开页面（支持末尾斜杠）
+  if (isPublicRoute(location.pathname)) {
     const token = localStorage.getItem(TOKEN_KEY);
     console.log('[getInitialState] 公开页面，token存在:', !!token);
+    console.log('[getInitialState] 公开页面路径:', location.pathname);
     
     if (token) {
       // 有token，尝试加载用户信息
@@ -110,16 +121,16 @@ export async function getInitialState(): Promise<{
           };
         }
         
-        // 如果加载失败（返回 undefined），清除无效 token
-        console.log('[getInitialState] token可能已失效，清除token');
+        // 如果加载失败（返回 undefined），清除无效 token，但仍允许访问公开页面
+        console.log('[getInitialState] token可能已失效，清除token，但允许访问公开页面');
         localStorage.removeItem(TOKEN_KEY);
         return {
           fetchUserInfo,
           settings: defaultSettings as Partial<LayoutSettings>,
         };
       } catch (error) {
-        console.log('[getInitialState] 用户信息加载失败，清除无效token');
-        // 加载失败，清除可能无效的 token
+        console.log('[getInitialState] 用户信息加载失败，清除无效token，但允许访问公开页面');
+        // 加载失败，清除可能无效的 token，但仍允许访问公开页面
         localStorage.removeItem(TOKEN_KEY);
         return {
           fetchUserInfo,
@@ -128,7 +139,7 @@ export async function getInitialState(): Promise<{
       }
     } else {
       console.log('[getInitialState] 无token，允许访问公开页面');
-      // 没有token，直接允许访问
+      // 没有token，直接允许访问公开页面
       return {
         fetchUserInfo,
         settings: defaultSettings as Partial<LayoutSettings>,
@@ -180,6 +191,7 @@ export const layout: RunTimeLayoutConfig = ({
       // 为测试路由添加白名单，允许未登录访问
       const testRoutes = [
         loginPath,
+        '/user/admin/login',      // 后台管理员登录页
         '/user/register',
         '/user/register-result',
         '/user/forgetpsw',
@@ -189,19 +201,33 @@ export const layout: RunTimeLayoutConfig = ({
         '/audio-recorder',
       ];
       
-      // 公开页面：允许匿名访问
+      // 公开页面：允许匿名访问（必须与 getInitialState 中的 publicRoutes 保持一致）
       const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/'];
+      
+      // 检查是否为公开路由（支持末尾斜杠）
+      const isPublicRoute = (pathname: string) => {
+        return publicRoutes.some(route => {
+          if (route === '/') return pathname === '/';
+          return pathname === route || pathname === route + '/' || pathname.startsWith(route + '/');
+        });
+      };
       
       // 合并所有允许未登录访问的路由
       const allowedRoutes = [...testRoutes, ...publicRoutes];
       
       console.log('[路由守卫] 当前路径:', location.pathname);
       console.log('[路由守卫] 是否登录:', !!initialState?.currentUser);
-      console.log('[路由守卫] 是否在白名单中:', allowedRoutes.includes(location.pathname));
+      console.log('[路由守卫] 是否公开路由:', isPublicRoute(location.pathname));
       
       // 特殊处理：如果是根路径 '/'，不进行任何拦截，让路由配置的 redirect 生效
       if (location.pathname === '/') {
         console.log('[路由守卫] 根路径，跳过拦截');
+        return;
+      }
+      
+      // 如果是公开页面，无论是否登录都允许访问（支持末尾斜杠）
+      if (isPublicRoute(location.pathname)) {
+        console.log('[路由守卫] 公开页面，允许访问');
         return;
       }
       
@@ -210,7 +236,7 @@ export const layout: RunTimeLayoutConfig = ({
         !initialState?.currentUser &&
         !allowedRoutes.includes(location.pathname)
       ) {
-        console.log('[路由守卫] 重定向到登录页');
+        console.log('[路由守卫] 需要登录，重定向到登录页');
         history.push(loginPath);
       }
     },

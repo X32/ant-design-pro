@@ -154,7 +154,6 @@ export default {
   // },
   pre: {
     '/api/': {
-      // target: 'https://api.qtoplay.com',
       target: MAIN_API_TARGET,
       changeOrigin: true,
       pathRewrite: { '^': '' },

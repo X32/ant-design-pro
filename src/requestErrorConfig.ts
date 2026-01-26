@@ -98,8 +98,8 @@ export const errorConfig: RequestConfig = {
     (config: RequestOptions) => {
       // 如果 URL 是完整的 https://api.qtoplay.com 地址，转换为相对路径
       if (config.url && typeof config.url === 'string') {
-        config.url = config.url.replace('https://api.qtoplay.com', '');
-        config.url = config.url.replace('http://api.qtoplay.com', '');
+        // config.url = config.url.replace('https://api.qtoplay.com', '');
+        config.url = config.url.replace('http://localhost:9002', '');
       }
       return config;
     },

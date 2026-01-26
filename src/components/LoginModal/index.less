@@ -188,10 +188,83 @@
     margin-bottom: 20px;
   }
 
-  .ant-input-affix-wrapper,
-  .ant-input {
+  // 手机号输入框（带prefix icon）
+  .ant-input-affix-wrapper {
     height: 48px;
     border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 4px 11px;
+    
+    .ant-input {
+      height: 100%;
+      line-height: normal;
+    }
+    
+    .ant-input-prefix {
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      
+      .anticon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // 验证码输入框（带addonAfter）
+  .ant-input-group-wrapper {
+    .ant-input-wrapper {
+      display: flex;
+      align-items: stretch;
+      
+      .ant-input {
+        height: 48px;
+        border-radius: 8px 0 0 8px;
+        flex: 1;
+        line-height: normal;
+        padding: 4px 11px;
+      }
+      
+      .ant-input-group-addon {
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-left: none;
+        border-radius: 0 8px 8px 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        min-width: 100px;
+        
+        .ant-btn-link {
+          height: 100%;
+          padding: 0 12px;
+          color: #1890ff;
+          font-size: 14px;
+          border: none;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          &:hover:not(:disabled) {
+            color: #40a9ff;
+            background: rgba(24, 144, 255, 0.04);
+          }
+          
+          &:disabled {
+            color: rgba(0, 0, 0, 0.25);
+          }
+        }
+      }
+    }
+  }
+
+  // 登录按钮
+  .ant-btn-primary {
+    height: 48px;
+    border-radius: 8px;
+    font-size: 16px;
   }
 
   .login-tips {

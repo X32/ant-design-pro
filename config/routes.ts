@@ -22,6 +22,11 @@ export default [
         component: './user',
       },
       {
+        name: 'admin-login',
+        path: '/user/admin/login',
+        component: './user/admin/login',
+      },
+      {
         name: 'profile',
         path: '/user/profile',
         component: './user/profile',

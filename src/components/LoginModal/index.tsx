@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Button, Form, Input, message, Divider, Space } from 'antd';
-import { WechatOutlined, MobileOutlined, SwapOutlined, CloseOutlined } from '@ant-design/icons';
+import { Modal, Button, Form, Input, message, Alert } from 'antd';
+import { WechatOutlined, MobileOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
+import { flushSync } from 'react-dom';
 import { wechatLogin } from '@/services/ant-design-pro/login';
-import { TOKEN_KEY } from '@/config/apiConfig';
+import { sendSmsCode, smsLogin, setPassword } from '@/services/ant-design-pro/api';
+import { TOKEN_KEY, USER_ID_KEY } from '@/config/apiConfig';
 import WECHAT_CONFIG from '@/config/wechatConfig';
 import './index.less';
 
@@ -37,6 +39,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
   const qrContainerRef = useRef<HTMLDivElement>(null);
   const wxLoginInstanceRef = useRef<any>(null);
   const { initialState, setInitialState } = useModel('@@initialState');
+  
+  // 设置密码模态框状态
+  const [setPasswordModalVisible, setSetPasswordModalVisible] = useState(false);
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [passwordForm] = Form.useForm();
 
   // 处理微信登录回调（URL中的code参数）
   useEffect(() => {
@@ -200,7 +207,60 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
     form.resetFields();
   };
 
-  // 发送验证码
+  /**
+   * 处理登录成功后的逻辑
+   */
+  const handleLoginSuccess = (result: any, isAutoRegistered: boolean = false) => {
+    const { access_token, user } = result.data;
+    
+    // 保存token
+    if (access_token) {
+      localStorage.setItem(TOKEN_KEY, access_token);
+    }
+    
+    // 保存用户ID
+    if (user && user.id) {
+      localStorage.setItem(USER_ID_KEY, user.id.toString());
+    }
+    
+    // 更新用户信息到state
+    if (user) {
+      flushSync(() => {
+        setInitialState((s) => ({
+          ...s,
+          currentUser: {
+            ...user,
+            name: user.email?.split('@')[0] || 'User',
+            userid: user.id?.toString(),
+            access: user.is_superuser ? 'admin' : 'user',
+          },
+        }));
+      });
+    }
+    
+    // 如果是手机号自动注册，提示设置密码
+    if (isAutoRegistered) {
+      message.success('登录成功（首次登录已自动注册）');
+      setCurrentUserData(result.data);
+      setSetPasswordModalVisible(true);
+    } else {
+      const successMessage = result.message || '登录成功！';
+      message.success(successMessage);
+      
+      // 执行成功回调
+      onSuccess?.();
+      onCancel();
+      
+      // 刷新页面
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    }
+  };
+
+  /**
+   * 发送短信验证码
+   */
   const handleSendCode = async () => {
     try {
       const phone = form.getFieldValue('phone');
@@ -209,28 +269,117 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
         return;
       }
       
-      // TODO: 调用发送验证码接口
-      message.success('验证码已发送');
-      setCountdown(60);
-    } catch (error) {
-      message.error('验证码发送失败');
+      // 前端防刷：检查发送频率（5分钟内最多3次）
+      const SEND_HISTORY_KEY = 'sms_send_history';
+      const MAX_SENDS_PER_5MIN = 3;
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      
+      const history = JSON.parse(localStorage.getItem(SEND_HISTORY_KEY) || '[]');
+      const now = Date.now();
+      const recentSends = history.filter((time: number) => now - time < FIVE_MINUTES);
+      
+      if (recentSends.length >= MAX_SENDS_PER_5MIN) {
+        message.error('发送过于频繁，请5分钟后再试');
+        return;
+      }
+      
+      const result = await sendSmsCode({ phone_number: phone });
+      
+      if (result.success) {
+        // 记录本次发送时间
+        const newHistory = [...recentSends, now];
+        localStorage.setItem(SEND_HISTORY_KEY, JSON.stringify(newHistory));
+        
+        message.success(result.message || '验证码发送成功');
+        // 固定60秒倒计时
+        setCountdown(60);
+      } else {
+        message.error(result.message || '验证码发送失败');
+      }
+    } catch (error: any) {
+      message.error(error?.message || '验证码发送失败');
     }
   };
 
-  // 手机号登录
+  /**
+   * 手机号登录
+   */
   const handleMobileLogin = async (values: { phone: string; code: string }) => {
     setLoading(true);
     try {
-      // TODO: 调用手机号登录接口
-      console.log('手机号登录:', values);
-      message.success('登录成功');
-      onSuccess?.();
-      onCancel();
-    } catch (error) {
-      message.error('登录失败，请重试');
+      const result = await smsLogin({
+        phone_number: values.phone,
+        code: values.code,
+      });
+      
+      if (result.success && result.data) {
+        const isAutoRegistered = result.data.auto_registered || false;
+        handleLoginSuccess(result, isAutoRegistered);
+        return;
+      }
+      
+      const errorMessage = result.message || '登录失败，请检查验证码';
+      message.error(errorMessage);
+    } catch (error: any) {
+      const errorMessage = error?.message || '登录失败，请重试！';
+      console.error(error);
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * 处理设置密码
+   */
+  const handleSetPassword = async () => {
+    try {
+      const values = await passwordForm.validateFields();
+      
+      const result = await setPassword({
+        new_password: values.password,
+      });
+      
+      if (result.success) {
+        message.success('密码设置成功，下次可以使用用户名密码登录');
+        setSetPasswordModalVisible(false);
+        passwordForm.resetFields();
+        
+        // 执行成功回调
+        onSuccess?.();
+        onCancel();
+        
+        // 刷新页面
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        message.error(result.message || '密码设置失败');
+      }
+    } catch (error: any) {
+      if (error.errorFields) {
+        // 表单验证错误
+        return;
+      }
+      message.error(error?.message || '密码设置失败');
+    }
+  };
+
+  /**
+   * 跳过设置密码
+   */
+  const handleSkipSetPassword = () => {
+    setSetPasswordModalVisible(false);
+    passwordForm.resetFields();
+    
+    // 执行成功回调
+    onSuccess?.();
+    onCancel();
+    
+    // 刷新页面
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   // 跳转到用户协议页面
@@ -240,159 +389,214 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
   };
 
   return (
-    <Modal
-      open={visible}
-      onCancel={onCancel}
-      footer={null}
-      width={800}
-      closeIcon={null}
-      className="login-modal"
-      centered
-    >
-      <div className="login-modal-content">
-        {/* 左侧：品牌区域 */}
-        <div className="login-modal-left">
-          <div className="brand-section">
-            <div className="brand-logo">
-              <img src={require('../../img/icon_200.png')} alt="Logo" />
-            </div>
-            <h1 className="brand-title">AI 口语练习平台</h1>
-            <p className="brand-slogan">智能陪练，让口语更流利</p>
-            <div className="brand-features">
-              <div className="feature-item">✨ 24小时AI智能陪练</div>
-              <div className="feature-item">🎯 个性化学习方案</div>
-              <div className="feature-item">📊 实时反馈与纠正</div>
-              <div className="feature-item">🏆 快速提升口语能力</div>
-            </div>
-          </div>
-        </div>
-
-        {/* 右侧：登录区域 */}
-        <div className="login-modal-right">
-          {/* 右上角切换按钮 */}
-          <div className="switch-button-container">
-            <Button
-              type="text"
-              icon={loginType === 'wechat' ? <MobileOutlined /> : <WechatOutlined />}
-              onClick={switchLoginType}
-              className="switch-button"
-            >
-              {loginType === 'wechat' ? '手机号登录' : '微信扫码登录'}
-            </Button>
-          </div>
-
-          <div className="login-form-container">
-            <h2 className="login-title">
-              {loginType === 'wechat' ? '微信扫码登录' : '手机号登录'}
-            </h2>
-
-            {/* 微信扫码登录 */}
-            {loginType === 'wechat' && (
-              <div className="wechat-login">
-                <div className="qrcode-container">
-                  {/* 微信二维码容器 */}
-                  <div 
-                    id="wechat_qrcode_container" 
-                    ref={qrContainerRef}
-                    className="wechat-qrcode-wrapper"
-                  />
-                  <p className="qrcode-desc">
-                    打开微信扫一扫<br />
-                    快速登录或注册
-                  </p>
-                </div>
+    <>
+      <Modal
+        open={visible}
+        onCancel={onCancel}
+        footer={null}
+        width={800}
+        closeIcon={null}
+        className="login-modal"
+        centered
+      >
+        <div className="login-modal-content">
+          {/* 左侧：品牌区域 */}
+          <div className="login-modal-left">
+            <div className="brand-section">
+              <div className="brand-logo">
+                <img src={require('../../img/icon_200.png')} alt="Logo" />
               </div>
-            )}
+              <h1 className="brand-title">AI 口语练习平台</h1>
+              <p className="brand-slogan">智能陪练，让口语更流利</p>
+              <div className="brand-features">
+                <div className="feature-item">✨ 24小时AI智能陪练</div>
+                <div className="feature-item">🎯 个性化学习方案</div>
+                <div className="feature-item">📊 实时反馈与纠正</div>
+                <div className="feature-item">🏆 快速提升口语能力</div>
+              </div>
+            </div>
+          </div>
 
-            {/* 手机号登录 */}
-            {loginType === 'mobile' && (
-              <div className="mobile-login">
-                <Form
-                  form={form}
-                  onFinish={handleMobileLogin}
-                  layout="vertical"
-                  size="large"
-                >
-                  <Form.Item
-                    name="phone"
-                    rules={[
-                      { required: true, message: '请输入手机号' },
-                      { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' },
-                    ]}
-                  >
-                    <Input
-                      prefix={<MobileOutlined />}
-                      placeholder="请输入手机号"
-                      maxLength={11}
+          {/* 右侧：登录区域 */}
+          <div className="login-modal-right">
+            {/* 右上角切换按钮 */}
+            <div className="switch-button-container">
+              <Button
+                type="text"
+                icon={loginType === 'wechat' ? <MobileOutlined /> : <WechatOutlined />}
+                onClick={switchLoginType}
+                className="switch-button"
+              >
+                {loginType === 'wechat' ? '手机号登录' : '微信扫码登录'}
+              </Button>
+            </div>
+
+            <div className="login-form-container">
+              <h2 className="login-title">
+                {loginType === 'wechat' ? '微信扫码登录' : '手机号登录'}
+              </h2>
+
+              {/* 微信扫码登录 */}
+              {loginType === 'wechat' && (
+                <div className="wechat-login">
+                  <div className="qrcode-container">
+                    {/* 微信二维码容器 */}
+                    <div 
+                      id="wechat_qrcode_container" 
+                      ref={qrContainerRef}
+                      className="wechat-qrcode-wrapper"
                     />
-                  </Form.Item>
+                    <p className="qrcode-desc">
+                      打开微信扫一扫<br />
+                      快速登录或注册
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                  <Form.Item
-                    name="code"
-                    rules={[
-                      { required: true, message: '请输入验证码' },
-                      { len: 6, message: '验证码为6位数字' },
-                    ]}
+              {/* 手机号登录 */}
+              {loginType === 'mobile' && (
+                <div className="mobile-login">
+                  <Form
+                    form={form}
+                    onFinish={handleMobileLogin}
+                    layout="vertical"
+                    size="large"
                   >
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <Form.Item
+                      name="phone"
+                      rules={[
+                        { required: true, message: '请输入手机号' },
+                        { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号' },
+                      ]}
+                    >
+                      <Input
+                        prefix={<MobileOutlined />}
+                        placeholder="请输入手机号"
+                        maxLength={11}
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="code"
+                      rules={[
+                        { required: true, message: '请输入验证码' },
+                        { len: 6, message: '验证码为6位数字' },
+                      ]}
+                    >
                       <Input
                         placeholder="请输入验证码"
                         maxLength={6}
-                        style={{ flex: 1 }}
+                        addonAfter={
+                          <Button
+                            type="link"
+                            onClick={handleSendCode}
+                            disabled={countdown > 0}
+                            style={{ padding: '0 16px', height: '100%' }}
+                          >
+                            {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                          </Button>
+                        }
                       />
+                    </Form.Item>
+
+                    <Form.Item>
                       <Button
-                        onClick={handleSendCode}
-                        disabled={countdown > 0}
-                        style={{ width: 120 }}
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        block
+                        size="large"
+                        style={{ height: 48 }}
                       >
-                        {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                        登录
                       </Button>
+                    </Form.Item>
+
+                    <div className="login-tips">
+                      <span style={{ color: '#999', fontSize: 12 }}>
+                        首次使用手机号登录将自动注册账号
+                      </span>
                     </div>
-                  </Form.Item>
+                  </Form>
+                </div>
+              )}
+            </div>
 
-                  <Form.Item>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={loading}
-                      block
-                      size="large"
-                      style={{ height: 48 }}
-                    >
-                      登录
-                    </Button>
-                  </Form.Item>
-
-                  <div className="login-tips">
-                    <span style={{ color: '#999', fontSize: 12 }}>
-                      首次使用手机号登录将自动注册账号
-                    </span>
-                  </div>
-                </Form>
-              </div>
-            )}
-
-          
-
-           
-          </div>
-
-          {/* 底部协议 */}
-          <div className="agreement-section">
-            <span className="agreement-text">
-              登录即表示同意
-              <a onClick={() => handleViewAgreement('terms')} className="agreement-link">
-                《用户协议》
-              </a>
-              和
-              <a onClick={() => handleViewAgreement('privacy')} className="agreement-link">
-                《隐私政策》
-              </a>
-            </span>
+            {/* 底部协议 */}
+            <div className="agreement-section">
+              <span className="agreement-text">
+                登录即表示同意
+                <a onClick={() => handleViewAgreement('terms')} className="agreement-link">
+                  《用户协议》
+                </a>
+                和
+                <a onClick={() => handleViewAgreement('privacy')} className="agreement-link">
+                  《隐私政策》
+                </a>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {/* 设置密码模态框 */}
+      <Modal
+        title="设置登录密码"
+        open={setPasswordModalVisible}
+        onOk={handleSetPassword}
+        onCancel={handleSkipSetPassword}
+        okText="设置密码"
+        cancelText="跳过"
+        width={500}
+        maskClosable={false}
+      >
+        <div style={{ marginBottom: 24 }}>
+          <Alert
+            message="欢迎使用！"
+            description="您是首次使用手机号登录，建议设置一个密码，以便下次使用邮箱密码登录。也可以选择跳过，稍后在个人中心设置。"
+            type="info"
+            showIcon
+          />
+        </div>
+        <Form form={passwordForm} layout="vertical">
+          <Form.Item
+            label="设置密码"
+            name="password"
+            rules={[
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码至少6位' },
+              { max: 20, message: '密码最多20位' },
+            ]}
+          >
+            <Input.Password placeholder="请输入密码（至少6位）" size="large" />
+          </Form.Item>
+          
+          <Form.Item
+            label="确认密码"
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: '请确认密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入密码" size="large" />
+          </Form.Item>
+          
+          <div style={{ color: '#666', fontSize: 12, marginTop: -8 }}>
+            提示：设置密码后，您可以使用用户名和密码登录,用户名默认为手机号。
+          </div>
+        </Form>
+      </Modal>
+    </>
   );
 };
 

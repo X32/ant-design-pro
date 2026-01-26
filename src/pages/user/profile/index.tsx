@@ -18,6 +18,7 @@ import {
   updateUserPassword,
   updateUserProfile,
 } from '@/services/ant-design-pro/api';
+import { TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig';
 import './index.less';
 
 const UserProfile: React.FC = () => {
@@ -33,6 +34,28 @@ const UserProfile: React.FC = () => {
 
   // 使用钱包 Hook
   const { balance, loading: walletLoading, fetchBalance } = useWallet();
+
+  /**
+   * 截断过长文本，保留首尾字符
+   * @param text 原始文本
+   * @param maxLength 最大长度（默认20）
+   * @param headLength 保留开头字符数（默认8）
+   * @param tailLength 保留结尾字符数（默认6）
+   * @returns 处理后的文本
+   */
+  const truncateMiddle = (
+    text: string | undefined,
+    maxLength: number = 20,
+    headLength: number = 8,
+    tailLength: number = 6,
+  ): string => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    
+    const head = text.slice(0, headLength);
+    const tail = text.slice(-tailLength);
+    return `${head}...${tail}`;
+  };
 
   useEffect(() => {
     if (user) {
@@ -65,9 +88,36 @@ const UserProfile: React.FC = () => {
 
   // 退出登录
   const handleLogout = () => {
-    localStorage.clear();
+    // 清除所有认证相关的 localStorage 数据
+    const keysToRemove = [
+      TOKEN_KEY,              // access_token
+      REFRESH_TOKEN_KEY,      // refresh_token
+      USER_ID_KEY,            // user_id
+      CONVERSATION_ID_KEY,    // current_conversation_id
+      'wechat_state',         // 微信登录状态（如果有）
+      'wechat_openid',        // 微信 openid（如果有）
+      'wechat_unionid',       // 微信 unionid（如果有）
+    ];
+    
+    // 逐个删除指定的 key
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // 清除全局用户状态
+    if (setInitialState) {
+      setInitialState((s) => ({
+        ...s,
+        currentUser: undefined,
+      }));
+    }
+    
     message.success('已退出登录');
-    history.push('/user/login');
+    
+    // 跳转到登录页
+    setTimeout(() => {
+      history.push('/user/login');
+    }, 300);
   };
 
   // 修改用户名
@@ -153,15 +203,17 @@ const UserProfile: React.FC = () => {
             icon={<UserOutlined />}
             style={{ backgroundColor: '#1890ff' }}
           />
-          <h2 className="user-name">
-            {user?.name || user?.email?.split('@')[0]}
+          <h2 className="user-name" title={user?.name || user?.email?.split('@')[0]}>
+            {truncateMiddle(user?.name || user?.email?.split('@')[0], 20, 8, 6)}
           </h2>
           {user?.email && user.email.includes('@sms.local') ? (
-            <p className="user-phone">
-              <PhoneOutlined /> {user.email.split('@')[0]}
+            <p className="user-phone" title={user.email.split('@')[0]}>
+              <PhoneOutlined /> {truncateMiddle(user.email.split('@')[0], 18, 7, 5)}
             </p>
           ) : (
-            <p className="user-email">{user?.email}</p>
+            <p className="user-email" title={user?.email}>
+              {truncateMiddle(user?.email, 24, 10, 8)}
+            </p>
           )}
           <p className="user-role">
             {user?.access === 'admin' ? '管理员' : '普通用户'}
