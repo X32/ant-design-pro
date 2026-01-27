@@ -44,6 +44,16 @@ declare namespace API {
     currentAuthority?: string;
   };
 
+  type LogoutResult = {
+    success: boolean;
+    message: string;
+    data: {
+      logout_time: string;
+      user_id: number;
+      note: string;
+    };
+  };
+
   type PageParams = {
     current?: number;
     pageSize?: number;

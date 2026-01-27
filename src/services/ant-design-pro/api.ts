@@ -1,7 +1,7 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from '@umijs/max';
-import { API_ENDPOINTS, TOKEN_KEY } from '@/config/apiConfig';
+import { API_ENDPOINTS, API_BASE_URL, TOKEN_KEY } from '@/config/apiConfig';
 
 // 创建自定义请求实例以支持FormData
 const formDataRequest = async (url: string, body: FormData, options?: { [key: string]: any }) => {
@@ -191,9 +191,9 @@ export async function changeUsername(
   });
 }
 
-/** 退出登录接口 POST /api/login/outLogin */
+/** 退出登录接口 POST /api/auth/logout */
 export async function outLogin(options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/login/outLogin', {
+  return request<API.LogoutResult>(`${API_BASE_URL}/api/auth/logout`, {
     method: 'POST',
     ...(options || {}),
   });

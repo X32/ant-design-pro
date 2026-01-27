@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Dropdown, Space } from 'antd';
+import { Avatar, Dropdown, Space, App } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   UserOutlined,
@@ -9,9 +9,7 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
-import { flushSync } from 'react-dom';
-import { outLogin } from '@/services/ant-design-pro/api';
-import { TOKEN_KEY } from '@/config/apiConfig';
+import { TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig';
 import './index.less';
 
 export interface UserAvatarProps {
@@ -41,38 +39,45 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   menuItems,
   onMenuClick,
 }) => {
+  const { message } = App.useApp();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
 
   /**
    * 退出登录
    */
-  const handleLogout = async () => {
-    try {
-      // 调用后端退出接口
-      await outLogin();
-      
-      // 清除本地存储的token
-      localStorage.removeItem(TOKEN_KEY);
-      
-      // 清空用户信息
-      flushSync(() => {
-        setInitialState((s) => ({ ...s, currentUser: undefined }));
-      });
-      
-      // 跳转到登录页
-      const { search, pathname } = window.location;
-      const searchParams = new URLSearchParams({
-        redirect: pathname + search,
-      });
-      
-      history.replace({
-        pathname: '/user/login',
-        search: searchParams.toString(),
-      });
-    } catch (error) {
-      console.error('退出登录失败:', error);
+  const handleLogout = () => {
+    // 清除所有认证相关的 localStorage 数据
+    const keysToRemove = [
+      TOKEN_KEY,              // access_token
+      REFRESH_TOKEN_KEY,      // refresh_token
+      USER_ID_KEY,            // user_id
+      CONVERSATION_ID_KEY,    // current_conversation_id
+      'wechat_state',         // 微信登录状态（如果有）
+      'wechat_openid',        // 微信 openid（如果有）
+      'wechat_unionid',       // 微信 unionid（如果有）
+      'sms_send_history',     // 短信发送历史
+    ];
+    
+    // 逐个删除指定的 key
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // 清除全局用户状态
+    if (setInitialState) {
+      setInitialState((s) => ({
+        ...s,
+        currentUser: undefined,
+      }));
     }
+    
+    message.success('已退出登录');
+    
+    // 跳转到登录页
+    setTimeout(() => {
+      history.push('/user/login');
+    }, 300);
   };
 
   /**
@@ -151,6 +156,15 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   // 获取用户名首字母作为头像
   const avatarText = currentUser.name?.charAt(0).toUpperCase() || 'U';
 
+  // 截断用户名：最多显示5个字符
+  const truncateName = (name: string | undefined, maxLength: number = 5): string => {
+    if (!name) return '';
+    if (name.length <= maxLength) return name;
+    return name.slice(0, maxLength) + '...';
+  };
+
+  const displayName = truncateName(currentUser.name);
+
   // 用户头像内容
   const avatarContent = (
     <Space className={`user-avatar-container ${className}`} size={8}>
@@ -162,7 +176,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         {avatarText}
       </Avatar>
       {showName && (
-        <span className="user-name">{currentUser.name}</span>
+        <span className="user-name" title={currentUser.name}>
+          {displayName}
+        </span>
       )}
     </Space>
   );

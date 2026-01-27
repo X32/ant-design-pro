@@ -44,6 +44,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
   const [setPasswordModalVisible, setSetPasswordModalVisible] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<any>(null);
   const [passwordForm] = Form.useForm();
+  
+  // 标记微信登录是否正在处理中
+  const isProcessingWechatLogin = useRef(false);
 
   // 处理微信登录回调（URL中的code参数）
   useEffect(() => {
@@ -51,7 +54,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
-    if (code && visible) {
+    // 只在弹窗显示且有code参数且未处理时才执行
+    if (code && visible && !isProcessingWechatLogin.current) {
+      isProcessingWechatLogin.current = true;
       handleWechatCallback(code, state);
     }
   }, [visible]);
@@ -71,13 +76,26 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
         // 保存 token
         localStorage.setItem(TOKEN_KEY, access_token);
         
+        // 保存用户ID
+        if (user && user.id) {
+          localStorage.setItem(USER_ID_KEY, user.id.toString());
+        }
+        
         // 更新全局用户状态
         if (setInitialState) {
           await setInitialState((s) => ({
             ...s,
-            currentUser: user,
+            currentUser: {
+              ...user,
+              name: user.email?.split('@')[0] || 'User',
+              userid: user.id?.toString(),
+              access: user.is_superuser ? 'admin' : 'user',
+            },
           }));
         }
+        
+        // 清除URL参数
+        window.history.replaceState({}, '', window.location.pathname);
         
         // 显示成功消息
         if (is_new_user && auto_registered) {
@@ -86,19 +104,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
           message.success('登录成功！');
         }
         
-        // 清除URL参数
-        window.history.replaceState({}, '', window.location.pathname);
-        
-        // 执行成功回调
+        // 执行成功回调并关闭弹窗
         onSuccess?.();
         onCancel();
         
-        // 刷新页面或跳转
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        // 重置处理标记
+        isProcessingWechatLogin.current = false;
       } else {
         message.error(response.message || '微信登录失败，请重试');
+        isProcessingWechatLogin.current = false;
       }
     } catch (error: any) {
       console.error('微信登录失败:', error);
@@ -107,6 +121,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
       
       // 清除URL参数
       window.history.replaceState({}, '', window.location.pathname);
+      
+      // 重置处理标记
+      isProcessingWechatLogin.current = false;
     } finally {
       setLoading(false);
     }
@@ -247,14 +264,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
       const successMessage = result.message || '登录成功！';
       message.success(successMessage);
       
-      // 执行成功回调
+      // 执行成功回调并关闭弹窗
       onSuccess?.();
       onCancel();
-      
-      // 刷新页面
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     }
   };
 
@@ -345,14 +357,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
         setSetPasswordModalVisible(false);
         passwordForm.resetFields();
         
-        // 执行成功回调
+        // 执行成功回调并关闭弹窗
         onSuccess?.();
         onCancel();
-        
-        // 刷新页面
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
       } else {
         message.error(result.message || '密码设置失败');
       }
@@ -372,14 +379,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
     setSetPasswordModalVisible(false);
     passwordForm.resetFields();
     
-    // 执行成功回调
+    // 执行成功回调并关闭弹窗
     onSuccess?.();
     onCancel();
-    
-    // 刷新页面
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   // 跳转到用户协议页面

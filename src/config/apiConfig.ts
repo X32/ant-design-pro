@@ -13,7 +13,7 @@ console.log('isDev:', isDev);
 // 开发环境：使用空字符串，通过 proxy.ts 代理到远程服务器
 // 生产环境：直接使用远程 API 地址
 // export const API_BASE_URL = isDev ? '' :  'http://localhost:9002';
-export const API_BASE_URL = isDev ? '' : 'http://api.qtoplay.com';
+export const API_BASE_URL = isDev ? '' : 'https://api.qtoplay.com';
 
 // 临时强制使用空字符串进行调试
 // export const API_BASE_URL = ''; // 强制走 proxy
