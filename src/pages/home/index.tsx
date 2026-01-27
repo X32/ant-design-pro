@@ -11,18 +11,9 @@ const HomePage: React.FC = () => {
   const isLoggedIn = !!currentUser;
   const [loginModalVisible, setLoginModalVisible] = useState(false);
 
-  // 检测URL中是否有微信登录的code参数
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    
-    // 如果URL中有code参数且用户未登录，打开登录弹框处理微信登录
-    if (code && !isLoggedIn) {
-      setLoginModalVisible(true);
-    }
-  }, [isLoggedIn]);
 
-  const handleLogin = () => {
+
+ const handleLogin = () => {
     setLoginModalVisible(true);
   };
 

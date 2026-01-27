@@ -15,8 +15,12 @@ export const WECHAT_CONFIG = {
   // 微信扫码后会重定向到此地址，并携带code参数
   getRedirectUri: () => {
     const origin = window.location.origin;
-    // 回调到首页，前端会自动处理URL中的code参数
-    return `${origin}/home`;
+    const currentPath = window.location.pathname;
+    
+    // 回调到当前页面，前端会自动处理URL中的code参数
+    // 注意：根路径 / 需要特殊处理，重定向到 /home
+    const redirectPath = currentPath === '/' ? '/home' : currentPath;
+    return `${origin}${redirectPath}`;
   },
   
   // 二维码样式：black 或 white

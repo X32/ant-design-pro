@@ -12,6 +12,7 @@ import { history, useModel } from '@umijs/max';
 import { App, Avatar, Button, Card, Form, Input, Spin, Statistic } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useWallet } from '@/hooks/useWallet';
+import LoginModal from '@/components/LoginModal';
 import {
   changeUsername,
   currentUser,
@@ -25,12 +26,14 @@ const UserProfile: React.FC = () => {
   const { message } = App.useApp();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser: user } = initialState || {};
+  const isLoggedIn = !!user;
 
   const [loading, setLoading] = useState(false);
   const [usernameLoading, setUsernameLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [usernameForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
 
   // 使用钱包 Hook
   const { balance, loading: walletLoading, fetchBalance } = useWallet();
@@ -65,10 +68,12 @@ const UserProfile: React.FC = () => {
     }
   }, [user, usernameForm]);
 
-  // 查询钱包余额
+  // 查询钱包余额（仅在已登录时）
   useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
+    if (isLoggedIn) {
+      fetchBalance();
+    }
+  }, [isLoggedIn, fetchBalance]);
 
   // 返回首页
   const handleBack = () => {
@@ -114,11 +119,73 @@ const UserProfile: React.FC = () => {
     
     message.success('已退出登录');
     
-    // 跳转到登录页
+    // 跳转到首页并打开登录弹框
     setTimeout(() => {
-      history.push('/user/login');
+      history.push('/home');
     }, 300);
   };
+
+  // 登录成功回调
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+    message.success('登录成功');
+  };
+
+  // 打开登录弹框
+  const handleOpenLogin = () => {
+    setLoginModalVisible(true);
+  };
+
+  // 如果未登录，显示提示页面
+  if (!isLoggedIn) {
+    return (
+      <div className="user-profile-container">
+        {/* 顶部导航 */}
+        <div className="profile-header">
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
+            size="large"
+          >
+            返回
+          </Button>
+        </div>
+
+        {/* 未登录提示 */}
+        <div className="profile-content" style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          minHeight: '60vh',
+          textAlign: 'center'
+        }}>
+          <UserOutlined style={{ fontSize: 80, color: '#d9d9d9', marginBottom: 24 }} />
+          <h2 style={{ fontSize: 24, color: '#262626', marginBottom: 16 }}>
+            请先登录
+          </h2>
+          <p style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 32 }}>
+            登录后可以查看和管理您的个人信息
+          </p>
+          <Button 
+            type="primary" 
+            size="large"
+            onClick={handleOpenLogin}
+          >
+            立即登录
+          </Button>
+        </div>
+
+        {/* 登录弹框 */}
+        <LoginModal
+          visible={loginModalVisible}
+          onCancel={() => setLoginModalVisible(false)}
+          onSuccess={handleLoginSuccess}
+        />
+      </div>
+    );
+  }
 
   // 修改用户名
   const handleUpdateUsername = async (values: any) => {
@@ -165,10 +232,19 @@ const UserProfile: React.FC = () => {
       if (response.success) {
         message.success('密码修改成功，请重新登录');
         passwordForm.resetFields();
-        // 跳转到登录页
+        // 清除认证信息并跳转到首页
         setTimeout(() => {
           localStorage.clear();
-          history.push('/user/login');
+          
+          // 清除全局用户状态
+          if (setInitialState) {
+            setInitialState((s) => ({
+              ...s,
+              currentUser: undefined,
+            }));
+          }
+          
+          history.push('/home');
         }, 1500);
       } else {
         message.error(response.message || '密码修改失败');
@@ -392,6 +468,13 @@ const UserProfile: React.FC = () => {
           </Card>
         </div>
       </div>
+      
+      {/* 登录弹框 */}
+      <LoginModal
+        visible={loginModalVisible}
+        onCancel={() => setLoginModalVisible(false)}
+        onSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

@@ -91,8 +91,18 @@ export async function getInitialState(): Promise<{
     });
   };
 
+  // 检查是否为测试路由（支持末尾斜杠）
+  const isTestRoute = (pathname: string) => {
+    // 移除末尾的斜杠进行比较
+    const normalizedPath = pathname.replace(/\/$/, '');
+    return testRoutes.some(route => {
+      const normalizedRoute = route.replace(/\/$/, '');
+      return normalizedPath === normalizedRoute;
+    });
+  };
+
   // 如果是测试路由或登录相关页面，直接返回不加载用户信息
-  if (testRoutes.includes(location.pathname)) {
+  if (isTestRoute(location.pathname)) {
     console.log('[getInitialState] 测试路由，不加载用户信息');
     return {
       fetchUserInfo,
@@ -212,12 +222,20 @@ export const layout: RunTimeLayoutConfig = ({
         });
       };
       
-      // 合并所有允许未登录访问的路由
-      const allowedRoutes = [...testRoutes, ...publicRoutes];
+      // 检查是否为测试路由（支持末尾斜杠）
+      const isTestRoute = (pathname: string) => {
+        // 移除末尾的斜杠进行比较
+        const normalizedPath = pathname.replace(/\/$/, '');
+        return testRoutes.some(route => {
+          const normalizedRoute = route.replace(/\/$/, '');
+          return normalizedPath === normalizedRoute;
+        });
+      };
       
       console.log('[路由守卫] 当前路径:', location.pathname);
       console.log('[路由守卫] 是否登录:', !!initialState?.currentUser);
       console.log('[路由守卫] 是否公开路由:', isPublicRoute(location.pathname));
+      console.log('[路由守卫] 是否测试路由:', isTestRoute(location.pathname));
       
       // 特殊处理：如果是根路径 '/'，不进行任何拦截，让路由配置的 redirect 生效
       if (location.pathname === '/') {
@@ -231,11 +249,14 @@ export const layout: RunTimeLayoutConfig = ({
         return;
       }
       
+      // 如果是测试路由，允许访问（支持末尾斜杠）
+      if (isTestRoute(location.pathname)) {
+        console.log('[路由守卫] 测试路由，允许访问');
+        return;
+      }
+      
       // 如果没有登录且路径不在白名单中，重定向到 login
-      if (
-        !initialState?.currentUser &&
-        !allowedRoutes.includes(location.pathname)
-      ) {
+      if (!initialState?.currentUser) {
         console.log('[路由守卫] 需要登录，重定向到登录页');
         history.push(loginPath);
       }
@@ -304,7 +325,8 @@ export const layout: RunTimeLayoutConfig = ({
  */
 export const request: RequestConfig = {
   // 开发环境不设置 baseURL，确保使用相对路径，走 webpack 代理
-  ...(isDev ? {} : { baseURL: 'https://api.qtoplay.com' }),
+  // ...(isDev ? {} : { baseURL: 'https://api.qtoplay.com' }),
+  ...(isDev ? {} : { baseURL: 'https://localhost:9002' }),
   timeout: 60000,
   ...errorConfig,
 };

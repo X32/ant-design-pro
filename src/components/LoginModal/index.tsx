@@ -48,18 +48,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
   // 标记微信登录是否正在处理中
   const isProcessingWechatLogin = useRef(false);
 
-  // 处理微信登录回调（URL中的code参数）
+  // 页面加载时检查URL中的code参数（不依赖弹窗状态）
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
-    // 只在弹窗显示且有code参数且未处理时才执行
-    if (code && visible && !isProcessingWechatLogin.current) {
+    // 如果URL中有code参数且未处理，立即处理（不管弹窗是否打开）
+    if (code && !isProcessingWechatLogin.current) {
       isProcessingWechatLogin.current = true;
       handleWechatCallback(code, state);
     }
-  }, [visible]);
+  }, []); // 只在组件挂载时执行一次
 
   // 处理微信登录回调
   const handleWechatCallback = async (code: string, state: string | null) => {
@@ -94,7 +94,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
           }));
         }
         
-        // 清除URL参数
+        // 清除URL参数（在跳转前清除，避免重复处理）
         window.history.replaceState({}, '', window.location.pathname);
         
         // 显示成功消息
@@ -104,9 +104,25 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
           message.success('登录成功！');
         }
         
-        // 执行成功回调并关闭弹窗
-        onSuccess?.();
-        onCancel();
+        // 特殊处理：如果当前在登录页，需要跳转走
+        const currentPath = window.location.pathname;
+        console.log('[LoginModal] 微信登录成功，当前路径:', currentPath);
+        
+        if (currentPath === '/user/login') {
+          console.log('[LoginModal] 检测到在登录页，准备跳转到首页');
+          console.log('[LoginModal] Token 已保存:', !!localStorage.getItem(TOKEN_KEY));
+          console.log('[LoginModal] User 已更新:', !!user);
+          
+          // 不执行 onSuccess 回调，避免登录页的逻辑干扰
+          // 直接跳转，不等待
+          setTimeout(() => {
+            console.log('[LoginModal] 执行跳转...');
+            history.push('/home');
+          }, 500); // 确保状态完全更新
+        } else {
+          // 其他页面，执行成功回调
+          onSuccess?.();
+        }
         
         // 重置处理标记
         isProcessingWechatLogin.current = false;

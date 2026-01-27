@@ -25,8 +25,23 @@ const Login: React.FC = () => {
   const { styles } = useStyles();
   const [modalVisible, setModalVisible] = useState(true);
 
-  // 如果已登录，直接跳转
+  // 记录是否是微信登录（组件挂载时检查一次，之后不变）
+  const isWechatLoginRef = React.useRef(
+    new URLSearchParams(window.location.search).has('code')
+  );
+
+  // 如果已登录，直接跳转（微信登录时不执行，完全由 LoginModal 处理）
   useEffect(() => {
+    console.log('[登录页] currentUser 状态变化:', initialState?.currentUser);
+    console.log('[登录页] 是否微信登录:', isWechatLoginRef.current);
+    
+    // 微信登录时，完全跳过登录页的跳转逻辑，由 LoginModal 统一处理
+    if (isWechatLoginRef.current) {
+      console.log('[登录页] 微信登录模式，跳过登录页跳转逻辑');
+      return;
+    }
+    
+    // 只处理非微信登录的情况
     if (initialState?.currentUser) {
       const urlParams = new URL(window.location.href).searchParams;
       const redirect = urlParams.get('redirect');
@@ -34,24 +49,33 @@ const Login: React.FC = () => {
       if (initialState.currentUser.is_superuser) {
         defaultPath = '/back/welcome';
       }
-      history.push(redirect || defaultPath);
+      
+      console.log('[登录页] 检测到已登录（非微信），准备跳转到:', redirect || defaultPath);
+      
+      // 延迟跳转，确保登录状态已完全更新
+      setTimeout(() => {
+        console.log('[登录页] 执行跳转到:', redirect || defaultPath);
+        history.push(redirect || defaultPath);
+      }, 300);
     }
-  }, [initialState?.currentUser]);
+  }, [initialState]);
 
   const handleLoginSuccess = () => {
+    console.log('[登录页] handleLoginSuccess 被调用');
     setModalVisible(false);
     
-    // 跳转逻辑
-    const urlParams = new URL(window.location.href).searchParams;
-    const redirect = urlParams.get('redirect');
-    let defaultPath = '/home';
-    if (initialState?.currentUser?.is_superuser) {
-      defaultPath = '/back/welcome';
+    // 注意：微信登录的跳转由 LoginModal 内部处理
+    // 这里只处理手机号登录等其他方式的跳转
+    if (!isWechatLoginRef.current) {
+      setTimeout(() => {
+        console.log('[登录页] 非微信登录，跳转到首页');
+        const urlParams = new URL(window.location.href).searchParams;
+        const redirect = urlParams.get('redirect');
+        history.push(redirect || '/home');
+      }, 300);
+    } else {
+      console.log('[登录页] 微信登录，跳转由 LoginModal 处理，登录页不执行任何操作');
     }
-    
-    setTimeout(() => {
-      history.push(redirect || defaultPath);
-    }, 500);
   };
 
   const handleCancel = () => {

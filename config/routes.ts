@@ -25,6 +25,7 @@ export default [
         name: 'admin-login',
         path: '/user/admin/login',
         component: './user/admin/login',
+        layout: false,  // 显式禁用布局
       },
       {
         name: 'profile',

@@ -120,6 +120,13 @@ const Login: React.FC = () => {
   const { message, modal } = App.useApp();
   const intl = useIntl();
   
+  // 调试：组件挂载时输出日志
+  React.useEffect(() => {
+    console.log('[Admin Login] 组件已挂载');
+    console.log('[Admin Login] 当前路径:', window.location.pathname);
+    console.log('[Admin Login] 当前用户:', initialState?.currentUser);
+  }, []);
+  
   // 设置密码模态框状态
   const [setPasswordModalVisible, setSetPasswordModalVisible] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<any>(null);

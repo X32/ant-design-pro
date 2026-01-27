@@ -25,6 +25,8 @@ export interface UserAvatarProps {
   menuItems?: MenuProps['items'];
   /** 自定义菜单点击事件 */
   onMenuClick?: (key: string) => void;
+  /** 退出登录后的回调（用于打开登录弹框） */
+  onLogout?: () => void;
 }
 
 /**
@@ -38,6 +40,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   showMenu = true,
   menuItems,
   onMenuClick,
+  onLogout,
 }) => {
   const { message } = App.useApp();
   const { initialState, setInitialState } = useModel('@@initialState');
@@ -74,10 +77,15 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     
     message.success('已退出登录');
     
-    // 跳转到登录页
-    setTimeout(() => {
-      history.push('/user/login');
-    }, 300);
+    // 如果有自定义退出回调（用于打开登录弹框），执行回调
+    if (onLogout) {
+      onLogout();
+    } else {
+      // 默认行为：跳转到首页
+      setTimeout(() => {
+        history.push('/home');
+      }, 300);
+    }
   };
 
   /**

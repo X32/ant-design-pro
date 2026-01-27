@@ -3,6 +3,7 @@ import { App, Button, Card, Spin, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
 import UserAvatar from '@/components/UserAvatar';
+import LoginModal from '@/components/LoginModal';
 import {
   getPublicExamCategories,
   getPublicExamPaperQuestions,
@@ -25,12 +26,13 @@ const ExamCatalog: React.FC = () => {
 
   const [categories, setCategories] = useState<ExamCategoryWithPapers[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
 
   // 跳转到我的练习记录页面
   const handleMyPracticeRecords = () => {
     if (!isLoggedIn) {
       message.warning('请先登录后查看练习记录');
-      history.push('/user/login');
+      setLoginModalVisible(true);
       return;
     }
     history.push('/messages/userpractice');
@@ -43,7 +45,13 @@ const ExamCatalog: React.FC = () => {
 
   // 登录
   const handleLogin = () => {
-    history.push('/user/login');
+    setLoginModalVisible(true);
+  };
+
+  // 登录成功回调
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+    message.success('登录成功');
   };
 
   // 加载考试分类
@@ -233,7 +241,7 @@ const ExamCatalog: React.FC = () => {
     // 检查是否已登录
     if (!isLoggedIn) {
       message.warning('请先登录后再开始练习');
-      history.push('/user/login');
+      setLoginModalVisible(true);
       return;
     }
 
@@ -435,6 +443,13 @@ const ExamCatalog: React.FC = () => {
           ))
         )}
       </div>
+      
+      {/* 登录弹框 */}
+      <LoginModal
+        visible={loginModalVisible}
+        onCancel={() => setLoginModalVisible(false)}
+        onSuccess={handleLoginSuccess}
+      />
     </div>
   );
 };

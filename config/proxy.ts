@@ -12,8 +12,8 @@
 
 // ============ 后端服务地址配置 ============
 // 主后端服务（业务API、认证、考试等）
-// const MAIN_API_TARGET = 'http://localhost:9002';
-const MAIN_API_TARGET = 'https://api.qtoplay.com';
+const MAIN_API_TARGET = 'http://localhost:9002';
+// const MAIN_API_TARGET = 'https://api.qtoplay.com';
 // 对话服务（AI 对话相关）
 const CONVERSATION_API_TARGET = 'http://localhost:9019';
 // WebSocket 服务
