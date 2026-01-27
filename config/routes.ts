@@ -202,6 +202,18 @@ export default [
             path: '/back/orders/wallet-logs',
             component: './orders/wallets/logs',
           },
+          {
+            name: 'vip-plans',
+            icon: 'CrownOutlined',
+            path: '/back/orders/vip-plans',
+            component: './orders/viplist',
+          },
+          {
+            name: 'vip-subscriptions',
+            icon: 'CrownOutlined',
+            path: '/back/orders/vip-subscriptions',
+            component: './orders/vipSubscription',
+          },
         ],
       },
     ],

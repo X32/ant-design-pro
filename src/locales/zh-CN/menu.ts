@@ -24,6 +24,8 @@ export default {
   'menu.back.orders.product': '商品管理',
   'menu.back.orders.wallets': '钱包管理',
   'menu.back.orders.wallet-logs': '钱包流水',
+  'menu.back.orders.vip-plans': 'VIP套餐管理',
+  'menu.back.orders.vip-subscriptions': 'VIP订阅管理',
   'menu.login': '登录',
   'menu.register': '注册',
   'menu.register-result': '注册结果',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button, Form, Input, message, Alert } from 'antd';
-import { WechatOutlined, MobileOutlined } from '@ant-design/icons';
+import { WechatOutlined, MobileOutlined, CloseOutlined } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { flushSync } from 'react-dom';
 import { wechatLogin } from '@/services/ant-design-pro/login';
@@ -416,6 +416,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
         closeIcon={null}
         className="login-modal"
         centered
+        maskClosable={false}
       >
         <div className="login-modal-content">
           {/* 左侧：品牌区域 */}
@@ -553,6 +554,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                   《隐私政策》
                 </a>
               </span>
+            </div>
+            
+            {/* 关闭按钮 - 放在右下角 */}
+            <div className="modal-close-btn-bottom" onClick={onCancel}>
+              <CloseOutlined />
             </div>
           </div>
         </div>

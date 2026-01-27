@@ -24,6 +24,8 @@ export default {
   'menu.back.orders.product': 'Product Management',
   'menu.back.orders.wallets': 'Wallet Management',
   'menu.back.orders.wallet-logs': 'Wallet Logs',
+  'menu.back.orders.vip-plans': 'VIP Plans Management',
+  'menu.back.orders.vip-subscriptions': 'VIP Subscriptions Management',
   'menu.login': 'Login',
   'menu.register': 'Register',
   'menu.register-result': 'Register Result',

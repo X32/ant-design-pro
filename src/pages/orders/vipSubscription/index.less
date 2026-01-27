@@ -1,0 +1,160 @@
+.vip-subscription-management {
+  // 统计卡片样式
+  .statistics-card {
+    .ant-statistic-title {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+    
+    .ant-statistic-content {
+      font-size: 24px;
+      font-weight: 600;
+    }
+  }
+
+  // 表格样式优化
+  .ant-table {
+    .user-info {
+      .username {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.85);
+      }
+      
+      .user-id {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    .plan-info {
+      .plan-name {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.85);
+      }
+      
+      .plan-tags {
+        margin-top: 4px;
+      }
+    }
+
+    .amount-info {
+      .amount {
+        font-size: 16px;
+        font-weight: 600;
+        color: #faad14;
+      }
+    }
+  }
+
+  // 抽屉样式
+  .ant-drawer {
+    .user-summary-card {
+      margin-bottom: 16px;
+      
+      .ant-descriptions-item-label {
+        font-weight: 500;
+      }
+    }
+
+    .history-list {
+      .ant-list-item-meta-avatar {
+        .anticon {
+          font-size: 24px;
+          color: #faad14;
+        }
+      }
+    }
+  }
+
+  // 筛选栏样式
+  .filter-bar {
+    margin-bottom: 16px;
+    
+    .ant-input,
+    .ant-select {
+      border-radius: 4px;
+    }
+  }
+
+  // 套餐类型统计卡片
+  .plan-type-stats {
+    margin-top: 24px;
+    
+    .plan-type-card {
+      text-align: center;
+      
+      .plan-type-name {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      
+      .plan-type-data {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.65);
+      }
+    }
+  }
+
+  // 响应式设计
+  @media (max-width: 768px) {
+    .ant-table {
+      font-size: 12px;
+    }
+
+    .statistics-card {
+      .ant-statistic-content {
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+// 状态标签颜色优化
+.ant-tag {
+  &.status-active {
+    background-color: #f6ffed;
+    border-color: #b7eb8f;
+    color: #52c41a;
+  }
+
+  &.status-expired {
+    background-color: #fafafa;
+    border-color: #d9d9d9;
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  &.status-canceled {
+    background-color: #fff1f0;
+    border-color: #ffccc7;
+    color: #ff4d4f;
+  }
+}
+
+// 用户详情抽屉优化
+.user-detail-drawer {
+  .ant-drawer-body {
+    padding: 24px;
+  }
+
+  .summary-section {
+    margin-bottom: 24px;
+    
+    .highlight-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #faad14;
+    }
+  }
+
+  .history-section {
+    .ant-list-item {
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import {
   ArrowLeftOutlined,
   CreditCardOutlined,
+  CrownOutlined,
   HistoryOutlined,
   LockOutlined,
   LogoutOutlined,
@@ -9,7 +10,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
-import { App, Avatar, Button, Card, Form, Input, Spin, Statistic } from 'antd';
+import { App, Avatar, Button, Card, Form, Input, Spin, Statistic, Tag, List } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useWallet } from '@/hooks/useWallet';
 import LoginModal from '@/components/LoginModal';
@@ -19,6 +20,7 @@ import {
   updateUserPassword,
   updateUserProfile,
 } from '@/services/ant-design-pro/api';
+import { getMySubscription, UserSubscription, RenewalOption } from '@/services/ant-design-pro/api/vipSubscription';
 import { TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig';
 import './index.less';
 
@@ -37,6 +39,11 @@ const UserProfile: React.FC = () => {
 
   // 使用钱包 Hook
   const { balance, loading: walletLoading, fetchBalance } = useWallet();
+
+  // VIP订阅状态
+  const [subscriptions, setSubscriptions] = useState<UserSubscription[]>([]); // 改为数组
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   /**
    * 截断过长文本，保留首尾字符
@@ -74,6 +81,32 @@ const UserProfile: React.FC = () => {
       fetchBalance();
     }
   }, [isLoggedIn, fetchBalance]);
+
+  // 查询VIP订阅状态（仅在已登录时）
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!isLoggedIn) return;
+      
+      try {
+        setSubscriptionLoading(true);
+        const response = await getMySubscription();
+        
+        if (response.success && response.data) {
+          setHasSubscription(response.data.has_subscription);
+          setSubscriptions(response.data.subscriptions || []); // 设置订阅数组
+          console.log('VIP订阅信息:', response.data);
+        } else {
+          console.error('获取VIP订阅失败:', response.message);
+        }
+      } catch (error) {
+        console.error('获取VIP订阅失败:', error);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [isLoggedIn]);
 
   // 返回首页
   const handleBack = () => {
@@ -326,6 +359,179 @@ const UserProfile: React.FC = () => {
               </div>
             </Spin>
           </Card>
+
+          {/* VIP订阅信息卡片 - 支持多个订阅 */}
+          {hasSubscription && subscriptions.length > 0 ? (
+            subscriptions.map((subscription, index) => (
+              <div key={subscription.id}>
+                <Card
+                  className="vip-subscription-card"
+                  style={{ marginTop: index === 0 ? 16 : 12, width: '100%' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <Spin spinning={subscriptionLoading}>
+                    <div style={{ textAlign: 'center' }}>
+                      <CrownOutlined
+                        style={{ 
+                          fontSize: 32, 
+                          color: '#faad14', 
+                          marginBottom: 8 
+                        }}
+                      />
+                      
+                      {/* 订阅信息 */}
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ 
+                          fontSize: 16, 
+                          fontWeight: 'bold', 
+                          color: '#faad14',
+                          marginBottom: 4
+                        }}>
+                          VIP会员
+                        </div>
+                        <Tag color="gold" style={{ fontSize: 14, padding: '4px 12px' }}>
+                          {subscription.exam_level} 级别
+                        </Tag>
+                      </div>
+                      
+                      {subscription.status === 'ACTIVE' ? (
+                        <>
+                          <div style={{ fontSize: 14, color: '#52c41a', marginTop: 8 }}>
+                            ✓ 订阅生效中
+                          </div>
+                          <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                            剩余 {subscription.remaining_days} 天
+                          </div>
+                          <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                            到期时间：{new Date(subscription.end_time).toLocaleDateString()}
+                          </div>
+                        </>
+                      ) : subscription.status === 'EXPIRED' ? (
+                        <div style={{ fontSize: 14, color: '#ff4d4f', marginTop: 8 }}>
+                          已过期
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 14, color: '#999', marginTop: 8 }}>
+                          已取消
+                        </div>
+                      )}
+                    </div>
+                  </Spin>
+                </Card>
+
+                {/* 续费选项卡片 - 每个订阅对象自己的续费选项 */}
+                {subscription.renewal_options && subscription.renewal_options.length > 0 && (
+                  <Card
+                    title={
+                      <span style={{ fontSize: 14, fontWeight: 'bold' }}>
+                        <CrownOutlined style={{ marginRight: 6, color: '#faad14' }} />
+                        续费套餐选择
+                      </span>
+                    }
+                    style={{ marginTop: 12, width: '100%' }}
+                    bodyStyle={{ padding: '12px' }}
+                  >
+                    <List
+                      size="small"
+                      dataSource={subscription.renewal_options}
+                      renderItem={(option) => (
+                        <List.Item
+                          key={option.plan_id}
+                          style={{ 
+                            padding: '12px',
+                            marginBottom: '8px',
+                            border: option.is_recommended ? '2px solid #faad14' : '1px solid #f0f0f0',
+                            borderRadius: '6px',
+                            backgroundColor: option.is_recommended ? '#fffbf0' : '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s'
+                          }}
+                          onClick={() => {
+                            message.info(`选择 ${option.plan_name}，请前往充值页面购买`);
+                            history.push('/orders/recharge');
+                          }}
+                        >
+                          <div style={{ width: '100%' }}>
+                            <div style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center',
+                              marginBottom: 6
+                            }}>
+                              <div>
+                                <span style={{ 
+                                  fontSize: 15, 
+                                  fontWeight: 'bold',
+                                  color: option.is_recommended ? '#faad14' : '#262626'
+                                }}>
+                                  {option.plan_name}
+                                </span>
+                                {option.is_recommended === 1 && (
+                                  <Tag color="gold" style={{ marginLeft: 8, fontSize: 11 }}>
+                                    推荐
+                                  </Tag>
+                                )}
+                              </div>
+                              <span style={{ 
+                                fontSize: 16, 
+                                fontWeight: 'bold',
+                                color: '#faad14'
+                              }}>
+                                ¥{(option.price / 100).toFixed(2)}
+                              </span>
+                            </div>
+                            <div style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between',
+                              fontSize: 12,
+                              color: '#999'
+                            }}>
+                              <span>{option.duration_days} 天</span>
+                              <span>
+                                到期时间: {new Date(option.expected_end_time).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </List.Item>
+                      )}
+                    />
+                  </Card>
+                )}
+              </div>
+            ))
+          ) : (
+            /* 无订阅：显示提示 */
+            <Card
+              className="vip-subscription-card"
+              style={{ marginTop: 16, width: '100%' }}
+              bodyStyle={{ padding: '16px' }}
+            >
+              <Spin spinning={subscriptionLoading}>
+                <div style={{ textAlign: 'center' }}>
+                  <CrownOutlined
+                    style={{ 
+                      fontSize: 32, 
+                      color: '#d9d9d9', 
+                      marginBottom: 8 
+                    }}
+                  />
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ 
+                      fontSize: 16, 
+                      fontWeight: 'bold', 
+                      color: '#999',
+                      marginBottom: 4
+                    }}>
+                      暂无VIP订阅
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                    订阅VIP享受无限次练习
+                  </div>
+                </div>
+              </Spin>
+            </Card>
+          )}
 
           {/* 充值入口按钮 */}
           <Button

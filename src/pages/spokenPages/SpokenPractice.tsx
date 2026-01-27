@@ -35,6 +35,7 @@ import {
   consumeCoins,
   getWalletBalance,
 } from '@/services/ant-design-pro/api'; // 导入API函数
+import { getMySubscription } from '@/services/ant-design-pro/api/vipSubscription'; // 导入VIP订阅接口
 import { TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig'; // 导入Token键名常量
 import './SpokenPractice.less'; // 导入样式文件
 
@@ -190,6 +191,11 @@ const SpokenPractice: React.FC = () => {
   // 💡 新增：余额检查标记（避免重复检查）
   const balanceCheckedRef = useRef(false);
   
+  // 💡 新增：VIP订阅状态
+  const [hasVipSubscription, setHasVipSubscription] = useState(false);
+  const [vipRemainingDays, setVipRemainingDays] = useState(0);
+  const [vipLoading, setVipLoading] = useState(false);
+  
   // 💡 新增：测试面板显示状态
   const [showTestPanel, setShowTestPanel] = useState(false);
 
@@ -248,17 +254,67 @@ const SpokenPractice: React.FC = () => {
             priceMap.set(item.value, price);
           });
           
-          // ⭐ 同时更新 State 和 Ref
           setWorkflowPriceMap(priceMap);
-          workflowPriceMapRef.current = priceMap; // 确保 Ref 实时可用
+          workflowPriceMapRef.current = priceMap; // 🔥 同步更新 Ref
           console.log('✅ 工作流价格映射加载成功:', Object.fromEntries(priceMap));
         } else {
-          console.warn('⚠️ 加载工作流价格失败，响应:', response);
+          console.error('❌ 获取工作流价格失败:', response);
         }
       } catch (error) {
-        console.error('❌ 加载工作流价格失败:', error);
+        console.error('❌ 加载工作流价格异常:', error);
       } finally {
         setPriceLoading(false);
+      }
+    };
+    
+    /**
+     * 💡 新增：获取用户VIP订阅状态
+     * 查询用户是否有有效的VIP订阅（has_subscription == true && remaining_days > 0）
+     */
+    const fetchVipSubscriptionStatus = async (): Promise<void> => {
+      try {
+        setVipLoading(true);
+        console.log('🔍 开始查询VIP订阅状态...');
+        
+        const response = await getMySubscription();
+        
+        if (response.success && response.data) {
+          const { has_subscription, subscriptions } = response.data;
+          
+          // 检查是否有有效订阅：has_subscription 为 true 且至少有一个订阅的 remaining_days > 0
+          let hasValidSubscription = false;
+          let maxRemainingDays = 0;
+          
+          if (has_subscription && subscriptions && subscriptions.length > 0) {
+            // 遍历所有订阅，找到最大的 remaining_days
+            subscriptions.forEach((sub) => {
+              if (sub.remaining_days > 0) {
+                hasValidSubscription = true;
+                maxRemainingDays = Math.max(maxRemainingDays, sub.remaining_days);
+              }
+            });
+          }
+          
+          setHasVipSubscription(hasValidSubscription);
+          setVipRemainingDays(maxRemainingDays);
+          
+          if (hasValidSubscription) {
+            console.log(`✅ 用户拥有VIP订阅，剩余天数: ${maxRemainingDays} 天`);
+            console.log('💎 VIP用户可以免费使用所有功能，无需金币支付');
+          } else {
+            console.log('❌ 用户没有有效的VIP订阅，需要金币支付');
+          }
+        } else {
+          console.error('❌ 查询VIP订阅状态失败:', response.message);
+          setHasVipSubscription(false);
+          setVipRemainingDays(0);
+        }
+      } catch (error: any) {
+        console.error('❌ 查询VIP订阅状态异常:', error);
+        setHasVipSubscription(false);
+        setVipRemainingDays(0);
+      } finally {
+        setVipLoading(false);
       }
     };
     
@@ -295,6 +351,7 @@ const SpokenPractice: React.FC = () => {
     
     /**
      * 检查用户余额是否充足
+     * 💡 新增：如果用户有VIP订阅，直接返回充足状态，跳过金币检查
      * @param showModal 是否显示余额不足弹框（默认true）
      * @returns { sufficient: boolean, balance: number, price: number }
      */
@@ -302,6 +359,16 @@ const SpokenPractice: React.FC = () => {
       try {
         // 获取当前价格
         const { price } = getCurrentWorkflowInfo();
+        
+        // ✅ VIP用户特权：直接返回充足状态，无需金币
+        if (hasVipSubscription && vipRemainingDays > 0) {
+          console.log(`💎 VIP用户特权：跳过金币检查（剩余${vipRemainingDays}天）`);
+          return {
+            sufficient: true,
+            balance: 0,
+            price: 0,
+          };
+        }
         
         // 如果价格为0，直接返回充足
         if (price <= 0) {
@@ -341,7 +408,7 @@ const SpokenPractice: React.FC = () => {
               cancelText: '取消',
               onOk: () => {
                 console.log('👉 跳转到充值页面');
-                history.push('/user/recharge');
+                history.push('/orders/recharge');
               },
               onCancel: () => {
                 console.log('❌ 用户取消充值');
@@ -374,10 +441,35 @@ const SpokenPractice: React.FC = () => {
     
     /**
      * 扣款方法：使用金币支付练习费用
+     * 💡 新增：VIP用户跳过扣款，直接返回成功
      * @returns 扣款是否成功
      */
     const handleConsumeCoins = async (): Promise<boolean> => {
       try {
+        // ✅ VIP用户特权：跳过扣款，直接返回成功
+        if (hasVipSubscription && vipRemainingDays > 0) {
+          console.log(`💎 VIP用户特权：跳过扣款（剩余${vipRemainingDays}天）`);
+          
+          // 在消息栏显示VIP特权消息
+          const now = new Date();
+          const vipMessage: Message = {
+            id: generateMessageId(),
+            content: `💎 VIP会员特权：本次练习免费（剩余${vipRemainingDays}天）`,
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            fullTimestamp: now,
+            messageType: 'text',
+          };
+          
+          setMessages(prevMessages => [...prevMessages, vipMessage]);
+          console.log('💬 VIP特权消息已添加到消息栏');
+          
+          return true;
+        }
+        
         // 获取练习题目 ID
         const exerciseId = getPaperIdFromUrl();
         if (!exerciseId) {
@@ -1281,8 +1373,11 @@ const SpokenPractice: React.FC = () => {
   useEffect(() => {
     const initializeConversation = async () => {
       try {
-        // 0. 加载工作流价格映射
-        await fetchWorkflowPrices();
+        // 0. 加载工作流价格映射和VIP订阅状态
+        await Promise.all([
+          fetchWorkflowPrices(),
+          fetchVipSubscriptionStatus(), // ✅ 新增：加载VIP订阅状态
+        ]);
         
         // 1. 加载历史消息（如果会话不存在会创建新会话）
         console.log('初始化会话 ID:', conversationId);

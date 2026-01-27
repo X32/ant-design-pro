@@ -64,6 +64,7 @@ export const pollOrderStatus = async (
  * @param orderInfo 订单基本信息
  * @param modal Ant Design Modal 实例
  * @param setShowCoinAnimation 金币雨动画控制函数
+ * @param orderType 订单类型：'coin' | 'vip'
  */
 export const handleAlipayPayment = async (
   orderNo: string,
@@ -74,7 +75,8 @@ export const handleAlipayPayment = async (
     total_amount: number;
   },
   modal: any,
-  setShowCoinAnimation: (show: boolean) => void
+  setShowCoinAnimation: (show: boolean) => void,
+  orderType: 'coin' | 'vip' = 'coin'
 ) => {
   try {
     // 1. 获取支付宝支付链接
@@ -91,6 +93,7 @@ export const handleAlipayPayment = async (
     // 2. 保存订单号到 sessionStorage
     sessionStorage.setItem('current_order_no', orderNo);
     sessionStorage.setItem('order_info', JSON.stringify(orderInfo));
+    sessionStorage.setItem('order_type', orderType); // 保存订单类型
     
     // 3. 跳转到支付宝支付页面
     setTimeout(() => {
@@ -114,6 +117,7 @@ export const checkPaymentResult = async (
 ) => {
   const orderNo = sessionStorage.getItem('current_order_no');
   const orderInfoStr = sessionStorage.getItem('order_info');
+  const orderType = (sessionStorage.getItem('order_type') || 'coin') as 'coin' | 'vip'; // 获取订单类型
   
   if (!orderNo) {
     console.log('没有待查询的订单');
@@ -137,40 +141,73 @@ export const checkPaymentResult = async (
     // 清除 sessionStorage
     sessionStorage.removeItem('current_order_no');
     sessionStorage.removeItem('order_info');
+    sessionStorage.removeItem('order_type');
     
     if (result.success) {
       // 支付成功
       message.success('支付成功！');
       
-      // 触发金币雨动画
-      setShowCoinAnimation(true);
+      // 只有金币充值才触发金币雨动画
+      if (orderType === 'coin') {
+        setShowCoinAnimation(true);
+      }
       
       const orderInfo = orderInfoStr ? JSON.parse(orderInfoStr) : null;
       
-      // 显示支付成功弹窗
-      modal.success({
-        title: '支付成功！',
-        content: (
-          <div>
-            {orderInfo && (
-              <>
-                <p>订单号：{orderInfo.order_no}</p>
-                <p>商品：{orderInfo.item_name}</p>
-                <p>金币数量：{orderInfo.coin_amount}</p>
-                <p>支付金额：￥{(orderInfo.total_amount / 100).toFixed(2)}</p>
-              </>
-            )}
-            <p style={{ color: '#52c41a', fontWeight: 'bold', marginTop: 12 }}>
-              金币已充值到账，请到个人中心查看！
-            </p>
-          </div>
-        ),
-        okText: '知道了',
-        onOk: () => {
-          // 可以选择刷新页面或跳转到其他页面
-          // window.location.href = '/';
-        }
-      });
+      // 根据订单类型显示不同的支付成功弹窗
+      if (orderType === 'vip') {
+        // VIP订阅成功弹窗
+        modal.success({
+          title: '🎉 VIP订阅成功！',
+          content: (
+            <div>
+              {orderInfo && (
+                <>
+                  <p>订单号：{orderInfo.order_no}</p>
+                  <p>套餐：{orderInfo.item_name}</p>
+                  <p>支付金额：￥{(orderInfo.total_amount / 100).toFixed(2)}</p>
+                </>
+              )}
+              <p style={{ color: '#faad14', fontWeight: 'bold', marginTop: 12, fontSize: '16px' }}>
+                👑 恭喜您成为VIP会员！
+              </p>
+              <p style={{ color: '#52c41a', marginTop: 8 }}>
+                现在可以无限次练习对应级别的考试题目了！
+              </p>
+            </div>
+          ),
+          okText: '开始练习',
+          onOk: () => {
+            // 可以选择跳转到练习页面
+            // window.location.href = '/exam';
+          }
+        });
+      } else {
+        // 金币充值成功弹窗
+        modal.success({
+          title: '💰 充值成功！',
+          content: (
+            <div>
+              {orderInfo && (
+                <>
+                  <p>订单号：{orderInfo.order_no}</p>
+                  <p>商品：{orderInfo.item_name}</p>
+                  <p>金币数量：{orderInfo.coin_amount}</p>
+                  <p>支付金额：￥{(orderInfo.total_amount / 100).toFixed(2)}</p>
+                </>
+              )}
+              <p style={{ color: '#52c41a', fontWeight: 'bold', marginTop: 12 }}>
+                金币已充值到账，请到个人中心查看！
+              </p>
+            </div>
+          ),
+          okText: '知道了',
+          onOk: () => {
+            // 可以选择刷新页面或跳转到其他页面
+            // window.location.href = '/';
+          }
+        });
+      }
     } else {
       // 支付失败或超时
       modal.error({
