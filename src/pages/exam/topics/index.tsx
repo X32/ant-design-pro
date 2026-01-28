@@ -304,11 +304,18 @@ const TopicsManagement: React.FC = () => {
 
       if (isAdding) {
         // 添加模式
-        await createOralCategory({
+        // 构建请求数据：一级分类（parent_id=0）不传 parent_id 字段
+        const requestData: any = {
           name: values.name,
-          parent_id: addParentId,
           sort: values.sort,
-        });
+        };
+        
+        // 只有当 parent_id > 0 时才传 parent_id（二级、三级分类）
+        if (addParentId > 0) {
+          requestData.parent_id = addParentId;
+        }
+        
+        await createOralCategory(requestData);
         message.success('添加成功');
         setIsAdding(false);
         form.resetFields();
@@ -561,8 +568,10 @@ const TopicsManagement: React.FC = () => {
                   <div className="section-title">基本信息</div>
                   
                   {isAdding && (
-                    <Form.Item>
-                      <Tag color="processing">{getAddLevelHint()}</Tag>
+                    <Form.Item label="添加层级">
+                      <Tag color="processing" style={{ fontSize: '14px', padding: '6px 12px' }}>
+                        {getAddLevelHint()}
+                      </Tag>
                     </Form.Item>
                   )}
                   
@@ -579,22 +588,36 @@ const TopicsManagement: React.FC = () => {
                     label="分类名称"
                     rules={[{ required: true, message: '请输入分类名称' }]}
                   >
-                    <Input placeholder="请输入分类名称（如：PET 口语、旅游、part1）" maxLength={50} />
+                    <Input 
+                      placeholder={
+                        addParentId === 0 
+                          ? "请输入一级分类名称（如：PET 口语、FCE 口语）" 
+                          : "请输入分类名称（如：旅游、part1）"
+                      } 
+                      maxLength={50} 
+                    />
                   </Form.Item>
 
-                  {isAdding && (
-                    <Form.Item name="parent_id" label="上级目录">
-                      <TreeSelect
-                        placeholder="请选择上级目录（不选则为根分类）"
-                        allowClear
-                        treeDefaultExpandAll
-                        disabled
-                        value={addParentId || undefined}
-                        treeData={[
-                          { value: 0, title: '无（根分类 - 口语等级）', children: [] },
-                          ...getParentSelectOptions(),
-                        ]}
-                      />
+                  {isAdding && addParentId > 0 && (
+                    <Form.Item label="上级目录">
+                      <div style={{ 
+                        padding: '8px 12px', 
+                        background: '#f5f5f5', 
+                        borderRadius: '4px',
+                        border: '1px solid #d9d9d9'
+                      }}>
+                        {(() => {
+                          const parent = findCategoryById(categories, addParentId);
+                          return parent ? (
+                            <span>
+                              {parent.name}
+                              <Tag color="blue" style={{ marginLeft: 8 }}>
+                                {getLevelName(parent.level)}
+                              </Tag>
+                            </span>
+                          ) : '未知分类';
+                        })()}
+                      </div>
                     </Form.Item>
                   )}
                 </div>
