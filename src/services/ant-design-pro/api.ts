@@ -1292,6 +1292,35 @@ export async function searchOralExercises(
   });
 }
 
+/**
+ * 按工作流类型获取练习题参数
+ */
+export interface GetExercisesByWorkflowParams {
+  /** 工作流类型（必填） */
+  workflow_type: string;
+}
+
+/**
+ * 按工作流类型获取练习题
+ * GET /api/oral/exercises/by-workflow
+ */
+export async function getExercisesByWorkflow(
+  params: GetExercisesByWorkflowParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<OralExerciseListResponse>(API_ENDPOINTS.ORAL_EXERCISES_BY_WORKFLOW, {
+    method: 'GET',
+    params: params,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
 // ==================== 通用文件上传 API ====================
 
 /**

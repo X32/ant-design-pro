@@ -55,6 +55,8 @@ import {
   createExamPaper,
   batchAddQuestionsToPaper,
   getExamCategories,
+  getWorkflowTypes,
+  getExercisesByWorkflow,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -128,7 +130,12 @@ const ExamPaperBuilder: React.FC = () => {
   const [examCategories, setExamCategories] = useState<any[]>([]);
   const [examCategoriesLoading, setExamCategoriesLoading] = useState(false);
 
-  // 分类数据
+  // 工作流类型列表
+  const [workflowTypes, setWorkflowTypes] = useState<Array<{ label: string; value: string }>>([]);
+  const [workflowTypesLoading, setWorkflowTypesLoading] = useState(false);
+  const [selectedWorkflowType, setSelectedWorkflowType] = useState<string>('');
+
+  // 分类数据（已废弃，保留用于类型兼容）
   const [categories, setCategories] = useState<Category[]>([]);
   const [treeData, setTreeData] = useState<CategoryTreeNode[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(false);
@@ -187,35 +194,46 @@ const ExamPaperBuilder: React.FC = () => {
   }, []);
 
   /**
-   * 获取分类列表
+   * 获取工作流类型列表
    */
-  const fetchCategories = useCallback(async () => {
-    setCategoryLoading(true);
+  const fetchWorkflowTypes = useCallback(async () => {
+    setWorkflowTypesLoading(true);
     try {
-      const response = await getOralCategoriesTree();
+      const response = await getWorkflowTypes({ only_active: true });
       if (response && response.success && Array.isArray(response.data)) {
-        setCategories(response.data);
-        setTreeData(convertToTreeData(response.data));
-        const allExpandableKeys = getAllExpandableKeys(response.data);
-        setExpandedKeys(allExpandableKeys);
+        const options = response.data.map((item: any) => ({
+          label: item.label,
+          value: item.value,
+        }));
+        setWorkflowTypes(options);
+        // 默认选中第一个工作流类型
+        if (options.length > 0) {
+          setSelectedWorkflowType(options[0].value);
+        }
       }
     } catch (error: any) {
-      console.error('获取分类列表失败:', error);
-      message.error(error?.message || '获取分类列表失败');
+      console.error('获取工作流类型列表失败:', error);
+      message.error(error?.message || '获取工作流类型列表失败');
     } finally {
-      setCategoryLoading(false);
+      setWorkflowTypesLoading(false);
     }
   }, []);
 
   /**
-   * 获取练习题列表
+   * 获取分类列表（已废弃）
    */
-  const fetchExercises = useCallback(async (categoryId: number) => {
+  const fetchCategories = useCallback(async () => {
+    // 不再使用，保留空函数以防引用错误
+  }, []);
+
+  /**
+   * 获取练习题列表（按工作流类型）
+   */
+  const fetchExercises = useCallback(async (workflowType: string) => {
     setExerciseLoading(true);
     try {
-      const response = await getOralExercises({
-        category_id: categoryId,
-        only_active: true,
+      const response = await getExercisesByWorkflow({
+        workflow_type: workflowType,
       });
       if (response && response.success && Array.isArray(response.data)) {
         setExercises(response.data);
@@ -231,20 +249,20 @@ const ExamPaperBuilder: React.FC = () => {
     }
   }, []);
 
-  // 初始化加载考试分类和分类树
+  // 初始化加载考试分类和工作流类型
   useEffect(() => {
     fetchExamCategories();
-    fetchCategories();
-  }, [fetchExamCategories, fetchCategories]);
+    fetchWorkflowTypes();
+  }, [fetchExamCategories, fetchWorkflowTypes]);
 
-  // 分类选中后加载练习题
+  // 工作流类型选中后加载练习题
   useEffect(() => {
-    if (selectedCategory && selectedCategory.level === 3) {
-      fetchExercises(selectedCategory.id);
+    if (selectedWorkflowType) {
+      fetchExercises(selectedWorkflowType);
     } else {
       setExercises([]);
     }
-  }, [selectedCategory, fetchExercises]);
+  }, [selectedWorkflowType, fetchExercises]);
 
   /**
    * 过滤后的练习题列表
@@ -543,13 +561,38 @@ const ExamPaperBuilder: React.FC = () => {
 
       {/* 主内容区域 */}
       <div className="main-content">
-        {/* 左侧分类筛选面板 */}
+        {/* 左侧工作流筛选面板 */}
         <div className="filter-panel">
           <div className="panel-header">
             <FilterOutlined />
-            <span>分类筛选</span>
+            <span>工作流筛选</span>
           </div>
           <div className="panel-content">
+            {/* 工作流类型选择 */}
+            <div className="filter-section">
+              <div className="section-title">工作流类型</div>
+              {workflowTypesLoading ? (
+                <div style={{ textAlign: 'center', padding: 20 }}>
+                  <Spin size="small" />
+                </div>
+              ) : workflowTypes.length > 0 ? (
+                <Select
+                  placeholder="选择工作流类型"
+                  value={selectedWorkflowType}
+                  onChange={(value) => setSelectedWorkflowType(value)}
+                  style={{ width: '100%', marginBottom: 16 }}
+                >
+                  {workflowTypes.map(wf => (
+                    <Option key={wf.value} value={wf.value}>
+                      {wf.label}
+                    </Option>
+                  ))}
+                </Select>
+              ) : (
+                <Empty description="暂无工作流" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </div>
+
             {/* 难度筛选 */}
             <div className="filter-section">
               <div className="section-title">难度等级</div>
@@ -566,32 +609,6 @@ const ExamPaperBuilder: React.FC = () => {
                   </Option>
                 ))}
               </Select>
-            </div>
-
-            {/* 分类树 */}
-            <div className="filter-section">
-              <div className="section-title">题目分类</div>
-              {categoryLoading ? (
-                <div style={{ textAlign: 'center', padding: 20 }}>
-                  <Spin size="small" />
-                </div>
-              ) : treeData.length > 0 ? (
-                <Tree
-                  className="category-tree"
-                  showIcon
-                  blockNode
-                  expandedKeys={expandedKeys}
-                  selectedKeys={selectedKeys}
-                  onSelect={handleTreeSelect}
-                  onExpand={handleExpand}
-                  treeData={convertToAntTreeData(treeData)}
-                  switcherIcon={({ expanded }) =>
-                    expanded ? <FolderOpenOutlined /> : <FolderOutlined />
-                  }
-                />
-              ) : (
-                <Empty description="暂无分类" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              )}
             </div>
           </div>
         </div>
@@ -610,7 +627,7 @@ const ExamPaperBuilder: React.FC = () => {
               <Button 
                 size="small" 
                 icon={<ReloadOutlined />}
-                onClick={() => selectedCategory?.level === 3 && fetchExercises(selectedCategory.id)}
+                onClick={() => selectedWorkflowType && fetchExercises(selectedWorkflowType)}
               >
                 刷新
               </Button>
@@ -685,21 +702,21 @@ const ExamPaperBuilder: React.FC = () => {
                   );
                 })}
               </div>
-            ) : selectedCategory?.level === 3 ? (
+            ) : selectedWorkflowType ? (
               <div className="empty-container">
-                <Empty description="该分类下暂无题目" />
+                <Empty description="该工作流下暂无题目" />
               </div>
             ) : (
               <div className="empty-container">
-                <FolderOutlined className="empty-icon" />
-                <div>请从左侧选择三级分类查看题目</div>
+                <FilterOutlined className="empty-icon" />
+                <div>请从左侧选择工作流类型查看题目</div>
               </div>
             )}
           </div>
 
           <div className="panel-footer">
             <div className="selection-info">
-              当前分类：{selectedCategory?.name || '未选择'}
+              当前工作流：{workflowTypes.find(wf => wf.value === selectedWorkflowType)?.label || '未选择'}
             </div>
           </div>
         </div>

@@ -216,14 +216,20 @@ const ExercisesManagement: React.FC = () => {
    * 获取练习题列表
    * GET /api/oral/exercises?category_id={id}&only_active={boolean}
    */
-  const fetchExercises = useCallback(async (categoryId: number, showOnlyActive: boolean = true) => {
+  const fetchExercises = useCallback(async (categoryId?: number, showOnlyActive: boolean = true) => {
     setExerciseLoading(true);
     setSearchMode(false);
     try {
-      const response = await getOralExercises({
-        category_id: categoryId,
+      const params: any = {
         only_active: showOnlyActive,
-      });
+      };
+      
+      // 只有当 categoryId 存在时才添加到参数中
+      if (categoryId !== undefined) {
+        params.category_id = categoryId;
+      }
+      
+      const response = await getOralExercises(params);
       if (response && response.success && Array.isArray(response.data)) {
         setExercises(response.data);
         setTotal(response.data.length);
@@ -291,12 +297,8 @@ const ExercisesManagement: React.FC = () => {
     setSearchKeyword('');
     setSearchMode(false);
     setCurrentPage(1);
-    if (selectedCategory) {
-      fetchExercises(selectedCategory.id, onlyActive);
-    } else {
-      setExercises([]);
-      setTotal(0);
-    }
+    // 根据是否有选中分类来决定加载哪些题目
+    fetchExercises(selectedCategory?.id, onlyActive);
   }, [selectedCategory, onlyActive, fetchExercises]);
 
   /**
@@ -311,12 +313,17 @@ const ExercisesManagement: React.FC = () => {
   useEffect(() => {
     fetchCategories();
     fetchWorkflowTypes();
+    // 默认加载所有题目（不限制分类）
+    fetchExercises(undefined, onlyActive);
   }, [fetchCategories, fetchWorkflowTypes]);
 
   // 分类选中后加载练习题
   useEffect(() => {
     if (selectedCategory) {
       fetchExercises(selectedCategory.id, onlyActive);
+    } else {
+      // 清除分类筛选时，重新加载所有题目
+      fetchExercises(undefined, onlyActive);
     }
   }, [selectedCategory, onlyActive, fetchExercises]);
 
@@ -358,21 +365,12 @@ const ExercisesManagement: React.FC = () => {
    * 打开添加弹窗
    */
   const handleAdd = () => {
-    if (!selectedCategory) {
-      message.warning('请先选择一个分类');
-      return;
-    }
-    // 只有三级分类才能添加题目
-    if (selectedCategory.level !== 3) {
-      message.warning('只能在三级分类下添加题目');
-      return;
-    }
     setModalMode('add');
     setCurrentExercise(null);
     form.resetFields();
     resetImageState();
     form.setFieldsValue({
-      category_id: selectedCategory.id,
+      category_id: selectedCategory?.id, // 如果有选中分类则自动填充
       difficulty: 3,
       is_active: 1,
       workflow_type: 'fce_part1',
@@ -449,9 +447,8 @@ const ExercisesManagement: React.FC = () => {
     try {
       await deleteOralExercise(record.id);
       message.success('删除成功');
-      if (selectedCategory) {
-        fetchExercises(selectedCategory.id, onlyActive);
-      }
+      // 根据当前是否有选中分类来决定刷新哪些题目
+      fetchExercises(selectedCategory?.id, onlyActive);
     } catch (error: any) {
       message.error(error?.message || '删除失败');
     }
@@ -490,9 +487,8 @@ const ExercisesManagement: React.FC = () => {
 
       setModalVisible(false);
       form.resetFields();
-      if (selectedCategory) {
-        fetchExercises(selectedCategory.id, onlyActive);
-      }
+      // 根据当前是否有选中分类来决定刷新哪些题目
+      fetchExercises(selectedCategory?.id, onlyActive);
     } catch (error: any) {
       if (error?.errorFields) {
         return;
@@ -506,9 +502,8 @@ const ExercisesManagement: React.FC = () => {
    */
   const handleRefresh = () => {
     fetchCategories();
-    if (selectedCategory) {
-      fetchExercises(selectedCategory.id, onlyActive);
-    }
+    // 根据当前是否有选中分类来决定刷新哪些题目
+    fetchExercises(selectedCategory?.id, onlyActive);
   };
 
   /**
@@ -750,6 +745,48 @@ const ExercisesManagement: React.FC = () => {
             <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={categoryLoading || exerciseLoading}>
               刷新
             </Button>
+            <Select
+              placeholder="筛选分类"
+              style={{ width: 200 }}
+              allowClear
+              showSearch
+              value={selectedCategory?.id}
+              onChange={(value) => {
+                if (value) {
+                  const category = findCategoryById(categories, value);
+                  setSelectedCategory(category);
+                  setSelectedKeys([value]);
+                } else {
+                  setSelectedCategory(null);
+                  setSelectedKeys([]);
+                  // 不需要手动清空，useEffect 会自动加载所有题目
+                }
+                setSearchKeyword('');
+                setSearchMode(false);
+              }}
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={(() => {
+                const flatList: Array<{ value: number; label: string }> = [];
+                const collectCategories = (cats: Category[], prefix = '') => {
+                  cats.forEach(cat => {
+                    const fullName = prefix ? `${prefix} > ${cat.name}` : cat.name;
+                    if (cat.level === 3) {
+                      flatList.push({
+                        value: cat.id,
+                        label: fullName,
+                      });
+                    }
+                    if (cat.children) {
+                      collectCategories(cat.children, fullName);
+                    }
+                  });
+                };
+                collectCategories(categories);
+                return flatList;
+              })()}
+            />
           </div>
 
           <div className="current-selection">
@@ -760,54 +797,32 @@ const ExercisesManagement: React.FC = () => {
                 <Tag color="blue" style={{ marginLeft: 8 }}>
                   {getLevelName(selectedCategory.level)}
                 </Tag>
+                <Button 
+                  type="link" 
+                  size="small" 
+                  onClick={() => {
+                    setSelectedKeys([]);
+                    setSelectedCategory(null);
+                    setSearchKeyword('');
+                    setSearchMode(false);
+                    // 不需要手动清空，useEffect 会自动加载所有题目
+                  }}
+                  style={{ marginLeft: 8 }}
+                >
+                  清除筛选
+                </Button>
               </span>
             ) : (
-              <span className="empty">未选择（请从左侧选择三级分类）</span>
+              <span className="empty">全部分类</span>
             )}
           </div>
         </div>
       </div>
 
       {/* 主内容区域 */}
-      <div className="main-content">
-        {/* 左侧分类树 */}
-        <div className="category-tree-panel">
-          <div className="panel-header">
-            <div className="header-title">
-              <FolderOpenOutlined />
-              <span>分类树</span>
-            </div>
-          </div>
-          <div className="panel-content">
-            {categoryLoading ? (
-              <div className="loading-container">
-                <Spin tip="加载中..." />
-              </div>
-            ) : treeData.length > 0 ? (
-              <Tree
-                className="category-tree"
-                showIcon
-                blockNode
-                selectable
-                expandedKeys={expandedKeys}
-                selectedKeys={selectedKeys}
-                onSelect={handleSelect}
-                onExpand={handleExpand}
-                treeData={convertToAntTreeData(treeData)}
-                switcherIcon={({ expanded }) =>
-                  expanded ? <FolderOpenOutlined /> : <FolderOutlined />
-                }
-              />
-            ) : (
-              <div className="empty-tree">
-                <Empty description="暂无分类数据" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 右侧题库列表 */}
-        <div className="exercise-list-panel">
+      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {/* 右侧题库列表（全宽显示） */}
+        <div className="exercise-list-panel" style={{ flex: 1, maxWidth: '100%' }}>
           <div className="panel-header">
             <div className="header-left">
               <UnorderedListOutlined />
@@ -849,9 +864,9 @@ const ExercisesManagement: React.FC = () => {
                   搜索范围：{selectedCategory.name}
                 </span>
               )}
-              {!selectedCategory && (
+              {!selectedCategory && !searchMode && (
                 <span style={{ color: '#999' }}>
-                  搜索范围：全部分类
+                  提示：直接搜索全部题目，或在顶部选择分类后再搜索
                 </span>
               )}
             </Space>
@@ -894,25 +909,16 @@ const ExercisesManagement: React.FC = () => {
                   清除搜索
                 </Button>
               </div>
-            ) : selectedCategory ? (
-              selectedCategory.level === 3 ? (
-                <div className="empty-list">
-                  <FileOutlined className="empty-icon" />
-                  <span className="empty-text">该分类下暂无题目</span>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} style={{ marginTop: 16 }}>
-                    添加题目
-                  </Button>
-                </div>
-              ) : (
-                <div className="empty-list">
-                  <FolderOutlined className="empty-icon" />
-                  <span className="empty-text">请选择三级分类（题型部分）查看题目</span>
-                </div>
-              )
             ) : (
               <div className="empty-list">
-                <FolderOutlined className="empty-icon" />
-                <span className="empty-text">请从左侧选择一个三级分类查看题目，或直接搜索</span>
+                <FileOutlined className="empty-icon" />
+                <span className="empty-text">暂无题目数据</span>
+                <div style={{ marginTop: 16 }}>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                    添加题目
+                  </Button>
+                  <span style={{ marginLeft: 16, color: '#999' }}>或使用搜索功能查找题目</span>
+                </div>
               </div>
             )}
           </div>
@@ -934,8 +940,40 @@ const ExercisesManagement: React.FC = () => {
           form={form}
           layout="vertical"
         >
-          <Form.Item name="category_id" hidden>
-            <Input />
+          <Form.Item
+            name="category_id"
+            label="所属分类"
+            tooltip="可选字段，建议选择三级分类（题型部分）"
+          >
+            <Select
+              placeholder="请选择分类（可不选）"
+              allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={(() => {
+                // 递归收集所有分类，只保留三级分类
+                const flatList: Array<{ value: number; label: string; level: number }> = [];
+                const collectCategories = (cats: Category[], prefix = '') => {
+                  cats.forEach(cat => {
+                    const fullName = prefix ? `${prefix} > ${cat.name}` : cat.name;
+                    if (cat.level === 3) {
+                      flatList.push({
+                        value: cat.id,
+                        label: fullName,
+                        level: cat.level,
+                      });
+                    }
+                    if (cat.children) {
+                      collectCategories(cat.children, fullName);
+                    }
+                  });
+                };
+                collectCategories(categories);
+                return flatList;
+              })()}
+            />
           </Form.Item>
 
           <Form.Item

@@ -53,6 +53,7 @@ export const API_ENDPOINTS = {
   // 练习题管理相关
   ORAL_EXERCISES: `${API_BASE_URL}/api/oral/exercises`,
   ORAL_EXERCISES_SEARCH: `${API_BASE_URL}/api/oral/exercises/search`,
+  ORAL_EXERCISES_BY_WORKFLOW: `${API_BASE_URL}/api/oral/exercises/by-workflow`,
 
   // 通用文件上传
   UPLOAD: `${API_BASE_URL}/api/upload/upload`,
