@@ -39,6 +39,7 @@ import { getMySubscription } from '@/services/ant-design-pro/api/vipSubscription
 import { TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig'; // 导入Token键名常量
 import './SpokenPractice.less'; // 导入样式文件
 
+const isDev = process.env.NODE_ENV === 'development';
 // 内联样式，用于WebSocket连接状态指示器
 const styles = {
   connectionStatus: {
@@ -106,8 +107,7 @@ interface Message {
 }
 
 // AI音频基础URL
-const AI_AUDIO_BASE_URL = 'http://localhost:9002';
-// const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
+const AI_AUDIO_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
 
 /**
  * AI口语练习组件

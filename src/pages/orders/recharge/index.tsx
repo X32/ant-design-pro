@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Divider, Typography, Space, message, Modal, Spin, App, Radio, Tabs, Badge } from 'antd';
 import { CreditCardOutlined, GiftOutlined, StarOutlined, CheckCircleOutlined, AlipayOutlined, TransactionOutlined, ArrowLeftOutlined, CrownOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { history } from '@umijs/max';
-import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数
+import { getCoinPackages, CoinPackage, createCoinOrder, mockPayOrder, getOrderDetail } from '@/services/ant-design-pro/api/coinPackages'; // 导入API函数 (mockPayOrder 仅用于本地测试)
 import { getVipPlans, VipSubscriptionPlan, ExamLevel, createSubscriptionOrder } from '@/services/ant-design-pro/api/vipSubscription'; // 导入VIP套餐API
 import CoinDropAnimation from '@/components/CoinDropAnimation';  // 导入金币雨动画组件
 import coinSound from '@/components/CoinDropAnimation/corns.mp3';  // 导入音频文件
@@ -151,6 +151,7 @@ const RechargePage: React.FC = () => {
 
   /**
    * 处理支付流程
+   * ⚠️ 仅用于本地测试环境，生产环境已禁用入口
    * @param orderNo 订单号
    * @param orderInfo 订单基本信息（用于显示）
    */
@@ -255,12 +256,12 @@ const RechargePage: React.FC = () => {
                       <span>支付宝支付</span>
                     </Space>
                   </Radio>
-                  <Radio value="mock" style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
+                  {/* <Radio value="mock" style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
                     <Space>
                       <TransactionOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
                       <span>模拟支付（测试）</span>
                     </Space>
-                  </Radio>
+                  </Radio> */}
                 </Space>
               </Radio.Group>
             </div>
@@ -316,6 +317,7 @@ const RechargePage: React.FC = () => {
 
   /**
    * 处理模拟支付（VIP和金币通用）
+   * ⚠️ 仅用于本地测试环境，生产环境已禁用入口
    * @param orderNo 订单号
    * @param orderInfo 订单信息
    * @param orderType 订单类型 'vip' | 'coin'
@@ -449,12 +451,13 @@ const RechargePage: React.FC = () => {
                       <span>支付宝支付</span>
                     </Space>
                   </Radio>
-                  <Radio value="mock" style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
+                  {/* 模拟支付选项 - 仅用于本地测试，上线时已隐藏 */}
+                  {/* <Radio value="mock" style={{ width: '100%', padding: '8px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
                     <Space>
                       <TransactionOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
                       <span>模拟支付（测试）</span>
                     </Space>
-                  </Radio>
+                  </Radio> */}
                 </Space>
               </Radio.Group>
             </div>

@@ -325,8 +325,8 @@ export const layout: RunTimeLayoutConfig = ({
  */
 export const request: RequestConfig = {
   // 开发环境不设置 baseURL，确保使用相对路径，走 webpack 代理
-  // ...(isDev ? {} : { baseURL: 'https://api.qtoplay.com' }),
-  ...(isDev ? {} : { baseURL: 'https://localhost:9002' }),
+  ...(isDev ? {baseURL: 'https://localhost:9002'} : { baseURL: 'https://api.qtoplay.com' }),
+  // ...(isDev ? {} : { baseURL: 'https://localhost:9002' }),
   timeout: 60000,
   ...errorConfig,
 };

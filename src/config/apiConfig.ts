@@ -12,8 +12,7 @@ console.log('isDev:', isDev);
 // API基础地址
 // 开发环境：使用空字符串，通过 proxy.ts 代理到远程服务器
 // 生产环境：直接使用远程 API 地址
-// export const API_BASE_URL = isDev ? '' :  'http://localhost:9002';
-export const API_BASE_URL = isDev ? '' : 'https://api.qtoplay.com';
+export const API_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
 
 // 临时强制使用空字符串进行调试
 // export const API_BASE_URL = ''; // 强制走 proxy
@@ -112,6 +111,23 @@ export const API_ENDPOINTS = {
   // 查询订单详情
   ORDER_DETAIL: `${API_BASE_URL}/api/order`,
 
+  // 支付宝支付
+  ALIPAY_PAY: `${API_BASE_URL}/api/order/alipay/pay`,
+
+  // 查询订单状态
+  ORDER_STATUS: `${API_BASE_URL}/api/order/status`,
+
+  // VIP订阅相关
+  VIP_PLANS: `${API_BASE_URL}/api/order/vip/plans`,
+  VIP_MY_SUBSCRIPTION: `${API_BASE_URL}/api/order/vip/my-subscription`,
+  VIP_SUBSCRIBE: `${API_BASE_URL}/api/order/vip/subscribe`,
+  VIP_CHECK_ACCESS: `${API_BASE_URL}/api/order/vip/check-access`,
+  VIP_HISTORY: `${API_BASE_URL}/api/order/vip/history`,
+
+  // VIP管理员接口
+  ADMIN_VIP_PLANS: `${API_BASE_URL}/api/admin/vip-plans`,
+  ADMIN_VIP_SUBSCRIPTIONS: `${API_BASE_URL}/api/admin/vip-subscriptions`,
+
   // 钱包相关
   WALLET_BALANCE: `${API_BASE_URL}/api/order/wallet/balance`, // 查询金币余额
   WALLET_CONSUME: `${API_BASE_URL}/api/order/wallet/consume`, // 金币支付
@@ -134,7 +150,7 @@ export const API_ENDPOINTS = {
   ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
 
   // 工作流类型管理
-  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflow-types/`,
+  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflow-types`,
 
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）

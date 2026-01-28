@@ -169,7 +169,7 @@ export async function getAlipayPayUrl(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AlipayPayResponse>('/api/order/alipay/pay', {
+  return request<AlipayPayResponse>(API_ENDPOINTS.ALIPAY_PAY, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ export async function getOrderStatus(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<OrderStatusResponse>(`/api/order/status/${orderNo}`, {
+  return request<OrderStatusResponse>(`${API_ENDPOINTS.ORDER_STATUS}/${orderNo}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`

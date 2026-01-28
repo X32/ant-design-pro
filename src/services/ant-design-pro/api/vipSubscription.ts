@@ -1,7 +1,7 @@
 // @ts-ignore
 /* eslint-disable */
 import { request } from '@umijs/max';
-import { TOKEN_KEY } from '@/config/apiConfig';
+import { API_ENDPOINTS, TOKEN_KEY } from '@/config/apiConfig';
 
 /** ==================== 类型定义 ==================== */
 
@@ -193,7 +193,7 @@ export async function getVipPlans(
   params?: GetVipPlansRequest,
   options?: { [key: string]: any },
 ) {
-  return request<GetVipPlansResponse>('/api/order/vip/plans', {
+  return request<GetVipPlansResponse>(API_ENDPOINTS.VIP_PLANS, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -212,7 +212,7 @@ export async function getMySubscription(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<GetMySubscriptionResponse>('/api/order/vip/my-subscription', {
+  return request<GetMySubscriptionResponse>(API_ENDPOINTS.VIP_MY_SUBSCRIPTION, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -232,7 +232,7 @@ export async function createSubscriptionOrder(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<CreateSubscriptionOrderResponse>('/api/order/vip/subscribe', {
+  return request<CreateSubscriptionOrderResponse>(API_ENDPOINTS.VIP_SUBSCRIBE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ export async function checkVipAccess(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<CheckAccessResponse>('/api/order/vip/check-access', {
+  return request<CheckAccessResponse>(API_ENDPOINTS.VIP_CHECK_ACCESS, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ export async function getSubscriptionHistory(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<GetSubscriptionHistoryResponse>('/api/order/vip/history', {
+  return request<GetSubscriptionHistoryResponse>(API_ENDPOINTS.VIP_HISTORY, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -412,7 +412,7 @@ export async function adminGetVipPlans(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminGetVipPlansResponse>('/api/admin/vip-plans/', {
+  return request<AdminGetVipPlansResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -433,7 +433,7 @@ export async function adminGetVipPlanDetail(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminGetVipPlanDetailResponse>(`/api/admin/vip-plans/${planId}`, {
+  return request<AdminGetVipPlanDetailResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/${planId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -453,7 +453,7 @@ export async function adminCreateVipPlan(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminCreateVipPlanResponse>('/api/admin/vip-plans/', {
+  return request<AdminCreateVipPlanResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -475,7 +475,7 @@ export async function adminUpdateVipPlan(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminUpdateVipPlanResponse>(`/api/admin/vip-plans/${planId}`, {
+  return request<AdminUpdateVipPlanResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/${planId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -497,7 +497,7 @@ export async function adminUpdateVipPlanStatus(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminUpdateVipPlanStatusResponse>(`/api/admin/vip-plans/${planId}/status`, {
+  return request<AdminUpdateVipPlanStatusResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/${planId}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -518,7 +518,7 @@ export async function adminDeleteVipPlan(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminDeleteVipPlanResponse>(`/api/admin/vip-plans/${planId}`, {
+  return request<AdminDeleteVipPlanResponse>(`${API_ENDPOINTS.ADMIN_VIP_PLANS}/${planId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -660,7 +660,7 @@ export async function adminGetSubscriptionList(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminGetSubscriptionListResponse>('/api/admin/vip-subscriptions/list', {
+  return request<AdminGetSubscriptionListResponse>(`${API_ENDPOINTS.ADMIN_VIP_SUBSCRIPTIONS}/list`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -687,7 +687,7 @@ export async function adminGetUserSubscriptionSummary(
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
   return request<AdminGetUserSubscriptionSummaryResponse>(
-    `/api/admin/vip-subscriptions/user/${userId}/summary`,
+    `${API_ENDPOINTS.ADMIN_VIP_SUBSCRIPTIONS}/user/${userId}/summary`,
     {
       method: 'GET',
       headers: {
@@ -711,7 +711,7 @@ export async function adminGetUserSubscriptionHistory(
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
   return request<AdminGetUserSubscriptionHistoryResponse>(
-    `/api/admin/vip-subscriptions/user/${userId}/history`,
+    `${API_ENDPOINTS.ADMIN_VIP_SUBSCRIPTIONS}/user/${userId}/history`,
     {
       method: 'GET',
       headers: {
@@ -736,7 +736,7 @@ export async function adminGetSubscriptionStatistics(
   options?: { [key: string]: any },
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
-  return request<AdminGetSubscriptionStatisticsResponse>('/api/admin/vip-subscriptions/statistics', {
+  return request<AdminGetSubscriptionStatisticsResponse>(`${API_ENDPOINTS.ADMIN_VIP_SUBSCRIPTIONS}/statistics`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
