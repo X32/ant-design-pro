@@ -50,6 +50,12 @@ export default [
         component: './test-auth',
         layout: false,
       },
+      {
+        name: 'workflow-test',
+        path: '/user/workflow-test',
+        component: './test/workflow-test',
+        layout: false,
+      },
     ],
   },
 

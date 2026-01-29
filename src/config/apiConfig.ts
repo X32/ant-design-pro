@@ -12,7 +12,11 @@ console.log('isDev:', isDev);
 // API基础地址
 // 开发环境：使用空字符串，通过 proxy.ts 代理到远程服务器
 // 生产环境：直接使用远程 API 地址
-export const API_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
+export const API_BASE_URL = isDev ? '' : 'https://api.qtoplay.com';
+// const API_BASE_URL = 'https://api.qtoplay.com';
+// export const API_BASE_URL = 'https://api.qtoplay.com';
+// export const API_BASE_URL = 'http://localhost:9002';
+
 
 // 临时强制使用空字符串进行调试
 // export const API_BASE_URL = ''; // 强制走 proxy
@@ -150,7 +154,7 @@ export const API_ENDPOINTS = {
   ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
 
   // 工作流类型管理
-  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflow-types`,
+  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflowtypes`,
 
   // 其他端点可以在这里添加
   // 统计管理（管理员权限）

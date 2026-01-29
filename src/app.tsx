@@ -324,9 +324,9 @@ export const layout: RunTimeLayoutConfig = ({
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: RequestConfig = {
-  // 开发环境不设置 baseURL，确保使用相对路径，走 webpack 代理
-  ...(isDev ? {baseURL: 'https://localhost:9002'} : { baseURL: 'https://api.qtoplay.com' }),
-  // ...(isDev ? {} : { baseURL: 'https://localhost:9002' }),
+  // 开发环境：不设置 baseURL 和 prefix，确保走 webpack proxy 代理
+  // 生产环境：设置完整的 API 地址
+  ...(isDev ? { prefix: '', baseURL: '' } : { baseURL: 'https://api.qtoplay.com' }),
   timeout: 60000,
   ...errorConfig,
 };

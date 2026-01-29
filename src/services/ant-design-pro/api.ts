@@ -52,8 +52,7 @@ const retryRequest = async (fn: Function, maxRetries: number = 2, delay: number 
  * GET /api/auth/user
  */
 export async function currentUser(options?: { [key: string]: any }) {
-  const token = localStorage.getItem(TOKEN_KEY);
-  
+  // 不需要在这里手动设置 token，请求拦截器会自动添加
   return request<{
     success: boolean;
     data: {
@@ -61,10 +60,6 @@ export async function currentUser(options?: { [key: string]: any }) {
     };
   }>(API_ENDPOINTS.CURRENT_USER, {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
     ...(options || {}),
   });
 }
@@ -3447,7 +3442,7 @@ export async function getSpokenMessageDetail(
 
 /**
  * 获取工作流类型列表（分页）
- * GET /api/workflow-types
+ * GET /api/workflowtypes
  */
 export async function getWorkflowTypes(
   params?: {
@@ -3457,29 +3452,37 @@ export async function getWorkflowTypes(
   },
   options?: { [key: string]: any },
 ) {
-  // 不需要在这里手动设置 token,请求拦截器会自动添加
-  const requestConfig = {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.WorkflowTypeListResponse>(`${API_ENDPOINTS.WORKFLOW_TYPES}/`, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      // GET 请求不需要 Content-Type
+    },
     params,
     ...(options || {}),
-  };
-
-  return request<API.WorkflowTypeListResponse>(API_ENDPOINTS.WORKFLOW_TYPES, requestConfig);
+  });
 }
 
 /**
  * 获取工作流类型详情
- * GET /api/workflow-types/{option_id}
+ * GET /api/workflowtypes/{option_id}
  */
 export async function getWorkflowTypeDetail(
   optionId: number,
   options?: { [key: string]: any },
 ) {
-  // 不需要在这里手动设置 token，请求拦截器会自动添加
+  const token = localStorage.getItem(TOKEN_KEY);
+
   return request<API.WorkflowTypeDetailResponse>(
     `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
     {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // GET 请求不需要 Content-Type
+      },
       ...(options || {}),
     },
   );
@@ -3487,7 +3490,7 @@ export async function getWorkflowTypeDetail(
 
 /**
  * 创建工作流类型选项
- * POST /api/workflow-types
+ * POST /api/workflowtypes
  */
 export async function createWorkflowType(
   data: {
@@ -3499,9 +3502,14 @@ export async function createWorkflowType(
   },
   options?: { [key: string]: any },
 ) {
-  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  const token = localStorage.getItem(TOKEN_KEY);
+
   return request<API.WorkflowTypeDetailResponse>(API_ENDPOINTS.WORKFLOW_TYPES, {
     method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
     data,
     ...(options || {}),
   });
@@ -3509,7 +3517,7 @@ export async function createWorkflowType(
 
 /**
  * 更新工作流类型选项
- * PUT /api/workflow-types/{option_id}
+ * PUT /api/workflowtypes/{option_id}
  */
 export async function updateWorkflowType(
   optionId: number,
@@ -3522,11 +3530,16 @@ export async function updateWorkflowType(
   },
   options?: { [key: string]: any },
 ) {
-  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  const token = localStorage.getItem(TOKEN_KEY);
+
   return request<API.WorkflowTypeDetailResponse>(
     `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
     {
       method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       data,
       ...(options || {}),
     },
@@ -3535,19 +3548,24 @@ export async function updateWorkflowType(
 
 /**
  * 删除工作流类型选项（软删除）
- * DELETE /api/workflow-types/{option_id}
+ * DELETE /api/workflowtypes/{option_id}
  */
 export async function deleteWorkflowType(
   optionId: number,
   options?: { [key: string]: any },
 ) {
-  // 不需要在这里手动设置 token,请求拦截器会自动添加
+  const token = localStorage.getItem(TOKEN_KEY);
+
   return request<{
     success: boolean;
     message?: string;
     data: null;
   }>(`${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`, {
     method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      // DELETE 请求不需要 Content-Type
+    },
     ...(options || {}),
   });
 }

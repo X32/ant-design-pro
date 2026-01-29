@@ -4,7 +4,7 @@
 
 工作流类型选项 API 用于管理不同工作流类型的配置及价格信息，如 PET Part1、FCE Part2、雅思 Part1 等。
 
-**基础路径**: `/api/workflow-types`
+**基础路径**: `/api/workflowtypes`
 
 **认证方式**: Bearer Token（所有接口都需要登录认证）
 
@@ -32,7 +32,7 @@
 
 ### 1. 创建工作流类型选项
 
-**接口**: `POST /api/workflow-types`
+**接口**: `POST /api/workflowtypes`
 
 **请求头**:
 ```
@@ -86,7 +86,7 @@ Content-Type: application/json
 
 ### 2. 获取工作流类型选项列表
 
-**接口**: `GET /api/workflow-types`
+**接口**: `GET /api/workflowtypes`
 
 **请求头**:
 ```
@@ -102,7 +102,7 @@ Authorization: Bearer {token}
 
 **请求示例**:
 ```
-GET /api/workflow-types?only_active=true&page=1&page_size=20
+GET /api/workflowtypes?only_active=true&page=1&page_size=20
 ```
 
 **成功响应** (200):
@@ -147,7 +147,7 @@ GET /api/workflow-types?only_active=true&page=1&page_size=20
 
 ### 3. 获取工作流类型选项详情
 
-**接口**: `GET /api/workflow-types/{option_id}`
+**接口**: `GET /api/workflowtypes/{option_id}`
 
 **请求头**:
 ```
@@ -159,7 +159,7 @@ Authorization: Bearer {token}
 
 **请求示例**:
 ```
-GET /api/workflow-types/5
+GET /api/workflowtypes/5
 ```
 
 **成功响应** (200):
@@ -190,7 +190,7 @@ GET /api/workflow-types/5
 
 ### 4. 更新工作流类型选项
 
-**接口**: `PUT /api/workflow-types/{option_id}`
+**接口**: `PUT /api/workflowtypes/{option_id}`
 
 **请求头**:
 ```
@@ -249,7 +249,7 @@ Content-Type: application/json
 
 ### 5. 删除工作流类型选项
 
-**接口**: `DELETE /api/workflow-types/{option_id}`
+**接口**: `DELETE /api/workflowtypes/{option_id}`
 
 **请求头**:
 ```
@@ -261,7 +261,7 @@ Authorization: Bearer {token}
 
 **请求示例**:
 ```
-DELETE /api/workflow-types/5
+DELETE /api/workflowtypes/5
 ```
 
 **成功响应** (200):
@@ -276,7 +276,7 @@ DELETE /api/workflow-types/5
 **说明**:
 - 这是软删除操作，会将 `is_active` 设置为 0
 - 删除后的记录仍保留在数据库中
-- 可以通过 `GET /api/workflow-types?only_active=false` 查看已删除的记录
+- 可以通过 `GET /api/workflowtypes?only_active=false` 查看已删除的记录
 
 **错误响应**:
 - 400: 选项不存在或已删除
@@ -293,7 +293,7 @@ DELETE /api/workflow-types/5
 import requests
 
 # 基础配置
-BASE_URL = "http://localhost:9004/api/workflow-types"
+BASE_URL = "http://localhost:9004/api/workflowtypes"
 TOKEN = "your_token_here"
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
@@ -333,7 +333,7 @@ print(response.json())
 
 ```bash
 # 1. 创建工作流类型选项
-curl -X POST http://localhost:9004/api/workflow-types \
+curl -X POST http://localhost:9004/api/workflowtypes \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -345,15 +345,15 @@ curl -X POST http://localhost:9004/api/workflow-types \
   }'
 
 # 2. 获取列表
-curl -X GET "http://localhost:9004/api/workflow-types?only_active=true&page=1&page_size=10" \
+curl -X GET "http://localhost:9004/api/workflowtypes?only_active=true&page=1&page_size=10" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 3. 获取详情
-curl -X GET http://localhost:9004/api/workflow-types/1 \
+curl -X GET http://localhost:9004/api/workflowtypes/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # 4. 更新选项
-curl -X PUT http://localhost:9004/api/workflow-types/1 \
+curl -X PUT http://localhost:9004/api/workflowtypes/1 \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -362,7 +362,7 @@ curl -X PUT http://localhost:9004/api/workflow-types/1 \
   }'
 
 # 5. 删除选项
-curl -X DELETE http://localhost:9004/api/workflow-types/1 \
+curl -X DELETE http://localhost:9004/api/workflowtypes/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

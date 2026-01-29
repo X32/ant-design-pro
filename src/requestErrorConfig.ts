@@ -94,22 +94,35 @@ export const errorConfig: RequestConfig = {
 
   // 请求拦截器
   requestInterceptors: [
-    // 第一个拦截器：确保使用相对路径
+    // 第一个拦截器：确保使用相对路径（开发环境）
     (config: RequestOptions) => {
-      // 如果 URL 是完整的 https://api.qtoplay.com 地址，转换为相对路径
+      // 开发环境：如果 URL 中包含完整域名，转换为相对路径
+      // 这样可以确保所有请求都走 webpack proxy
       if (config.url && typeof config.url === 'string') {
-        config.url = config.url.replace('https://api.qtoplay.com', '');
-        // config.url = config.url.replace('http://localhost:9002', '');
+        config.url = config.url
+          .replace('https://api.qtoplay.com', '')
+          .replace('http://localhost:9002', '');
       }
       return config;
     },
-    // 第二个拦截器：打印请求信息
+    // 第二个拦截器：打印请求信息（详细调试）
     (config: RequestOptions) => {
       console.log('\n=== [requestErrorConfig.ts] Request Interceptor ===');
       console.log('1. URL:', config.url);
       console.log('2. Method:', config.method);
       console.log('3. Headers:', config.headers);
       console.log('4. BaseURL:', config.baseURL);
+      console.log('5. Prefix:', (config as any).prefix);
+      
+      // 🔴 强制检查：如果 URL 被篡改成绝对路径，强制改回相对路径
+      if (config.url && typeof config.url === 'string' && config.url.startsWith('http://localhost:9002')) {
+        console.warn('⚠️⚠️⚠️ 检测到 URL 被篡改为绝对路径！强制改回相对路径');
+        console.warn('篡改前:', config.url);
+        config.url = config.url.replace('http://localhost:9002', '');
+        console.warn('篡改后:', config.url);
+      }
+      
+      console.log('6. 完整 config:', JSON.stringify(config, null, 2));
       console.log('====================================================\n');
       return config;
     },
@@ -136,6 +149,12 @@ export const errorConfig: RequestConfig = {
   // 响应拦截器
   responseInterceptors: [
     (response) => {
+      // 拦截 307 重定向，防止 Authorization 头丢失
+      if (response.status === 307 || response.status === 308) {
+        console.warn('⚠️ 检测到 307/308 重定向，这会导致 Authorization 头丢失');
+        console.warn('建议修改后端配置，避免对 API 路径做重定向');
+      }
+
       // 拦截响应数据，进行个性化处理
       const { data } = response as unknown as ResponseStructure;
 

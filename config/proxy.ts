@@ -14,7 +14,8 @@ const isDev = process.env.NODE_ENV === 'development';
 // ============ 后端服务地址配置 ============
 // 主后端服务（业务API、认证、考试等）
 // 根据环境自动切换：开发环境使用本地服务，生产环境使用线上API
-const MAIN_API_TARGET = isDev ? 'https://api.qtoplay.com' : 'https://api.qtoplay.com';
+// const MAIN_API_TARGET = isDev ? 'https://api.qtoplay.com' : 'https://api.qtoplay.com';
+const MAIN_API_TARGET = 'http://localhost:9002'; // ⚠️ 连接本地后端（HTTP协议）
 // 对话服务（AI 对话相关）
 const CONVERSATION_API_TARGET = 'http://localhost:9019';
 // WebSocket 服务
@@ -33,10 +34,10 @@ export default {
     // ============ 主后端服务代理 (9002) ============
 
     // 工作流类型代理 - 最高优先级
-    '/api/workflow-types': {
+    '/api/workflowtypes': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      pathRewrite: { '^/api/workflow-types': '/api/workflow-types' },
+      pathRewrite: { '^/api/workflowtypes': '/api/workflowtypes' },
       onProxyReq: (proxyReq: any, req: any, res: any) => {
         console.log('\n=== Workflow Types Proxy ===');
         console.log('[Proxy] 请求:', req.method, req.url);
@@ -56,8 +57,18 @@ export default {
     '/api/spoken/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      onProxyReq: (proxyReq: any, req: any) => {
-        console.log('[Spoken Proxy]', req.method, req.url);
+     onProxyReq: (proxyReq: any, req: any, res: any) => {
+        console.log('\n=== spoken Types Proxy ===');
+        console.log('[Proxy] 请求:', req.method, req.url);
+        console.log('[Proxy] 代理到:', proxyReq.path);
+        console.log('[Proxy] Target:', MAIN_API_TARGET);
+        console.log('===========================\n');
+      },
+      onProxyRes: (proxyRes: any, req: any, res: any) => {
+        console.log('[Proxy Response] Status:', proxyRes.statusCode);
+      },
+      onError: (err: any, req: any, res: any) => {
+        console.error('[Proxy Error]:', err.message);
       },
     },
 

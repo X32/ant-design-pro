@@ -33,7 +33,7 @@ const TestAuthPage: React.FC = () => {
     // 先使用原生 fetch 测试
     console.log('\n=== 测试 1: 使用原生 fetch ===');
     try {
-      const fetchResponse = await fetch('/api/workflow-types/?only_active=true&page=1&page_size=5', {
+      const fetchResponse = await fetch('/api/workflowtypes/?only_active=true&page=1&page_size=5', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

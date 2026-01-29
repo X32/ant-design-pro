@@ -107,7 +107,9 @@ interface Message {
 }
 
 // AI音频基础URL
-const AI_AUDIO_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
+// const AI_AUDIO_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
+const AI_AUDIO_BASE_URL = 'http://localhost:9002';
+// const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 
 /**
  * AI口语练习组件
@@ -600,6 +602,86 @@ const SpokenPractice: React.FC = () => {
         
 
     /**
+     * 📤 保存单条消息到数据库（根据消息类型调用不同的 API）
+     * @param conversationId 会话 ID
+     * @param msg 待保存的消息对象
+     * @param index 消息索引（用于日志）
+     * @param total 总消息数（用于日志）
+     * @returns Promise<any | null> 返回保存结果，失败返回 null
+     */
+    const saveSingleMessage = async (
+      conversationId: number,
+      msg: Message,
+      index: number,
+      total: number
+    ): Promise<any | null> => {
+      // 将前端的 timestamp 转换为 ISO 8601 格式
+      const createdAt = convertTimestampToISO(msg.timestamp, msg.fullTimestamp);
+      console.log(`💾 [${index + 1}/${total}] 准备保存消息: ${msg.messageType}, sender: ${msg.sender}, created_at: ${createdAt}`);
+      
+      try {
+        // 根据消息类型调用相应的 API
+        switch (msg.messageType) {
+          case 'text':
+          case undefined: // 兼容旧的无类型消息
+            // 文本消息
+            return await createSpokenTextMessage(conversationId, {
+              sender: msg.sender,
+              content: typeof msg.content === 'string' ? msg.content : '',
+              round_num: msg.roundNum,
+              created_at: createdAt,
+            });
+
+          case 'voice': {
+            // 语音消息
+            // 🔥 优先使用服务器路径，如果没有则使用本地路径
+            const audioPath = msg.serverAudioPath || msg.audioFilePath;
+            console.log(`📦 保存语音消息 [${index + 1}/${total}], 音频路径:`, audioPath);
+            
+            return await createSpokenVoiceMessage(conversationId, {
+              sender: msg.sender,
+              audio_file_path: audioPath,
+              round_num: msg.roundNum,
+              transcription_text: msg.transcriptionText || '',
+              created_at: createdAt,
+            });
+          }
+
+          case 'image':
+            // 图片消息
+            return await createSpokenImageMessage(conversationId, {
+              image_url: msg.imageUrl!,
+              round_num: msg.roundNum,
+              created_at: createdAt,
+            });
+
+          case 'score': {
+            // 评分消息
+            const content = msg.content as ScoreContent;
+            return await createSpokenScoreMessage(conversationId, {
+              raw_text: content.rawText,
+              round_num: msg.roundNum,
+              total_score: msg.score,
+              dimension_scores: content.dimensionScores,
+              advantages: content.advantages,
+              disadvantages: content.disadvantages,
+              suggestions: content.suggestions,
+              improved_answer: content.improvedAnswer,
+              created_at: createdAt,
+            });
+          }
+
+          default:
+            console.warn(`⚠️ 未知消息类型: ${msg.messageType}`);
+            return null;
+        }
+      } catch (err) {
+        console.error(`❌ 保存${msg.messageType || 'text'}消息失败 [${index + 1}/${total}]:`, err);
+        return null;
+      }
+    };
+
+    /**
      * 💾 批量保存缓存消息到数据库
      * @param conversationId 会话 ID
      * @param messages 待保存的消息列表
@@ -622,69 +704,10 @@ const SpokenPractice: React.FC = () => {
         sender: m.sender
       })));
       
-      // ⭐ 并发保存所有消息，使用缓存的精确时间戳
-      const savePromises = messages.map((msg, index) => {
-        // 将前端的 timestamp 转换为 ISO 8601 格式
-        const createdAt = convertTimestampToISO(msg.timestamp, msg.fullTimestamp);
-        console.log(`💾 [${index + 1}/${messages.length}] 准备保存消息: ${msg.messageType}, sender: ${msg.sender}, created_at: ${createdAt}`);
-        
-        if (msg.messageType === 'text' || !msg.messageType) {
-          // 文本消息
-          return createSpokenTextMessage(conversationId, {
-            sender: msg.sender,
-            content: typeof msg.content === 'string' ? msg.content : '',
-            round_num: msg.roundNum,
-            created_at: createdAt, // ⭐ 传入精确时间戳
-          }).catch(err => {
-            console.error(`❌ 保存文本消息失败 [${index + 1}/${messages.length}]:`, err);
-            return null;
-          });
-        } else if (msg.messageType === 'voice') {
-          // 语音消息
-          // 🔥 优先使用服务器路径，如果没有则使用本地路径
-          const audioPath = msg.serverAudioPath || msg.audioFilePath;
-          console.log(`📦 保存语音消息 [${index + 1}/${messages.length}], 音频路径:`, audioPath);
-          
-          return createSpokenVoiceMessage(conversationId, {
-            sender: msg.sender,
-            audio_file_path: audioPath,
-            round_num: msg.roundNum,
-            transcription_text: msg.transcriptionText || '',
-            created_at: createdAt, // ⭐ 传入精确时间戳
-          }).catch(err => {
-            console.error(`❌ 保存语音消息失败 [${index + 1}/${messages.length}]:`, err);
-            return null;
-          });
-        } else if (msg.messageType === 'image') {
-          // 图片消息
-          return createSpokenImageMessage(conversationId, {
-            image_url: msg.imageUrl!,
-            round_num: msg.roundNum,
-            created_at: createdAt, // ⭐ 传入精确时间戳
-          }).catch(err => {
-            console.error(`❌ 保存图片消息失败 [${index + 1}/${messages.length}]:`, err);
-            return null;
-          });
-        } else if (msg.messageType === 'score') {
-          // 评分消息
-          const content = msg.content as ScoreContent;
-          return createSpokenScoreMessage(conversationId, {
-            raw_text: content.rawText,
-            round_num: msg.roundNum,
-            total_score: msg.score,
-            dimension_scores: content.dimensionScores,
-            advantages: content.advantages,
-            disadvantages: content.disadvantages,
-            suggestions: content.suggestions,
-            improved_answer: content.improvedAnswer,
-            created_at: createdAt, // ⭐ 传入精确时间戳
-          }).catch(err => {
-            console.error(`❌ 保存评分消息失败 [${index + 1}/${messages.length}]:`, err);
-            return null;
-          });
-        }
-        return Promise.resolve(null);
-      });
+      // ⭐ 并发保存所有消息，使用封装的 saveSingleMessage 函数
+      const savePromises = messages.map((msg, index) => 
+        saveSingleMessage(conversationId, msg, index, messages.length)
+      );
       
       // 并发保存所有消息
       await Promise.all(savePromises);

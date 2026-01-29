@@ -29,11 +29,11 @@
 ## 🔌 API 接口
 
 ### 后端接口
-- `GET /api/workflow-types` - 获取列表（分页）
-- `POST /api/workflow-types` - 创建选项
-- `GET /api/workflow-types/{id}` - 获取详情
-- `PUT /api/workflow-types/{id}` - 更新选项
-- `DELETE /api/workflow-types/{id}` - 删除选项（软删除）
+- `GET /api/workflowtypes` - 获取列表（分页）
+- `POST /api/workflowtypes` - 创建选项
+- `GET /api/workflowtypes/{id}` - 获取详情
+- `PUT /api/workflowtypes/{id}` - 更新选项
+- `DELETE /api/workflowtypes/{id}` - 删除选项（软删除）
 
 ### 前端 API 函数
 位置：`/src/services/ant-design-pro/api.ts`
@@ -112,8 +112,8 @@ workflowType/
 ```typescript
 export const API_ENDPOINTS = {
   // ...
-  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflow-types`,
-  WORKFLOW_TYPE_DETAIL: `${API_BASE_URL}/api/workflow-types`,
+  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflowtypes`,
+  WORKFLOW_TYPE_DETAIL: `${API_BASE_URL}/api/workflowtypes`,
   // ...
 };
 ```
@@ -121,7 +121,7 @@ export const API_ENDPOINTS = {
 ### 代理配置
 位置：`/config/proxy.ts`
 
-开发环境下，`/api/workflow-types` 会被代理到 `http://localhost:9002`
+开发环境下，`/api/workflowtypes` 会被代理到 `http://localhost:9002`
 
 ### 国际化
 - 中文：`/src/locales/zh-CN/menu.ts`

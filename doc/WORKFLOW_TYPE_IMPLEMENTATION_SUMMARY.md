@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `workflow_type_option` (
 
 **文件**: `/Volumes/H/python/rag_spoken/src/conversation/conversation_server.py`
 
-**路由前缀**: `/api/workflow-types`
+**路由前缀**: `/api/workflowtypes`
 
 **Pydantic 模型**:
 - `WorkflowTypeOptionCreateRequest` - 创建请求
@@ -116,12 +116,12 @@ CREATE TABLE IF NOT EXISTS `workflow_type_option` (
 
 **实现的接口**:
 
-#### 1. POST `/api/workflow-types` - 创建工作流类型选项
+#### 1. POST `/api/workflowtypes` - 创建工作流类型选项
 **功能**: 创建新的工作流类型选项  
 **认证**: 需要 Bearer Token  
 **验证**: 自动检查 value 唯一性
 
-#### 2. GET `/api/workflow-types` - 获取列表（分页）
+#### 2. GET `/api/workflowtypes` - 获取列表（分页）
 **功能**: 获取工作流类型选项列表  
 **参数**:
 - `only_active`: 是否仅返回启用的（默认 true）
@@ -130,16 +130,16 @@ CREATE TABLE IF NOT EXISTS `workflow_type_option` (
 
 **排序**: `sort DESC, id ASC`
 
-#### 3. GET `/api/workflow-types/{option_id}` - 获取详情
+#### 3. GET `/api/workflowtypes/{option_id}` - 获取详情
 **功能**: 获取单个工作流类型选项详情  
 **认证**: 需要 Bearer Token
 
-#### 4. PUT `/api/workflow-types/{option_id}` - 更新选项
+#### 4. PUT `/api/workflowtypes/{option_id}` - 更新选项
 **功能**: 更新工作流类型选项信息  
 **支持字段**: `label`, `price`, `description`, `sort`, `is_active`  
 **限制**: `value` 字段不可修改
 
-#### 5. DELETE `/api/workflow-types/{option_id}` - 删除选项
+#### 5. DELETE `/api/workflowtypes/{option_id}` - 删除选项
 **功能**: 软删除工作流类型选项  
 **说明**: 设置 `is_active = 0`，不物理删除
 
@@ -156,7 +156,7 @@ from conversation.conversation_server import conversation_router, oral_router, w
 app.include_router(workflow_type_router)
 ```
 
-服务可通过主应用访问：`http://localhost:9000/api/workflow-types`
+服务可通过主应用访问：`http://localhost:9000/api/workflowtypes`
 
 ---
 
@@ -207,14 +207,14 @@ mysql -u root -p your_database < src/workflow/sql/oral_practice_schema.sql
 cd /Volumes/H/python/rag_spoken
 python src/app/main_fastapi_app.py
 ```
-访问: `http://localhost:9000/api/workflow-types`
+访问: `http://localhost:9000/api/workflowtypes`
 
 **方式2: 独立启动 conversation 服务**
 ```bash
 cd /Volumes/H/python/rag_spoken
 python src/conversation/conversation_server.py
 ```
-访问: `http://localhost:9004/api/workflow-types`
+访问: `http://localhost:9004/api/workflowtypes`
 
 ### 3. 运行测试
 
@@ -229,7 +229,7 @@ python test/test_workflow_type_api.py
 ```python
 import requests
 
-BASE_URL = "http://localhost:9000/api/workflow-types"
+BASE_URL = "http://localhost:9000/api/workflowtypes"
 TOKEN = "your_token_here"
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
@@ -305,10 +305,10 @@ print(response.json())
 
 ### 1. 前端集成
 可以使用以下接口构建管理界面：
-- 列表页：使用 `GET /api/workflow-types` 展示分页列表
-- 创建页：使用 `POST /api/workflow-types` 创建新选项
-- 编辑页：使用 `PUT /api/workflow-types/{id}` 更新选项
-- 删除：使用 `DELETE /api/workflow-types/{id}` 软删除
+- 列表页：使用 `GET /api/workflowtypes` 展示分页列表
+- 创建页：使用 `POST /api/workflowtypes` 创建新选项
+- 编辑页：使用 `PUT /api/workflowtypes/{id}` 更新选项
+- 删除：使用 `DELETE /api/workflowtypes/{id}` 软删除
 
 ### 2. 与 oral_exercise 表联动
 `workflow_type_option` 表的 `value` 字段应与 `oral_exercise` 表的 `workflow_type` 字段对应，建议：
