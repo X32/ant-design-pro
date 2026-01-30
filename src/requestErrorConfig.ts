@@ -105,25 +105,13 @@ export const errorConfig: RequestConfig = {
       }
       return config;
     },
-    // 第二个拦截器：打印请求信息（详细调试）
+    // 第二个拦截器：URL 修正（仅在必要时输出警告）
     (config: RequestOptions) => {
-      console.log('\n=== [requestErrorConfig.ts] Request Interceptor ===');
-      console.log('1. URL:', config.url);
-      console.log('2. Method:', config.method);
-      console.log('3. Headers:', config.headers);
-      console.log('4. BaseURL:', config.baseURL);
-      console.log('5. Prefix:', (config as any).prefix);
-      
       // 🔴 强制检查：如果 URL 被篡改成绝对路径，强制改回相对路径
       if (config.url && typeof config.url === 'string' && config.url.startsWith('http://localhost:9002')) {
-        console.warn('⚠️⚠️⚠️ 检测到 URL 被篡改为绝对路径！强制改回相对路径');
-        console.warn('篡改前:', config.url);
+        console.warn('⚠️ 检测到 URL 被篡改为绝对路径，已自动修正:', config.url);
         config.url = config.url.replace('http://localhost:9002', '');
-        console.warn('篡改后:', config.url);
       }
-      
-      console.log('6. 完整 config:', JSON.stringify(config, null, 2));
-      console.log('====================================================\n');
       return config;
     },
     // 第二个拦截器：添加 Authorization

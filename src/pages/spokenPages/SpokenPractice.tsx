@@ -1269,8 +1269,9 @@ const SpokenPractice: React.FC = () => {
       return newId;
     };
     
-    // 会话ID和用户ID（从localStorage获取用户ID）
-    const conversationId = getOrCreateConversationId();
+    // 会话 ID 和用户 ID（从 localStorage 获取用户 ID）
+    // ⚠️ 使用 useState 保证只初始化一次，避免每次渲染都生成新 ID
+    const [conversationId] = useState(() => getOrCreateConversationId());
     const userId = parseInt(localStorage.getItem(USER_ID_KEY) || '1', 10);
     
    
@@ -1347,19 +1348,34 @@ const SpokenPractice: React.FC = () => {
     const playAiMessageAudio = (message: Message) => {
       if (!message.audioUrl) return;
       
-      // 停止当前正在播放的音频
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
+      // 停止当前正在播放的音频（使用缓存）
+      if (playingMessageId !== null && playingMessageId !== message.id) {
+        const currentAudio = aiAudioCacheRef.current.get(playingMessageId);
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
       }
       
-      // 尝试从缓存获取音频
+      // ⚠️ 修复：优先从缓存获取，确保自动播放和手动播放使用同一个对象
       let audio = aiAudioCacheRef.current.get(message.id);
       
       if (!audio) {
         // 缓存中没有，创建新的
         audio = new Audio(message.audioUrl);
         aiAudioCacheRef.current.set(message.id, audio);
+        
+        // 设置事件监听器（只在创建时设置一次）
+        audio.onended = () => {
+          setPlayingMessageId(null);
+          setAudioElement(null);
+        };
+        
+        audio.onerror = (err) => {
+          console.error('播放AI音频失败:', err);
+          setPlayingMessageId(null);
+          setAudioElement(null);
+        };
       }
       
       // 重置播放位置
@@ -1367,11 +1383,6 @@ const SpokenPractice: React.FC = () => {
       
       setPlayingMessageId(message.id);
       setAudioElement(audio);
-      
-      audio.onended = () => {
-        setPlayingMessageId(null);
-        setAudioElement(null);
-      };
       
       audio.play().catch(err => {
         console.error('播放AI音频失败:', err);
@@ -1470,17 +1481,7 @@ const SpokenPractice: React.FC = () => {
     const handlePopState = () => {
       console.log('🔙 检测到浏览器返回操作，开始清理资源...');
       
-      // 🧹 清理音频资源
-      if (audioElement) {
-        console.log('🔇 停止当前正在播放的音频');
-        audioElement.pause();
-        audioElement.src = '';
-        audioElement.load();
-        setAudioElement(null);
-        setPlayingMessageId(null);
-      }
-      
-      // 清理所有缓存的 AI 音频
+      // 🧹 清理所有缓存的 AI 音频
       if (aiAudioCacheRef.current.size > 0) {
         console.log(`🧹 清理 ${aiAudioCacheRef.current.size} 个缓存的音频`);
         aiAudioCacheRef.current.forEach((audio) => {
@@ -1504,11 +1505,11 @@ const SpokenPractice: React.FC = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
       
-      // 组件卸载时清除 conversationId
-      console.log('🧹 组件卸载，清除 conversationId');
-      localStorage.removeItem(CONVERSATION_ID_KEY);
+      // ⚠️ 不再删除 conversationId，避免组件重渲染时丢失会话
+      // 只有用户主动开始新会话时才清除
+      console.log('🧹 组件卸载，保留 conversationId 以便下次进入时恢复');
     };
-  }, [conversationFinished, audioElement]);
+  }, [conversationFinished]); // ⚠️ 移除 audioElement 依赖，使用 Ref 访问最新值
 
 
   /**
@@ -1920,79 +1921,128 @@ const SpokenPractice: React.FC = () => {
         );
         console.log('✅ 已更新缓存中的服务器音频路径:', uploadResult.filePath);
         
-        // 开始轮询转写状态
+        // 🎯 先显示"转写中"状态，立即释放UI
         if (uploadResult.task_id) {
           console.log('开始查询转写状态，任务ID:', uploadResult.task_id);
           
-          // 轮询查询转写结果
-          const transcriptionText = await pollTranscriptionStatus(uploadResult.task_id);
+          // 1️⃣ 立即更新UI为"转写中"状态（不阻塞）
+          setMessages(prevMessages => 
+            prevMessages.map(msg => 
+              msg.id === newMessageId 
+                ? { 
+                    ...msg, 
+                    transcriptionText: '正在转写中...',
+                    transcriptionStatus: 'processing' as const
+                  } 
+                : msg
+            )
+          );
           
-          if (transcriptionText) {
-            // 转写成功，更新消息的转写文本
-            setMessages(prevMessages => 
-              prevMessages.map(msg => 
-                msg.id === newMessageId 
-                  ? { 
-                      ...msg, 
-                      transcriptionText: transcriptionText,
-                      transcriptionStatus: 'done' as const
-                    } 
-                  : msg
-              )
-            );
-            
-            // ⭐ 同步更新缓存中的消息
-            messageCacheRef.current = messageCacheRef.current.map(msg =>
-              msg.id === newMessageId
-                ? {
-                    ...msg,
-                    transcriptionText: transcriptionText,
-                    transcriptionStatus: 'done' as const
+          messageCacheRef.current = messageCacheRef.current.map(msg =>
+            msg.id === newMessageId
+              ? {
+                  ...msg,
+                  transcriptionText: '正在转写中...',
+                  transcriptionStatus: 'processing' as const
+                }
+              : msg
+          );
+          console.log('✅ 已设置转写状态为"处理中"');
+          
+          // 2️⃣ 异步轮询（后台执行，不阻塞用户操作）
+          pollTranscriptionStatus(uploadResult.task_id)
+            .then(transcriptionText => {
+              if (transcriptionText) {
+                // 转写成功，更新消息的转写文本
+                setMessages(prevMessages => 
+                  prevMessages.map(msg => 
+                    msg.id === newMessageId 
+                      ? { 
+                          ...msg, 
+                          transcriptionText: transcriptionText,
+                          transcriptionStatus: 'done' as const
+                        } 
+                      : msg
+                  )
+                );
+                
+                // 同步更新缓存中的消息
+                messageCacheRef.current = messageCacheRef.current.map(msg =>
+                  msg.id === newMessageId
+                    ? {
+                        ...msg,
+                        transcriptionText: transcriptionText,
+                        transcriptionStatus: 'done' as const
+                      }
+                    : msg
+                );
+                console.log('✅ 转写成功，已更新缓存:', transcriptionText);
+                
+                // 将转写结果通过WebSocket发送给服务器
+                if (isConnected && socket) {
+                  try {
+                    socket.send(JSON.stringify({
+                      'type': 'answer',
+                      conversation_id: conversationId,
+                      'content': transcriptionText,
+                      round_num: 1,
+                    }));
+                    console.log('已将转写结果通过WebSocket发送');
+                  } catch (error) {
+                    console.error('WebSocket发送转写结果失败:', error);
                   }
-                : msg
-            );
-            console.log('✅ 已更新缓存中的转写文本:', transcriptionText);
-            
-            // 可以将转写结果通过WebSocket发送给服务器
-            if (isConnected && socket) {
-              try {
-                socket.send(JSON.stringify({
-                  'type': 'answer',
-                  conversation_id: conversationId,
-                  'content': transcriptionText,
-                  round_num: 1,
-                }));
-                console.log('已将转写结果通过WebSocket发送');
-              } catch (error) {
-                console.error('WebSocket发送转写结果失败:', error);
+                }
+              } else {
+                // 转写失败，更新状态
+                setMessages(prevMessages => 
+                  prevMessages.map(msg => 
+                    msg.id === newMessageId 
+                      ? { 
+                          ...msg, 
+                          transcriptionText: '转写失败，请重试',
+                          transcriptionStatus: 'failed' as const
+                        } 
+                      : msg
+                  )
+                );
+                
+                messageCacheRef.current = messageCacheRef.current.map(msg =>
+                  msg.id === newMessageId
+                    ? {
+                        ...msg,
+                        transcriptionText: '转写失败，请重试',
+                        transcriptionStatus: 'failed' as const
+                      }
+                    : msg
+                );
+                console.log('❌ 转写失败，已更新缓存');
               }
-            }
-          } else {
-            // 转写失败，更新状态
-            setMessages(prevMessages => 
-              prevMessages.map(msg => 
-                msg.id === newMessageId 
-                  ? { 
-                      ...msg, 
-                      transcriptionText: '转写失败',
+            })
+            .catch(error => {
+              console.error('转写轮询异常:', error);
+              // 异常处理：标记为失败
+              setMessages(prevMessages => 
+                prevMessages.map(msg => 
+                  msg.id === newMessageId 
+                    ? { 
+                        ...msg, 
+                        transcriptionText: '转写异常',
+                        transcriptionStatus: 'failed' as const
+                      } 
+                    : msg
+                )
+              );
+              
+              messageCacheRef.current = messageCacheRef.current.map(msg =>
+                msg.id === newMessageId
+                  ? {
+                      ...msg,
+                      transcriptionText: '转写异常',
                       transcriptionStatus: 'failed' as const
-                    } 
+                    }
                   : msg
-              )
-            );
-            
-            // ⭐ 同步更新缓存中的消息
-            messageCacheRef.current = messageCacheRef.current.map(msg =>
-              msg.id === newMessageId
-                ? {
-                    ...msg,
-                    transcriptionText: '转写失败',
-                    transcriptionStatus: 'failed' as const
-                  }
-                : msg
-            );
-            console.log('❌ 转写失败，已更新缓存');
-          }
+              );
+            });
         }
       }
     } catch (error) {
@@ -2111,12 +2161,23 @@ const SpokenPractice: React.FC = () => {
    * 停止播放音频
    */
   const stopAudioMessage = () => {
+    // ⚠️ 修复：不仅暂停 audioElement，还要暂停当前正在播放的缓存音频
+    if (playingMessageId !== null) {
+      const cachedAudio = aiAudioCacheRef.current.get(playingMessageId);
+      if (cachedAudio) {
+        cachedAudio.pause();
+        cachedAudio.currentTime = 0;
+      }
+    }
+    
+    // 同时暂停 audioElement（兼容旧逻辑）
     if (audioElement) {
       audioElement.pause();
       audioElement.currentTime = 0;
-      setPlayingMessageId(null);
-      setAudioElement(null);
     }
+    
+    setPlayingMessageId(null);
+    setAudioElement(null);
   };
 
   // 渲染组件UI
