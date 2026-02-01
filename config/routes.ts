@@ -267,6 +267,15 @@ export default [
     layout: false,  // 普通用户不显示侧边栏
   },
   
+  // ========== 口语考试练习页面（普通用户，不显示侧边栏）==========
+  {
+    name: 'spoken-exam-practice',
+    icon: 'sound',
+    path: '/spoken-exam-practice',
+    component: './spokenExamPage/SpokenPractice',
+    layout: false,  // 普通用户不显示侧边栏
+  },
+  
   // ========== 用户练习记录页面（不显示侧边栏）==========
   {
     path: '/messages/userpractice',

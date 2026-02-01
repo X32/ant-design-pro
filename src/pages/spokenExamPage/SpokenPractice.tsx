@@ -34,6 +34,7 @@ import {
   getWorkflowTypes,
   consumeCoins,
   getWalletBalance,
+  getPublicExamPaperQuestions,
 } from '@/services/ant-design-pro/api'; // 导入API函数
 import { getMySubscription } from '@/services/ant-design-pro/api/vipSubscription'; // 导入VIP订阅接口
 import { TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig'; // 导入Token键名常量
@@ -229,7 +230,7 @@ const SpokenPractice: React.FC = () => {
      * @returns paper_id 或 undefined
      */
     const getPaperIdFromUrl = (): number | undefined => {
-      const urlPaperId = searchParams.get('exercise_id');
+      const urlPaperId = searchParams.get('paper_id');
       if (urlPaperId) {
         const id = parseInt(urlPaperId, 10);
         if (!isNaN(id) && id > 0) {
@@ -268,7 +269,133 @@ const SpokenPractice: React.FC = () => {
         setPriceLoading(false);
       }
     };
-    
+    //获取价格和workflow
+
+    /**
+     * 📝 新增：获取试卷题目列表并计算总价格
+     * @param paperId 试卷ID
+     * @returns 返回题目列表、总价格、workflow_type 和 exercise IDs
+     */
+    const fetchExamPaperQuestionsAndPrice = async (paperId: number): Promise<{
+      totalPrice: number;
+      workflowTypes: string;
+      exerciseIds: Record<string, number>;
+    }> => {
+      try {
+        console.log(`🔍 开始获取试卷 ${paperId} 的题目列表...`);
+        
+        // 1. 调用接口获取试卷题目列表
+        const response = await getPublicExamPaperQuestions(paperId);
+        
+        if (!response || !response.success || !Array.isArray(response.data)) {
+          console.error('❌ 获取试卷题目失败:', response);
+          return {
+            totalPrice: 0,
+            workflowTypes: '',
+            exerciseIds: {},
+          };
+        }
+        
+        const questions = response.data;
+        console.log(`✅ 成功获取 ${questions.length} 道题目`);
+        
+        // 2. 提取所有 workflow_type 并去重
+        const workflowTypesSet = new Set<string>();
+        const priceDetails: { questionId: number; workflowType: string; price: number }[] = [];
+        let totalPrice = 0;
+        
+        questions.forEach((question: any) => {
+          // 优先从 question 本身获取 workflow_type，其次从 exercise 中获取
+          const workflowType = question.workflow_type || question.exercise?.workflow_type;
+          
+          if (workflowType) {
+            workflowTypesSet.add(workflowType);
+            
+            // 3. 从价格映射表中查找对应的价格
+            const price = workflowPriceMapRef.current.get(workflowType) || 0;
+            
+            priceDetails.push({
+              questionId: question.id,
+              workflowType: workflowType,
+              price: price,
+            });
+            
+            totalPrice += price;
+            
+            console.log(`  题目 #${question.id}: workflow_type=${workflowType}, price=${price}`);
+          } else {
+            console.warn(`⚠️ 题目 #${question.id} 没有 workflow_type`);
+          }
+        });
+        //获取 exercise 的 ID
+        const exerciseIds: Record<string, number> = {};
+        questions.forEach((question: any, index: number) => {
+          const exerciseId = question.exercise?.id || question.exercise_id;
+          const workflowType = question.workflow_type || question.exercise?.workflow_type;
+          
+          if (exerciseId && workflowType) {
+            // 提取 workflow_type 中的 part 数字
+            // 例如: 'ket_part1' → '1', 'pet_part2' → '2'
+            const partMatch = workflowType.match(/part(\d+)/);
+            if (partMatch && partMatch[1]) {
+              const partNumber = partMatch[1]; // 提取数字部分
+              exerciseIds[partNumber] = exerciseId;
+              console.log(`  题目 #${question.id}: workflow_type=${workflowType} → key="${partNumber}", exercise_id=${exerciseId}`);
+            } else {
+              // 如果没有 part 数字，使用索引 + 1 作为 key
+              exerciseIds[String(index + 1)] = exerciseId;
+              console.warn(`⚠️ 题目 #${question.id} 的 workflow_type "${workflowType}" 没有 part 数字，使用索引: ${index + 1}`);
+            }
+          } else {
+            if (!exerciseId) {
+              console.warn(`⚠️ 题目 #${question.id} 没有 exercise_id`);
+            }
+            if (!workflowType) {
+              console.warn(`⚠️ 题目 #${question.id} 没有 workflow_type`);
+            }
+          }
+        });
+        
+        console.log('🎯 获取到的 exercise IDs:', exerciseIds);
+
+        // 4. 取第一个 workflow_type 并转换为 full 类型
+        const workflowTypesArray = Array.from(workflowTypesSet);
+        let workflowTypes = '';
+        
+        if (workflowTypesArray.length > 0) {
+          const firstType = workflowTypesArray[0]; // 例如 'ket_part1'
+          // 提取前缀（ket、pet、fce 等）
+          const prefix = firstType.split('_')[0]; // 'ket'
+          workflowTypes = `${prefix}_full`; // 'ket_full'
+          
+          console.log(`🔄 转换 workflow_type: ${firstType} → ${workflowTypes}`);
+        } else {
+          console.warn('⚠️ 没有找到任何 workflow_type');
+        }
+        
+        console.log('📊 试卷统计信息:');
+        console.log(`  - 题目总数: ${questions.length}`);
+        console.log(`  - 原始 workflow_type: ${workflowTypesArray.join(', ')}`);
+        console.log(`  - 转换后 workflow_type: ${workflowTypes}`);
+        console.log(`  - 总价格: ${totalPrice} 金币`);
+        console.log('  - 价格明细:', priceDetails);
+        
+        return {
+          totalPrice,
+          workflowTypes,
+          exerciseIds,
+        };
+        
+      } catch (error) {
+        console.error('❌ 获取试卷题目异常:', error);
+        return {
+          totalPrice: 0,
+          workflowTypes: '',
+          exerciseIds: {},
+        };
+      }
+    };
+
     /**
      * 💡 新增：获取用户VIP订阅状态
      * 查询用户是否有有效的VIP订阅（has_subscription == true && remaining_days > 0）
@@ -473,9 +600,9 @@ const SpokenPractice: React.FC = () => {
         }
         
         // 获取练习题目 ID
-        const exerciseId = getPaperIdFromUrl();
-        if (!exerciseId) {
-          console.error('❌ 无法获取 exercise_id，无法扣款');
+        const paperId = getPaperIdFromUrl();
+        if (!paperId) {
+          console.error('❌ 无法获取 paper_id，无法扣款');
           Modal.error({
             title: '扣款失败',
             content: '无法获取练习题目 ID',
@@ -485,15 +612,16 @@ const SpokenPractice: React.FC = () => {
         
         // 获取工作流类型和价格
         const { workflowType, price } = getCurrentWorkflowInfo();
-        
+        // let price = 100.0
+        // workflowType = 'ket_full'
         // 检查价格是否有效
-        if (price <= 0) {
-          console.warn('⚠️ 练习价格为 0，跳过扣款');
-          return true;
-        }
+        // if (price <= 0) {
+        //   console.warn('⚠️ 练习价格为 0，跳过扣款');
+        //   return true;
+        // }
         
         // 获取课程名称（作为 remark）
-        const remark = `口语练习 - ${workflowType}`;
+        // const remark = `口语练习 - ${workflowType}`;
         
         console.log(`💳 开始扣款: exercise_id=${exerciseId}, price=${price}, remark=${remark}`);
         
@@ -757,12 +885,12 @@ const SpokenPractice: React.FC = () => {
         return null;
       }
     };
-
+    
     /**
      * 连接 WebSocket
      * @param realConversationId 真实的会话 ID
      */
-    const connectWebSocket = (realConversationId: number) => {
+    const connectWebSocket = async (realConversationId: number) => {
       try {
         // 从 localStorage 获取 token
         const token = localStorage.getItem(TOKEN_KEY);
@@ -782,17 +910,20 @@ const SpokenPractice: React.FC = () => {
           paperId = 25;
           console.log('没有从URL获取paper_id使用默认id :', paperId);
         }
+        const { workflowTypes, totalPrice, exerciseIds } = await fetchExamPaperQuestionsAndPrice(paperId)
+        console.log('从服务器获取的workflowTypes:', workflowTypes, totalPrice );
+        console.log('从服务器获取的exerciseIds:', exerciseIds);
         
         // 从 URL 获取 workflow_type
-        let workflowType = searchParams.get('workflow_type');
-        if (!workflowType) {
-          workflowType = 'fce_part1';
-          console.log('没有从URL获取workflow_type使用默认workflow_type :', workflowType);
-        }
-        console.log('从URL获取的workflow_type:', workflowType);
+        // let workflowType = searchParams.get('workflow_type');
+        // if (!workflowType) {
+        //   workflowType = 'ket_all';
+        //   console.log('没有从URL获取workflow_type使用默认workflow_type :', workflowType);
+        // }
+        // console.log('从URL获取的workflow_type:', workflowType);
        
-        // 连接 WebSocket，传入 token、workflow_type 和 paper_id
-        const wsSocket = webSocketService.connect(userId, realConversationId, token, workflowType, paperId);
+        // 连接 WebSocket，传入 token、workflow_type、paper_id 和 exercise_ids
+        const wsSocket = webSocketService.connect(userId, realConversationId, token, workflowTypes, paperId, exerciseIds);
         setSocket(wsSocket);
         
         // 监听认证成功事件
@@ -1403,15 +1534,30 @@ const SpokenPractice: React.FC = () => {
     return () => clearTimeout(timer);
   }, [messages]); // 依赖于 messages 状态，当 messages 改变时触发滚动
     
-  // 组件挂载时加载历史消息并连接 WebSocket
+      // 组件挂载时加载历史消息并连接 WebSocket
   useEffect(() => {
     const initializeConversation = async () => {
       try {
-        // 0. 加载工作流价格映射和VIP订阅状态
-        await Promise.all([
+        // 0. 加载工作流价格映射和VIP订阅状态（使用 allSettled 确保所有接口都执行完）
+        const configResults = await Promise.allSettled([
           fetchWorkflowPrices(),
-          fetchVipSubscriptionStatus(), // ✅ 新增：加载VIP订阅状态
+          fetchVipSubscriptionStatus(),
         ]);
+        
+        // 检查配置加载结果
+        const [priceResult, vipResult] = configResults;
+        
+        if (priceResult.status === 'rejected') {
+          console.warn('⚠️ 工作流价格加载失败，将使用默认值:', priceResult.reason);
+        }
+        
+        if (vipResult.status === 'rejected') {
+          console.warn('⚠️ VIP订阅状态加载失败，将使用默认值:', vipResult.reason);
+        }
+        
+        // 统计成功/失败数量
+        const successCount = configResults.filter(r => r.status === 'fulfilled').length;
+        console.log(`📊 配置加载完成: ${successCount}/${configResults.length} 成功`);
         
         // 1. 加载历史消息（如果会话不存在会创建新会话）
         console.log('初始化会话 ID:', conversationId);
@@ -1419,14 +1565,16 @@ const SpokenPractice: React.FC = () => {
         
         // 2. 使用真实的会话 ID 连接 WebSocket
         console.log('使用真实会话 ID 连接 WebSocket:', realConversationId);
-        connectWebSocket(realConversationId);
+        await connectWebSocket(realConversationId);
       } catch (error) {
         console.error('初始化会话失败:', error);
       }
     };
       
     initializeConversation();
-    
+
+    // ... existing code ...
+
     // 组件卸载时断开连接并清理音频缓存
     return () => {
       console.log('🧹 组件卸载，开始清理资源...');

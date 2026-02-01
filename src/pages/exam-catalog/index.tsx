@@ -290,6 +290,7 @@ const ExamCatalog: React.FC = () => {
    */
   const handleExam = (paperId: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('开始考试，试卷ID:', paperId);
 
     if (!isLoggedIn) {
       message.warning('请先登录后再开始考试');
@@ -297,7 +298,7 @@ const ExamCatalog: React.FC = () => {
       return;
     }
 
-    history.push(`/exam?paper_id=${paperId}`);
+    history.push(`/spoken-exam-practice?paper_id=${paperId}`);
   };
 
   useEffect(() => {
