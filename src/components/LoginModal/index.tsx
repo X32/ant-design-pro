@@ -425,13 +425,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
               <div className="brand-logo">
                 <img src={require('../../img/icon_200.png')} alt="Logo" />
               </div>
-              <h1 className="brand-title">AI 口语练习平台</h1>
-              <p className="brand-slogan">智能陪练，让口语更流利</p>
+              <h1 className="brand-title">SpeakCube<br/>AI 口语练习</h1>
+              <p className="brand-slogan">像玩游戏一样学英语！🎮</p>
               <div className="brand-features">
-                <div className="feature-item">✨ 24小时AI智能陪练</div>
-                <div className="feature-item">🎯 个性化学习方案</div>
-                <div className="feature-item">📊 实时反馈与纠正</div>
-                <div className="feature-item">🏆 快速提升口语能力</div>
+                <div className="feature-item">🤖 AI 陪你聊天</div>
+                <div className="feature-item">⭐ 马上告诉你对不对</div>
+                <div className="feature-item">🎮 像游戏一样好玩</div>
+                <div className="feature-item">🏆 升级打怪学英语</div>
               </div>
             </div>
           </div>
@@ -446,13 +446,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                 onClick={switchLoginType}
                 className="switch-button"
               >
-                {loginType === 'wechat' ? '手机号登录' : '微信扫码登录'}
+                {loginType === 'wechat' ? '📱 换个方式' : '💬 微信登录'}
               </Button>
             </div>
 
             <div className="login-form-container">
               <h2 className="login-title">
-                {loginType === 'wechat' ? '微信扫码登录' : '手机号登录'}
+                {loginType === 'wechat' ? '🎉 扫码登录' : '📱 手机号登录'}
               </h2>
 
               {/* 微信扫码登录 */}
@@ -466,8 +466,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                       className="wechat-qrcode-wrapper"
                     />
                     <p className="qrcode-desc">
-                      打开微信扫一扫<br />
-                      快速登录或注册
+                      📱 打开微信扫一扫<br />
+                      ✨ 马上开始游戏~
                     </p>
                   </div>
                 </div>
@@ -491,7 +491,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                     >
                       <Input
                         prefix={<MobileOutlined />}
-                        placeholder="请输入手机号"
+                        placeholder="输入手机号 📱"
                         maxLength={11}
                       />
                     </Form.Item>
@@ -504,7 +504,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                       ]}
                     >
                       <Input
-                        placeholder="请输入验证码"
+                        placeholder="输入验证码 🔢"
                         maxLength={6}
                         addonAfter={
                           <Button
@@ -513,7 +513,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                             disabled={countdown > 0}
                             style={{ padding: '0 16px', height: '100%' }}
                           >
-                            {countdown > 0 ? `${countdown}秒后重试` : '获取验证码'}
+                            {countdown > 0 ? `${countdown}s` : '获取验证码'}
                           </Button>
                         }
                       />
@@ -528,13 +528,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
                         size="large"
                         style={{ height: 48 }}
                       >
-                        登录
+                        🚀 开始游戏
                       </Button>
                     </Form.Item>
 
                     <div className="login-tips">
                       <span style={{ color: '#999', fontSize: 12 }}>
-                        首次使用手机号登录将自动注册账号
+                        💡 首次登录自动注册哦~
                       </span>
                     </div>
                   </Form>
@@ -545,14 +545,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
             {/* 底部协议 */}
             <div className="agreement-section">
               <span className="agreement-text">
-                登录即表示同意
+                登录 = 同意
                 <a onClick={() => handleViewAgreement('terms')} className="agreement-link">
                   《用户协议》
                 </a>
-                和
+                +
                 <a onClick={() => handleViewAgreement('privacy')} className="agreement-link">
                   《隐私政策》
                 </a>
+                📝
               </span>
             </div>
             

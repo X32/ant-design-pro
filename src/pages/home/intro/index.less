@@ -1,30 +1,52 @@
 .exam-intro-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FFF9E6;
   padding-bottom: 60px;
+  position: relative;
+
+  // 波点背景图案
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(#FFD93D 20%, transparent 20%);
+    background-size: 40px 40px;
+    opacity: 0.08;
+    pointer-events: none;
+  }
 
   .exam-intro-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #FFD93D;
+    border-bottom: 4px solid #000;
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 100;
 
     h2 {
-      color: #667eea;
-      font-weight: 600;
+      color: #1A535C;
+      font-weight: 900;
+      text-shadow: 2px 2px 0px #FF6B6B;
+      transform: rotate(-1deg);
     }
 
     .ant-btn {
-      color: #667eea;
-      
+      color: #1A535C;
+      font-weight: 700;
+
       &:hover {
-        color: #764ba2;
-        background: rgba(102, 126, 234, 0.1);
+        color: #FF6B6B;
+        background: #FFF;
+        border-color: #000;
+        transform: rotate(-2deg) scale(1.05);
+        box-shadow: 3px 3px 0px #000;
       }
     }
   }
@@ -33,18 +55,22 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 24px;
+    position: relative;
+    z-index: 1;
   }
 
-  // 卡片通用样式
+  // 卡片通用样式 - 手绘风格
   .ant-card {
     margin-bottom: 24px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 25px 20px 30px 15px;
+    box-shadow: 8px 8px 0px #000;
+    border: 3px solid #000;
+    transition: all 0.2s;
+    background: #FFF;
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      transform: scale(1.02) rotate(0deg) !important;
+      box-shadow: 12px 12px 0px #000;
     }
   }
 
@@ -55,47 +81,48 @@
 
     .header-icon {
       font-size: 32px;
-      color: #667eea;
+      color: #FFD93D;
       margin-right: 12px;
     }
 
     h3 {
       margin: 0;
-      color: #333;
-      font-weight: 600;
+      color: #1A535C;
+      font-weight: 800;
     }
   }
 
   // 基本信息卡片
   .info-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    background: #FFF;
 
     .info-item {
       display: flex;
       align-items: center;
       padding: 20px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
+      background: #FFF9E6;
+      border-radius: 15px 12px 18px 10px;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0px #000;
+      transition: all 0.2s;
 
       &:hover {
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
-        transform: translateY(-2px);
+        box-shadow: 6px 6px 0px #000;
+        transform: translate(-2px, -2px);
       }
 
       .info-icon {
         font-size: 36px;
-        color: #667eea;
         margin-right: 16px;
         width: 60px;
         height: 60px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        color: white;
+        background: #FFD93D;
+        border-radius: 12px 8px 15px 10px;
+        border: 3px solid #000;
+        color: #1A535C;
       }
 
       .info-content {
@@ -108,8 +135,8 @@
 
         h4 {
           margin-top: 4px;
-          color: #667eea;
-          font-weight: 600;
+          color: #FF6B6B;
+          font-weight: 800;
         }
       }
     }
@@ -117,15 +144,17 @@
 
   // 流程卡片
   .flow-card {
-    background: white;
+    background: #4ECDC4;
 
     .flow-description {
       padding: 16px;
-      background: #f8f9ff;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      background: #FFF;
+      border-radius: 12px 8px 15px 10px;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0px #000;
       margin-bottom: 32px;
-      color: #555;
+      color: #1A535C;
+      font-weight: 600;
     }
 
     .exam-timeline {
@@ -139,14 +168,15 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #FF6B6B;
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
         font-size: 16px;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        border: 3px solid #000;
+        box-shadow: 3px 3px 0px #000;
       }
 
       .timeline-content {
@@ -159,24 +189,27 @@
 
           h4 {
             margin: 0;
-            color: #333;
-            font-weight: 600;
+            color: #1A535C;
+            font-weight: 800;
           }
 
           .ant-tag {
             font-size: 12px;
-            padding: 2px 12px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 20px 15px 25px 10px;
+            border: 2px solid #000;
+            font-weight: 700;
           }
         }
 
         p {
-          color: #666;
+          color: #1A535C;
           line-height: 1.8;
           margin-bottom: 12px;
+          font-weight: 600;
 
           strong {
-            color: #333;
+            color: #FF6B6B;
           }
         }
 
@@ -185,12 +218,13 @@
           margin: 8px 0;
 
           li {
-            color: #666;
+            color: #1A535C;
             line-height: 2;
             position: relative;
+            font-weight: 600;
 
             &::marker {
-              color: #667eea;
+              color: #FFD93D;
             }
           }
         }
@@ -200,16 +234,19 @@
 
   // 评分卡片
   .scoring-card {
-    background: white;
+    background: #FFF;
 
     .scoring-description {
       padding: 16px;
-      background: #f8f9ff;
-      border-radius: 8px;
+      background: #FFD93D;
+      border-radius: 15px 12px 18px 10px;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0px #000;
       text-align: center;
-      color: #555;
+      color: #1A535C;
       font-size: 16px;
       margin-bottom: 24px;
+      font-weight: 700;
     }
 
     .scoring-items {
@@ -220,26 +257,28 @@
 
     .scoring-item {
       padding: 24px;
-      background: #fafbff;
-      border-radius: 12px;
-      border: 2px solid #e8ebf7;
-      transition: all 0.3s ease;
+      background: #FFF9E6;
+      border-radius: 20px 15px 25px 10px;
+      border: 3px solid #000;
+      box-shadow: 5px 5px 0px #000;
+      transition: all 0.2s;
 
       &:hover {
-        border-color: #667eea;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+        box-shadow: 8px 8px 0px #000;
+        transform: translate(-2px, -2px);
       }
 
       &.highlight {
-        background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
-        border-color: #ff4d4f;
+        background: #FF6B6B;
+        border-color: #000;
 
         .scoring-number {
-          background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+          background: #FFF;
+          color: #FF6B6B;
         }
 
         .scoring-title h4 {
-          color: #ff4d4f;
+          color: #FFF;
         }
       }
 
@@ -253,7 +292,7 @@
           width: 48px;
           height: 48px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #4ECDC4;
           color: white;
           display: flex;
           align-items: center;
@@ -261,6 +300,8 @@
           font-weight: bold;
           font-size: 20px;
           flex-shrink: 0;
+          border: 3px solid #000;
+          box-shadow: 3px 3px 0px #000;
         }
 
         .scoring-title {
@@ -269,12 +310,12 @@
 
           h4 {
             margin: 0 0 4px 0;
-            color: #333;
-            font-weight: 600;
+            color: #1A535C;
+            font-weight: 800;
           }
 
           .ant-typography {
-            color: #999;
+            color: #666;
             font-size: 13px;
           }
         }
@@ -282,8 +323,9 @@
         .ant-tag {
           font-size: 13px;
           padding: 4px 12px;
-          border-radius: 12px;
-          font-weight: 500;
+          border-radius: 20px 15px 25px 10px;
+          border: 2px solid #000;
+          font-weight: 700;
         }
       }
 
@@ -292,16 +334,17 @@
         margin: 12px 0 0 0;
 
         li {
-          color: #666;
+          color: #1A535C;
           line-height: 2;
           position: relative;
+          font-weight: 600;
 
           &::marker {
-            color: #667eea;
+            color: #FFD93D;
           }
 
           strong {
-            color: #333;
+            color: #FF6B6B;
           }
         }
       }
@@ -310,13 +353,15 @@
     .scoring-formula {
       margin-top: 32px;
       padding: 24px;
-      background: linear-gradient(135deg, #f8f9ff 0%, #fff5f5 100%);
-      border-radius: 12px;
+      background: #95E1D3;
+      border-radius: 20px 15px 25px 10px;
+      border: 3px solid #000;
+      box-shadow: 5px 5px 0px #000;
 
       h4 {
         margin-bottom: 20px;
-        color: #333;
-        font-weight: 600;
+        color: #1A535C;
+        font-weight: 800;
       }
 
       .formula-items {
@@ -329,14 +374,17 @@
           align-items: center;
           gap: 12px;
           padding: 12px;
-          background: white;
-          border-radius: 8px;
+          background: #FFF;
+          border-radius: 10px 8px 12px 9px;
+          border: 2px solid #000;
 
           &.total {
             margin-top: 8px;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #FF6B6B;
             color: white;
+            border: 3px solid #000;
+            box-shadow: 5px 5px 0px #000;
 
             .ant-typography {
               color: white;
@@ -348,11 +396,12 @@
           }
 
           .ant-typography-mark {
-            background: #ff4d4f;
-            color: white;
+            background: #FFD93D;
+            color: #1A535C;
             padding: 2px 8px;
             border-radius: 4px;
-            font-weight: 600;
+            font-weight: 700;
+            border: 2px solid #000;
           }
         }
       }
@@ -371,28 +420,47 @@
       min-width: 140px;
       height: 48px;
       font-size: 16px;
-      border-radius: 24px;
-      font-weight: 500;
+      border-radius: 30px 20px 25px 35px;
+      font-weight: 700;
+      border: 3px solid #000;
+      box-shadow: 5px 5px 0px #000;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
 
       &.ant-btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        background: #FF6B6B;
+        border: 3px solid #000;
+        color: white;
 
         &:hover {
-          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-          transform: translateY(-2px);
+          background: #FF5252;
+          box-shadow: 8px 8px 0px #000;
+          transform: translate(-3px, -3px) rotate(-1deg);
+        }
+
+        &:active {
+          transform: translate(2px, 2px);
+          box-shadow: 2px 2px 0px #000;
         }
       }
 
       &:not(.ant-btn-primary) {
-        border-color: #667eea;
-        color: #667eea;
+        border-color: #000;
+        color: #1A535C;
+        background: #FFF;
 
         &:hover {
-          border-color: #764ba2;
-          color: #764ba2;
-          background: rgba(102, 126, 234, 0.05);
+          border-color: #000;
+          color: #1A535C;
+          background: #FFD93D;
+          box-shadow: 8px 8px 0px #000;
+          transform: translate(-3px, -3px) rotate(1deg);
+        }
+
+        &:active {
+          transform: translate(2px, 2px);
+          box-shadow: 2px 2px 0px #000;
         }
       }
     }
@@ -417,10 +485,12 @@
     .card-header {
       .header-icon {
         font-size: 24px;
+        color: #FFD93D;
       }
 
       h3 {
         font-size: 18px;
+        color: #1A535C;
       }
     }
 
@@ -432,6 +502,7 @@
           font-size: 28px;
           width: 50px;
           height: 50px;
+          background: #FFD93D;
         }
       }
     }
@@ -442,12 +513,14 @@
           width: 32px;
           height: 32px;
           font-size: 14px;
+          background: #FF6B6B;
         }
 
         .timeline-content {
           .timeline-header {
             h4 {
               font-size: 16px;
+              color: #1A535C;
             }
           }
         }
@@ -463,10 +536,12 @@
             width: 40px;
             height: 40px;
             font-size: 18px;
+            background: #4ECDC4;
           }
 
           .scoring-title h4 {
             font-size: 16px;
+            color: #1A535C;
           }
         }
       }

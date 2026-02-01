@@ -2,6 +2,21 @@ import { history, useModel } from '@umijs/max';
 import { Button } from 'antd';
 import React, { useState, useEffect } from 'react';
 import LoginModal from '@/components/LoginModal';
+import {
+  RobotIcon,
+  TargetIcon,
+  GameIcon,
+  MicIcon,
+  PhoneIcon,
+  CoinIcon,
+  LightningIcon,
+  StarIcon,
+  GraduationIcon,
+  LockIcon,
+  GamepadButtonIcon,
+  BookButtonIcon,
+  RocketButtonIcon,
+} from '@/components/HandDrawnIcons';
 import './index.less';
 import logoIcon from '@/img/icon_200.png';
 
@@ -68,12 +83,24 @@ const HomePage: React.FC = () => {
 
       {/* 英雄区域 */}
       <section className="hero">
+        {/* 漂浮装饰图形 */}
+        <div className="floating-shapes">
+          <div className="shape shape-1">⭐</div>
+          <div className="shape shape-2">🎈</div>
+          <div className="shape shape-3">🌟</div>
+        </div>
+
         <div className="hero-content">
-          <h1 className="hero-main-title">解锁每一环 · 流利不一般</h1>
-          <p className="hero-subtitle">Unlock every part · speak with art.</p>
+          <div className="hero-badge">✨ 少儿口语练习好伙伴</div>
+          <h1 className="hero-main-title">
+            <span className="line">开口说英语</span>
+            <span className="line">像玩游戏一样</span>
+            <span className="highlight">有趣！</span>
+          </h1>
+          <p className="hero-subtitle">Speak English, Play & Learn!</p>
           <p className="hero-description">
-            让 AI 成为你的口语教练 · 24小时随时随地练习 · 智能评分反馈 ·
-            快速提升口语水平
+            每天10分钟，AI陪你练口语<br/>
+            说错也没关系，大胆开口！
           </p>
           <div className="hero-buttons">
             <Button
@@ -81,14 +108,16 @@ const HomePage: React.FC = () => {
               size="large"
               onClick={handleStart}
             >
-              免费体验
+              <GamepadButtonIcon size={28} />
+              开始游戏
             </Button>
             <Button
               className="secondary-button"
               size="large"
               onClick={handleLearnMore}
             >
-              了解更多
+              <BookButtonIcon size={28} />
+              看看怎么玩
             </Button>
           </div>
         </div>
@@ -96,44 +125,56 @@ const HomePage: React.FC = () => {
 
       {/* 特性区域 */}
       <section id="features" className="features">
-        <h2 className="section-title">核心特性</h2>
+        <h2 className="section-title">为什么小朋友都喜欢？</h2>
         <p className="section-subtitle">
-          强大的 AI 技术，为你提供专业的口语训练
+          超级好玩的 AI 老师，让学英语像玩游戏一样上瘾！
         </p>
         <div className="features-grid">
           <div className="feature-card">
-            <div className="feature-icon">🤖</div>
-            <h3>智能 AI 对话</h3>
+            <div className="feature-icon">
+              <RobotIcon size={72} />
+            </div>
+            <h3>AI 陪你聊天</h3>
             <p>
-              先进的 AI 技术，提供真实自然的对话体验，就像与真人交流一样流畅
+              就像和朋友聊天一样，AI 会陪你说英语，不管说成什么样都鼓励你！
             </p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">🎯</div>
-            <h3>精准评分反馈</h3>
+            <div className="feature-icon">
+              <TargetIcon size={72} />
+            </div>
+            <h3>马上告诉你对不对</h3>
             <p>
-              实时语音识别与分析，从发音、流利度、语法等多维度给出专业评分和建议
+              说完立刻知道哪里好、哪里要改进，还有小星星奖励哦~
             </p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">📊</div>
-            <h3>个性化学习</h3>
-            <p>根据你的水平和需求，智能推荐练习内容，制定专属学习计划</p>
+            <div className="feature-icon">
+              <GameIcon size={72} />
+            </div>
+            <h3>像游戏一样好玩</h3>
+            <p>完成任务有金币，升级打怪，不知不觉就把英语学会了！</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">🎤</div>
-            <h3>语音识别</h3>
-            <p>高精度语音识别技术，准确捕捉你的发音细节，提供针对性改进建议</p>
+            <div className="feature-icon">
+              <MicIcon size={72} />
+            </div>
+            <h3>听懂你的每一句话</h3>
+            <p>超厉害的语音识别，连小小的发音问题都能发现！</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">📱</div>
-            <h3>随时随地练习</h3>
-            <p>支持手机、平板、电脑多端使用，利用碎片时间，随时随地提升口语</p>
+            <div className="feature-icon">
+              <PhoneIcon size={72} />
+            </div>
+            <h3>随时都能练</h3>
+            <p>手机、平板都能用，坐车、睡前都可以说几句~</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">💰</div>
-            <h3>经济实惠</h3>
-            <p>比传统外教课程更实惠，无需预约排课，想练就练，性价比超高</p>
+            <div className="feature-icon">
+              <CoinIcon size={72} />
+            </div>
+            <h3>超划算</h3>
+            <p>比外教课便宜多了，想练多久练多久，再也不用约时间！</p>
           </div>
         </div>
       </section>
@@ -142,36 +183,44 @@ const HomePage: React.FC = () => {
       <section id="advantages" className="advantages">
         <div className="advantages-container">
           <div>
-            <h2 className="section-title">为什么选择我们？</h2>
+            <h2 className="section-title">爸爸妈妈也放心！</h2>
             <ul className="advantages-list">
               <li className="advantage-item">
-                <div className="advantage-icon">⚡</div>
+                <div className="advantage-icon">
+                  <LightningIcon size={48} />
+                </div>
                 <div className="advantage-content">
-                  <h3>即时反馈</h3>
+                  <h3>立刻就能看到进步</h3>
                   <p>
-                    每次练习后立即获得详细的评分和改进建议，不用等待，高效学习
+                    每次练完马上就知道结果，孩子看到自己进步超有成就感！
                   </p>
                 </div>
               </li>
               <li className="advantage-item">
-                <div className="advantage-icon">🌟</div>
+                <div className="advantage-icon">
+                  <StarIcon size={48} />
+                </div>
                 <div className="advantage-content">
-                  <h3>零压力环境</h3>
-                  <p>与 AI 对话，无需担心说错，可以大胆练习，建立口语自信</p>
+                  <h3>说错了也不怕</h3>
+                  <p>AI 超级有耐心，永远不会批评孩子，越说越有自信！</p>
                 </div>
               </li>
               <li className="advantage-item">
-                <div className="advantage-icon">🎓</div>
+                <div className="advantage-icon">
+                  <GraduationIcon size={48} />
+                </div>
                 <div className="advantage-content">
-                  <h3>专业系统</h3>
-                  <p>科学的学习方法和丰富的练习场景，系统化提升口语能力</p>
+                  <h3>科学的方法</h3>
+                  <p>专业的教学设计，从简单到难，一步步提升口语能力</p>
                 </div>
               </li>
               <li className="advantage-item">
-                <div className="advantage-icon">🔒</div>
+                <div className="advantage-icon">
+                  <LockIcon size={48} />
+                </div>
                 <div className="advantage-content">
-                  <h3>隐私保护</h3>
-                  <p>你的练习数据完全保密，安全可靠，可以放心使用</p>
+                  <h3>安全可靠</h3>
+                  <p>所有数据都保护得很好，孩子可以放心使用~</p>
                 </div>
               </li>
             </ul>
@@ -182,37 +231,38 @@ const HomePage: React.FC = () => {
 
       {/* 统计数据 */}
       <section id="stats" className="stats">
-        <h2 className="section-title">用数据说话</h2>
+        <h2 className="section-title">大家都在用！</h2>
         <p className="section-subtitle">
-          已有数千名用户通过我们的平台提升了口语水平
+          已经有好多小朋友在这里学会说英语啦~
         </p>
         <div className="stats-grid">
           <div className="stat-item">
             <div className="stat-number">10K+</div>
-            <div className="stat-label">活跃用户</div>
+            <div className="stat-label">小朋友在用</div>
           </div>
           <div className="stat-item">
             <div className="stat-number">100K+</div>
-            <div className="stat-label">练习对话</div>
+            <div className="stat-label">练习次数</div>
           </div>
           <div className="stat-item">
             <div className="stat-number">95%</div>
-            <div className="stat-label">用户满意度</div>
+            <div className="stat-label">都说好</div>
           </div>
           <div className="stat-item">
             <div className="stat-number">24/7</div>
-            <div className="stat-label">全天候服务</div>
+            <div className="stat-label">随时都能练</div>
           </div>
         </div>
       </section>
 
       {/* CTA 区域 */}
       <section className="cta-section">
-        <h2>准备好开始你的口语提升之旅了吗？</h2>
-        <p>现在注册，免费体验 AI 口语练习</p>
+        <h2>准备好了吗？开始你的英语冒险！</h2>
+        <p>现在就加入，免费体验超好玩的口语练习</p>
         <div className="hero-buttons">
           <Button className="primary-button" size="large" onClick={handleLogin}>
-            立即注册
+            <RocketButtonIcon size={28} />
+            立即出发
           </Button>
         </div>
       </section>
