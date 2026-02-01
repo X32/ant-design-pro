@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, TrophyOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { App, Button, Card, Spin, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { history, useModel } from '@umijs/max';
@@ -25,6 +25,7 @@ const ExamCatalog: React.FC = () => {
   const isLoggedIn = !!currentUser;
 
   const [categories, setCategories] = useState<ExamCategoryWithPapers[]>([]);
+  const [examCategories, setExamCategories] = useState<ExamCategoryWithPapers[]>([]);
   const [loading, setLoading] = useState(true);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
 
@@ -67,6 +68,8 @@ const ExamCatalog: React.FC = () => {
           expanded: false,
         }));
         setCategories(categoriesData);
+        // 复制相同数据给考试部分
+        setExamCategories(categoriesData);
       }
     } catch (error) {
       message.error('加载考试分类失败');
@@ -228,6 +231,75 @@ const ExamCatalog: React.FC = () => {
     }
   };
 
+  // 切换考试分类展开/折叠 - 只展开试卷列表
+  const toggleExamCategory = async (categoryId: number) => {
+    const category = examCategories.find((c) => c.id === categoryId);
+    if (!category) return;
+
+    if (category.expanded) {
+      setExamCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, expanded: false } : c)),
+      );
+      return;
+    }
+
+    if (!category.papers || category.papers.length === 0) {
+      setExamCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, loading: true, expanded: true } : c)),
+      );
+
+      try {
+        const response = await getPublicExamPapers({
+          exam_category_id: categoryId,
+          page: 1,
+          page_size: 100,
+        });
+
+        if (response.success && response.data) {
+          const papersData: ExamPaperWithQuestions[] = response.data.map((paper: ExamPaper) => ({
+            ...paper,
+            questions: [],
+            loading: false,
+            expanded: false,
+          }));
+
+          setExamCategories((prev) =>
+            prev.map((c) =>
+              c.id === categoryId
+                ? { ...c, papers: papersData, loading: false, expanded: true }
+                : c,
+            ),
+          );
+        }
+      } catch (error) {
+        message.error('加载试卷列表失败');
+        console.error('加载试卷失败:', error);
+        setExamCategories((prev) =>
+          prev.map((c) => (c.id === categoryId ? { ...c, loading: false, expanded: false } : c)),
+        );
+      }
+    } else {
+      setExamCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, expanded: true } : c)),
+      );
+    }
+  };
+
+  /**
+   * 跳转到考试页面
+   */
+  const handleExam = (paperId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      message.warning('请先登录后再开始考试');
+      setLoginModalVisible(true);
+      return;
+    }
+
+    history.push(`/exam?paper_id=${paperId}`);
+  };
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -254,7 +326,7 @@ const ExamCatalog: React.FC = () => {
     }
   };
 
-  // 渲染题目列表
+  // 渲染题目列表（练习用）
   const renderQuestions = (questions: ExamPaperQuestion[]) => {
     if (!questions || questions.length === 0) {
       return (
@@ -285,14 +357,51 @@ const ExamCatalog: React.FC = () => {
                 <span className="question-tag">分值: {question.question_score}分</span>
                 <span className="question-tag">难度: {question.exercise?.difficulty || '-'}</span>
                 <span className="question-tag">类型: {question.workflow_type}</span>
-                <Button 
-                  type="primary" 
-                  size="small" 
+                <Button
+                  type="primary"
+                  size="small"
                   onClick={(e) => handlePractice(question, e)}
                   style={{ marginLeft: 'auto' }}
                 >
                   练习
                 </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 渲染考试题目列表（不显示练习按钮和类型）
+  const renderExamQuestions = (questions: ExamPaperQuestion[]) => {
+    if (!questions || questions.length === 0) {
+      return (
+        <div className="empty-container">
+          <InboxOutlined className="empty-icon" />
+          <div>暂无题目</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="questions-container">
+        {questions.map((question, index) => {
+          const content = question.exercise?.content || '';
+          const displayContent = content.length > 50 ? `${content.substring(0, 50)}...` : content;
+
+          return (
+            <div key={question.id} className="question-item">
+              <div className="question-header">
+                <div className="question-number">{index + 1}</div>
+                <div className="question-title">{question.exercise?.title || '无标题'}</div>
+              </div>
+              {displayContent && (
+                <div className="question-content">{displayContent}</div>
+              )}
+              <div className="question-footer">
+                <span className="question-tag">分值: {question.question_score}分</span>
+                <span className="question-tag">难度: {question.exercise?.difficulty || '-'}</span>
               </div>
             </div>
           );
@@ -347,6 +456,63 @@ const ExamCatalog: React.FC = () => {
                 )}
               </>
             )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // 渲染考试试卷列表（不展开题目）
+  const renderExamPapers = (papers: ExamPaperWithQuestions[]) => {
+    if (!papers || papers.length === 0) {
+      return (
+        <div className="empty-container">
+          <InboxOutlined className="empty-icon" />
+          <div>暂无试卷</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="papers-container">
+        {papers.map((paper) => (
+          <div key={paper.id} className="paper-item">
+            <div className="paper-header">
+              <div className="paper-header-left">
+                <FileTextOutlined className="paper-icon" />
+                <div className="paper-info">
+                  <div className="paper-name">{paper.paper_name}</div>
+                  <div className="paper-meta">
+                    <span>试卷编号: {paper.paper_code}</span>
+                    <span>总分: {paper.total_score}分</span>
+                    <span>
+                      状态: <Tag color={paper.is_active ? 'green' : 'default'}>
+                        {paper.is_active ? '启用' : '禁用'}
+                      </Tag>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="primary"
+                size="large"
+                onClick={(e) => handleExam(paper.id, e)}
+                icon={<PlayCircleOutlined />}
+                style={{
+                  border: '3px solid #000',
+                  borderRadius: '20px 15px 25px 18px',
+                  boxShadow: '4px 4px 0px #000',
+                  fontWeight: '900',
+                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%)',
+                  color: '#FFF',
+                  fontSize: '16px',
+                  padding: '8px 24px',
+                  height: 'auto',
+                }}
+              >
+                🎯 开始考试
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -443,7 +609,54 @@ const ExamCatalog: React.FC = () => {
           ))
         )}
       </div>
-      
+
+      {/* 口语考试部分 */}
+      <div className="exam-catalog-header" style={{ marginTop: '40px' }}>
+        <h1 className="exam-catalog-title">🎯 口语考试</h1>
+        <p className="exam-catalog-description">
+          点击分类可展开查看试卷列表，点击"开始考试"按钮进行整套试卷考试。
+        </p>
+      </div>
+
+      <div className="exam-catalog-content">
+        {examCategories.length === 0 ? (
+          <div className="empty-container" style={{ padding: '80px 0' }}>
+            <InboxOutlined className="empty-icon" style={{ fontSize: 64 }} />
+            <div style={{ fontSize: 16, marginTop: 16 }}>暂无口语考试分类</div>
+          </div>
+        ) : (
+          examCategories.map((category) => (
+            <div key={`exam-${category.id}`} className="category-item">
+              <div className="category-header" onClick={() => toggleExamCategory(category.id)}>
+                <div className="category-header-left">
+                  <FolderOpenOutlined className="category-icon" />
+                  <div className="category-info">
+                    <h3 className="category-name">{category.name}</h3>
+                    {category.description && (
+                      <p className="category-description">{category.description}</p>
+                    )}
+                  </div>
+                </div>
+                <DownOutlined
+                  className={`category-expand-icon ${category.expanded ? 'expanded' : ''}`}
+                />
+              </div>
+              {category.expanded && (
+                <>
+                  {category.loading ? (
+                    <div className="loading-container">
+                      <Spin tip="加载试卷和题目中..." />
+                    </div>
+                  ) : (
+                    renderExamPapers(category.papers || [])
+                  )}
+                </>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
       {/* 登录弹框 */}
       <LoginModal
         visible={loginModalVisible}
