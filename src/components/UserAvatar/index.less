@@ -1,29 +1,185 @@
+/* UserAvatar 组件样式 - 首页风格 */
+
 .user-avatar-container {
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 4px 8px;
-  border-radius: 4px;
-  
+  transition: all 0.2s ease;
+  padding: 6px 12px;
+  border-radius: 20px 15px 25px 18px;
+  border: 2px solid transparent;
+  position: relative;
+
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: #FFD93D;
+    border-color: #000;
+    transform: translate(-2px, -2px) rotate(-2deg);
+    box-shadow: 4px 4px 0px #000;
   }
-  
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
   .user-name {
-    color: rgba(0, 0, 0, 0.85);
-    font-size: 14px;
-    font-weight: 500;
+    color: #1A535C;
+    font-size: 15px;
+    font-weight: 700;
     white-space: nowrap;
     user-select: none;
+  }
+
+  // Ant Design Avatar 样式覆盖
+  .ant-avatar {
+    border: 3px solid #000 !important;
+    box-shadow: 3px 3px 0px #000 !important;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%) !important;
+    color: #FFF !important;
+    font-weight: 900 !important;
+
+    .anticon {
+      font-size: 18px;
+      color: #FFF;
+    }
+  }
+
+  &:hover .ant-avatar {
+    transform: scale(1.05) rotate(5deg);
+    box-shadow: 4px 4px 0px #000 !important;
+    background: linear-gradient(135deg, #FFD93D 0%, #FFC53D 100%) !important;
+    color: #1A535C !important;
+
+    .anticon {
+      color: #1A535C;
+    }
   }
 }
 
 // 移动端适配
 @media (max-width: 768px) {
   .user-avatar-container {
-    padding: 4px;
-    
+    padding: 4px 8px;
+    border-radius: 15px 12px 18px 14px;
+
+    &:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px #000;
+    }
+
     .user-name {
       display: none; // 移动端隐藏用户名
     }
+
+    .ant-avatar {
+      border-width: 2px !important;
+      box-shadow: 2px 2px 0px #000 !important;
+    }
+  }
+}
+
+/* Ant Design Dropdown 菜单样式覆盖 */
+.ant-dropdown {
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  .ant-dropdown-menu {
+    border-radius: 20px 15px 25px 18px !important;
+    border: 3px solid #000 !important;
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.2) !important;
+    background: #FFF9E6 !important;
+    padding: 8px;
+    overflow: hidden;
+  }
+
+  .ant-dropdown-menu-item {
+    border-radius: 12px 10px 14px 11px !important;
+    margin: 4px 0;
+    padding: 10px 16px !important;
+    font-weight: 600 !important;
+    color: #1A535C !important;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #FFD93D !important;
+      color: #1A535C !important;
+      transform: translateX(4px);
+    }
+
+    .anticon {
+      color: #FF6B6B;
+      font-size: 16px;
+    }
+
+    &:hover .anticon {
+      color: #1A535C;
+      transform: scale(1.1);
+    }
+  }
+
+  .ant-dropdown-menu-item-divider {
+    background: #FFD93D !important;
+    margin: 8px 0 !important;
+    height: 2px;
+    border-radius: 1px;
+  }
+
+  .ant-dropdown-menu-item-danger {
+    color: #FF6B6B !important;
+
+    &:hover {
+      background: #FF6B6B !important;
+      color: #FFF !important;
+
+      .anticon {
+        color: #FFF !important;
+      }
+    }
+
+    .anticon {
+      color: #FF6B6B;
+    }
+  }
+
+  // 下拉箭头样式
+  .ant-dropdown-arrow {
+    &::before {
+      background: #FFF9E6 !important;
+      border: 3px solid #000 !important;
+    }
+    &::after {
+      background: #FFF9E6 !important;
+      border: none !important;
+    }
+  }
+}
+
+/* Popover（如果使用 Popover 而不是 Dropdown） */
+.ant-popover {
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  .ant-popover-inner {
+    border-radius: 20px 15px 25px 18px !important;
+    border: 3px solid #000 !important;
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.2) !important;
+    background: #FFF9E6 !important;
+    overflow: hidden;
+  }
+
+  .ant-popover-arrow {
+    &::before {
+      background: #FFF9E6 !important;
+      border: 3px solid #000 !important;
+    }
+    &::after {
+      background: #FFF9E6 !important;
+      border: none !important;
+    }
+  }
+
+  .ant-popover-inner-content {
+    padding: 8px;
   }
 }

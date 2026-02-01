@@ -74,8 +74,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         currentUser: undefined,
       }));
     }
-    
-    message.success('已退出登录');
+
+    message.success('👋 已退出登录');
     
     // 如果有自定义退出回调（用于打开登录弹框），执行回调
     if (onLogout) {
@@ -125,17 +125,17 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     {
       key: 'center',
       icon: <UserOutlined />,
-      label: '个人中心',
+      label: '👤 个人中心',
     },
     {
       key: 'practice',
       icon: <TrophyOutlined />,
-      label: '我的练习记录',
+      label: '🏆 我的练习',
     },
     {
       key: 'recharge',
       icon: <WalletOutlined />,
-      label: '充值中心',
+      label: '💎 充值中心',
     },
     {
       type: 'divider',
@@ -151,7 +151,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: '👋 退出登录',
       danger: true,
     },
   ];
@@ -176,9 +176,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   // 用户头像内容
   const avatarContent = (
     <Space className={`user-avatar-container ${className}`} size={8}>
-      <Avatar 
-        size={size} 
-        style={{ backgroundColor: '#1890ff', cursor: 'pointer' }}
+      <Avatar
+        size={size}
         icon={<UserOutlined />}
       >
         {avatarText}

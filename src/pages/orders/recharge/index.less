@@ -1,31 +1,60 @@
-/* 充值页面样式 */
+/* 充值页面样式 - 首页风格 */
 
 .recharge-page {
-  background: #f0f2f5;
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #FFF9E6;
   min-height: 100vh;
+  position: relative;
+
+  /* 波点背景装饰 */
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(#FFD93D 15%, transparent 16%), radial-gradient(#FF6B6B 15%, transparent 16%);
+    background-size: 50px 50px;
+    background-position: 0 0, 25px 25px;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 /* 顶部导航栏 */
 .recharge-navbar {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #FFD93D;
+  border-bottom: 4px solid #000;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
   padding: 0 24px;
-  height: 64px;
+  height: 70px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 999;
+  z-index: 1000;
 
   .back-button {
-    color: #666;
-    font-size: 14px;
+    color: #1A535C;
+    font-size: 16px;
+    font-weight: 700;
     display: flex;
     align-items: center;
-    
+    padding: 8px 16px;
+    border-radius: 20px 15px 25px 18px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+
     &:hover {
-      color: #1890ff;
+      color: #FF6B6B;
+      background: #FFF;
+      border-color: #000;
+      transform: translate(-2px, -2px) rotate(-2deg);
+      box-shadow: 3px 3px 0px #000;
     }
   }
 }
@@ -33,82 +62,128 @@
 .recharge-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .recharge-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 50px;
+  animation: bounceInDown 0.8s ease-out;
+}
+
+@keyframes bounceInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(10px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 .recharge-title {
-  color: #1890ff;
-  margin-bottom: 16px;
+  color: #1A535C !important;
+  margin-bottom: 16px !important;
+  font-weight: 900 !important;
+  font-size: 2.5rem !important;
+  text-shadow: 3px 3px 0px #FFD93D;
+  transform: rotate(-1deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  .anticon {
+    font-size: 2.5rem;
+    color: #FF6B6B;
+    filter: drop-shadow(2px 2px 0px #000);
+  }
 }
 
 .recharge-subtitle {
-  font-size: 16px;
+  font-size: 1.2rem;
   color: #666;
+  font-weight: 600;
 }
 
 .package-grid {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 
 .package-card {
-  border-radius: 12px;
-  border: 1px solid #e8e8e8;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 25px 20px 30px 15px !important;
+  border: 3px solid #000 !important;
+  box-shadow: 8px 8px 0px #000 !important;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.3s ease;
+  background: #FFF;
 }
 
 .package-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  transform: translate(-4px, -4px) rotate(1deg) !important;
+  box-shadow: 12px 12px 0px #000 !important;
 }
 
 .package-card-selected {
-  border: 2px solid #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  border: 4px solid #4ECDC4 !important;
+  box-shadow: 10px 10px 0px #4ECDC4 !important;
+  background: #FFF9E6 !important;
+  transform: scale(1.02) rotate(-1deg) !important;
 }
 
 .package-popular-tag {
   position: absolute;
-  top: 12px;
-  right: -20px;
-  background: #faad14;
-  color: #fff;
-  padding: 2px 20px;
+  top: -8px;
+  right: -25px;
+  background: #FF6B6B;
+  color: #FFF;
+  padding: 6px 24px;
   transform: rotate(45deg);
-  font-size: 12px;
-  font-weight: bold;
-  z-index: 1;
+  font-size: 13px;
+  font-weight: 900;
+  z-index: 10;
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.3);
 }
 
 .package-content {
   text-align: center;
-  padding: 20px 10px;
+  padding: 24px 16px;
 }
 
 .package-icon {
-  font-size: 24px;
-  color: #1890ff;
-  margin-bottom: 12px;
+  font-size: 3rem;
+  color: #FF6B6B;
+  margin-bottom: 16px;
+  filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
 }
 
 .package-name {
-  margin: 10px 0;
-  color: #333;
+  margin: 12px 0 !important;
+  color: #1A535C !important;
+  font-weight: 900 !important;
+  font-size: 1.5rem !important;
 }
 
 .package-price-original {
-  font-size: 16px;
+  font-size: 1.1rem;
+  color: #999;
+  font-weight: 600;
 }
 
 .package-price-current {
-  color: #f5222d;
+  color: #FF6B6B !important;
+  font-weight: 900 !important;
+  margin: 8px 0 !important;
+  text-shadow: 2px 2px 0px rgba(255, 107, 107, 0.2);
 }
 
 .package-features {
@@ -117,41 +192,333 @@
 }
 
 .package-feature-item {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
+  font-weight: 600;
+  color: #333;
 }
 
 .package-feature-icon {
   color: #52c41a;
-  margin-right: 8px;
+  margin-right: 10px;
+  font-size: 16px;
 }
 
 .package-button {
   width: 100%;
-  font-weight: bold;
+  font-weight: 900;
+  border-radius: 20px 15px 25px 18px !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  transition: all 0.2s;
+  height: 50px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover:not(:disabled) {
+    transform: translate(-2px, -2px) rotate(-1deg);
+    box-shadow: 6px 6px 0px #000 !important;
+  }
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px #000 !important;
+  }
 }
 
 .selected-package-info {
   text-align: center;
-  margin: 40px 0;
+  margin: 50px 0;
 }
 
 .payment-security {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 50px;
+  padding: 40px 20px;
+  background: #FFF;
+  border-radius: 30px 20px 35px 25px;
+  border: 4px solid #000;
+  box-shadow: 10px 10px 0px #000;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .security-divider {
-  margin: 40px 0;
+  margin: 30px 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1A535C;
+  border-top: 3px dashed #FFD93D;
 }
 
+/* VIP套餐区域样式 */
+.vip-section {
+  margin-bottom: 60px;
+  animation: slideInLeft 0.6s ease-out;
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.section-header {
+  margin-bottom: 32px;
+
+  .ant-typography {
+    color: #1A535C !important;
+    font-weight: 900 !important;
+    text-shadow: 2px 2px 0px #FFD93D;
+    transform: rotate(-1deg);
+  }
+
+  .anticon {
+    color: #FFD93D;
+    filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.2));
+  }
+
+  p {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+}
+
+.vip-card {
+  background: linear-gradient(135deg, #FFD93D 0%, #FFF9E6 100%);
+  animation: wiggle 0.5s ease-out;
+
+  &:hover {
+    background: linear-gradient(135deg, #FFD93D 0%, #FFE58F 100%);
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
+}
+
+/* 金币充值区域样式 */
+.coin-section {
+  animation: slideInRight 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Ant Design Card 覆盖样式 */
+.ant-card {
+  border-radius: 25px 20px 30px 15px !important;
+  border: 3px solid #000 !important;
+  box-shadow: 8px 8px 0px #000 !important;
+  background: #FFF !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translate(-4px, -4px) rotate(1deg) !important;
+    box-shadow: 12px 12px 0px #000 !important;
+  }
+}
+
+.ant-card-body {
+  padding: 0 !important;
+}
+
+/* Ant Design Button 覆盖样式 */
+.ant-btn-primary {
+  background: #FF6B6B !important;
+  border-color: #FF6B6B !important;
+  color: #FFF !important;
+
+  &:hover {
+    background: #FF5252 !important;
+    border-color: #FF5252 !important;
+    color: #FFF !important;
+  }
+}
+
+.ant-btn-default {
+  background: #4ECDC4 !important;
+  border-color: #4ECDC4 !important;
+  color: #FFF !important;
+
+  &:hover {
+    background: #3DBDB5 !important;
+    border-color: #3DBDB5 !important;
+    color: #FFF !important;
+  }
+}
+
+/* Ant Design Typography 覆盖样式 */
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4 {
+  color: #1A535C;
+  font-weight: 900;
+}
+
+/* Ant Design Badge 覆盖样式 */
+.ant-badge-count {
+  background: #FFD93D !important;
+  color: #1A535C !important;
+  font-weight: 900 !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+/* Ant Design Divider 覆盖样式 */
+.ant-divider {
+  border-top-color: #FFD93D !important;
+}
+
+/* Ant Design Radio 覆盖样式 */
+.ant-radio-wrapper {
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.ant-radio-checked .ant-radio-inner {
+  background-color: #4ECDC4 !important;
+  border-color: #4ECDC4 !important;
+}
+
+.ant-radio:hover .ant-radio-inner {
+  border-color: #4ECDC4 !important;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
   .recharge-page {
-    padding: 16px;
+    padding: 0;
   }
-  
+
+  .recharge-navbar {
+    height: 60px;
+    padding: 0 16px;
+
+    .back-button {
+      font-size: 14px;
+      padding: 6px 12px;
+    }
+  }
+
+  .recharge-container {
+    padding: 20px 16px;
+  }
+
+  .recharge-title {
+    font-size: 1.8rem !important;
+
+    .anticon {
+      font-size: 1.8rem;
+    }
+  }
+
+  .recharge-subtitle {
+    font-size: 1rem;
+  }
+
+  .recharge-header {
+    margin-bottom: 30px;
+  }
+
   .package-card {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .payment-security {
+    padding: 24px 16px;
+    margin-top: 30px;
+  }
+
+  .section-header {
+    margin-bottom: 20px;
+  }
+}
+
+/* 加载动画样式 */
+.ant-spin {
+  .ant-spin-dot-item {
+    background-color: #FF6B6B;
+  }
+}
+
+/* Modal 样式覆盖 */
+.ant-modal-content {
+  border-radius: 25px 20px 30px 15px !important;
+  border: 4px solid #000 !important;
+  box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.2) !important;
+  background: #FFF9E6 !important;
+}
+
+.ant-modal-header {
+  background: #FFD93D !important;
+  border-bottom: 3px solid #000 !important;
+  border-radius: 20px 20px 0 0 !important;
+
+  .ant-modal-title {
+    color: #1A535C !important;
+    font-weight: 900 !important;
+    font-size: 1.3rem !important;
+  }
+}
+
+.ant-modal-footer {
+  border-top: 3px solid #FFD93D !important;
+}
+
+.ant-btn-primary {
+  background: #FF6B6B !important;
+  border-color: #FF6B6B !important;
+  color: #FFF !important;
+  font-weight: 700 !important;
+
+  &:hover {
+    background: #FF5252 !important;
+    border-color: #FF5252 !important;
+    color: #FFF !important;
+  }
+}
+
+/* 全级别通用标签样式 */
+.ant-badge {
+  .ant-badge-count {
+    animation: pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
 }

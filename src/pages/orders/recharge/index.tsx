@@ -228,7 +228,7 @@ const RechargePage: React.FC = () => {
         let tempPaymentMethod: 'alipay' | 'mock' = 'alipay';
         
         modal.confirm({
-          title: 'VIP订阅订单创建成功！',
+          title: '🎉 VIP订阅订单创建成功！',
           content: (
             <div>
               <p>订单号：{order.order_no}</p>
@@ -266,7 +266,7 @@ const RechargePage: React.FC = () => {
               </Radio.Group>
             </div>
           ),
-          okText: '立即支付',
+          okText: '🚀 立即支付',
           cancelText: '稍后支付',
           width: 500,
           onOk: () => {
@@ -359,7 +359,7 @@ const RechargePage: React.FC = () => {
           if (orderType === 'vip') {
             // VIP订阅成功弹窗
             modal.success({
-              title: '🎉 VIP订阅成功！',
+              title: '👑 VIP订阅成功！',
               content: (
                 <div>
                   <p>订单号：{updatedOrder.order_no}</p>
@@ -427,7 +427,7 @@ const RechargePage: React.FC = () => {
         let tempPaymentMethod: 'alipay' | 'mock' = 'alipay';
         
         modal.confirm({
-          title: '金币充值订单创建成功！',
+          title: '💰 金币充值订单创建成功！',
           content: (
             <div>
               <p>订单号：{order.order_no}</p>
@@ -462,7 +462,7 @@ const RechargePage: React.FC = () => {
               </Radio.Group>
             </div>
           ),
-          okText: '立即支付',
+          okText: '🚀 立即支付',
           cancelText: '稍后支付',
           width: 500,
           onOk: () => {
@@ -526,7 +526,7 @@ const RechargePage: React.FC = () => {
           className="back-button"
           size="large"
         >
-          返回
+          ⬅️ 返回
         </Button>
         <UserAvatar showName={false} size={40} />
       </div>
@@ -535,10 +535,10 @@ const RechargePage: React.FC = () => {
         <div className="recharge-header">
           <Title level={2} className="recharge-title">
             <GiftOutlined style={{ marginRight: '12px' }} />
-            充值中心
+            💎 充值中心
           </Title>
           <Paragraph className="recharge-subtitle">
-            选择VIP订阅套餐或金币充值套餐，畅享AI口语练习服务
+            选个喜欢的套餐，超好玩地学英语！🎮
           </Paragraph>
         </div>
 
@@ -546,42 +546,45 @@ const RechargePage: React.FC = () => {
         <div className="vip-section" style={{ marginBottom: '60px' }}>
           <div className="section-header" style={{ marginBottom: '24px' }}>
             <Title level={3} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <CrownOutlined style={{ marginRight: '8px', color: '#faad14' }} />
-              VIP订阅套餐
-              <Badge 
-                count="推荐" 
-                style={{ 
-                  backgroundColor: '#faad14', 
+              <CrownOutlined style={{ marginRight: '8px', color: '#FFD93D' }} />
+              👑 VIP 超级会员
+              <Badge
+                count="超值"
+                style={{
+                  backgroundColor: '#FFD93D',
                   marginLeft: '12px',
-                  fontSize: '12px'
-                }} 
+                  fontSize: '12px',
+                  color: '#1A535C',
+                  fontWeight: '900'
+                }}
               />
             </Title>
             <Paragraph type="secondary">
-              订阅后可无限次练习对应级别的考试题目，更高效的学习方式
+              成为VIP，想练多久练多久，超爽！⚡
             </Paragraph>
           </div>
 
           {/* 全级别通用标题 */}
-          <div style={{ 
-            marginBottom: '24px', 
+          <div style={{
+            marginBottom: '24px',
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%)',
-            borderRadius: '8px',
-            border: '2px solid #faad14',
-            textAlign: 'center'
+            background: 'linear-gradient(135deg, #FFF9E6 0%, #FFD93D 100%)',
+            borderRadius: '20px 15px 25px 18px',
+            border: '4px solid #000',
+            textAlign: 'center',
+            boxShadow: '6px 6px 0px #000'
           }}>
-            <span style={{ 
-              fontSize: '18px', 
-              fontWeight: 'bold', 
-              color: '#faad14',
+            <span style={{
+              fontSize: '18px',
+              fontWeight: '900',
+              color: '#1A535C',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px'
             }}>
-              <CrownOutlined style={{ fontSize: '20px' }} />
-              全级别通用会员（KET/PET/FCE）
+              <CrownOutlined style={{ fontSize: '24px', color: '#FF6B6B' }} />
+              全级别通用会员（KET/PET/FCE）✨
             </span>
           </div>
 
@@ -604,8 +607,8 @@ const RechargePage: React.FC = () => {
                     }}
                   >
                     {isRecommended && (
-                      <div className="package-popular-tag" style={{ background: '#faad14' }}>
-                        最划算
+                      <div className="package-popular-tag" style={{ background: '#FF6B6B' }}>
+                        🔥 最划算
                       </div>
                     )}
                     
@@ -682,14 +685,15 @@ const RechargePage: React.FC = () => {
                           e.stopPropagation(); // 阻止事件冒泡
                           handleVipSubscribe(plan.id);
                         }}
-                        style={{ 
-                          background: isSelected 
-                            ? 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)'
-                            : 'linear-gradient(135deg, #fadb14 0%, #ffe58f 100%)',
-                          borderColor: '#faad14'
+                        style={{
+                          background: isSelected
+                            ? 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%)'
+                            : 'linear-gradient(135deg, #FFD93D 0%, #FFC53D 100%)',
+                          borderColor: '#000',
+                          color: isSelected ? '#FFF' : '#1A535C'
                         }}
                       >
-                        {isSelected ? '立即订阅' : '选择此套餐'}
+                        {isSelected ? '🚀 立即订阅' : '✨ 选择此套餐'}
                       </Button>
                     </div>
                   </Card>
@@ -710,11 +714,11 @@ const RechargePage: React.FC = () => {
         <div className="coin-section">
           <div className="section-header" style={{ marginBottom: '24px' }}>
             <Title level={3} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <GiftOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-              金币充值套餐
+              <GiftOutlined style={{ marginRight: '8px', color: '#FF6B6B' }} />
+              💰 金币充值套餐
             </Title>
             <Paragraph type="secondary">
-              按次付费，灵活使用金币进行口语练习
+              按次付费，想练就练，超灵活！🎯
             </Paragraph>
           </div>
 
@@ -780,7 +784,7 @@ const RechargePage: React.FC = () => {
                       handleCoinRecharge(pkg.id);
                     }}
                   >
-                    {isSelected ? '立即购买' : '选择此套餐'}
+                    {isSelected ? '🎮 立即购买' : '⭐ 选择此套餐'}
                   </Button>
                 </div>
               </Card>
@@ -790,11 +794,11 @@ const RechargePage: React.FC = () => {
         </Row>
 
         <div className="payment-security">
-          <Divider className="security-divider">安全支付保障</Divider>
+          <Divider className="security-divider">🔒 安全支付保障</Divider>
           <Row justify="center" gutter={[40, 20]}>
             <Col>
               <Space direction="vertical" align="center">
-                <div style={{ fontSize: '24px', color: '#52c41a' }}>🔒</div>
+                <div style={{ fontSize: '28px' }}>🔐</div>
                 <Text strong>SSL加密</Text>
               </Space>
             </Col>
@@ -806,13 +810,13 @@ const RechargePage: React.FC = () => {
             </Col> */}
             <Col>
               <Space direction="vertical" align="center">
-                <div style={{ fontSize: '24px', color: '#faad14' }}>⚡</div>
+                <div style={{ fontSize: '28px' }}>⚡</div>
                 <Text strong>即时到账</Text>
               </Space>
             </Col>
             <Col>
               <Space direction="vertical" align="center">
-                <div style={{ fontSize: '24px', color: '#722ed1' }}>🛡️</div>
+                <div style={{ fontSize: '28px' }}>🛡️</div>
                 <Text strong>资金安全</Text>
               </Space>
             </Col>
