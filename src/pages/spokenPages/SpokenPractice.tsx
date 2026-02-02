@@ -1463,13 +1463,19 @@ const SpokenPractice: React.FC = () => {
     };
   }, []); // 空依赖数组，仅在组件挂载时执行一次
   
-  // 💡 新增：beforeunload 事件处理（页面刷新/关闭时清除 conversationId）
+  // 💡 新增：beforeunload 事件处理（页面刷新/关闭时清除 conversationId 并关闭 WebSocket）
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // 如果有未保存的消息，提示用户
       if (messageCacheRef.current.length > 0 && !conversationFinished) {
         e.preventDefault();
         e.returnValue = '对话尚未结束，离开将丢失未保存的消息！';
+      }
+      
+      // 🔌 关闭 WebSocket 连接
+      if (socket) {
+        console.log('🔌 页面关闭/刷新，断开 WebSocket 连接');
+        socket.disconnect();
       }
       
       // 无论如何都清除 conversationId
@@ -1480,6 +1486,12 @@ const SpokenPractice: React.FC = () => {
     // 监听浏览器返回/前进事件（使用 popstate）
     const handlePopState = () => {
       console.log('🔙 检测到浏览器返回操作，开始清理资源...');
+      
+      // 🔌 关闭 WebSocket 连接
+      if (socket) {
+        console.log('🔌 浏览器返回，断开 WebSocket 连接');
+        socket.disconnect();
+      }
       
       // 🧹 清理所有缓存的 AI 音频
       if (aiAudioCacheRef.current.size > 0) {
@@ -1509,7 +1521,7 @@ const SpokenPractice: React.FC = () => {
       // 只有用户主动开始新会话时才清除
       console.log('🧹 组件卸载，保留 conversationId 以便下次进入时恢复');
     };
-  }, [conversationFinished]); // ⚠️ 移除 audioElement 依赖，使用 Ref 访问最新值
+  }, [conversationFinished, socket]); // 添加 socket 依赖，确保事件处理函数中能访问到最新的 socket
 
 
   /**

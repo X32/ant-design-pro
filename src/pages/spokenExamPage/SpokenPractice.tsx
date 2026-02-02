@@ -5,9 +5,9 @@ import {
   SettingOutlined,// 设置图标
   PlayCircleOutlined,
   PauseOutlined,
-  ExperimentOutlined, // 测试图标
   CloseOutlined,      // 关闭图标
   ArrowLeftOutlined,  // 返回箭头图标
+  FileTextOutlined,   // 🆕 文件文本图标（语法反馈）
 } from '@ant-design/icons';
 
 // 导入所需的Ant Design组件
@@ -84,17 +84,54 @@ interface ScoreContent {
 }
 
 /**
+ * 语法反馈内容接口（KET/PET/FCE）
+ */
+interface GrammarFeedbackContent {
+  errors: Array<{
+    type: string;           // 错误类型
+    original: string;       // 错误片段
+    corrected: string;      // 修正后
+    explanation: string;    // 错误说明
+    severity: 'critical' | 'minor'; // 严重程度
+    a2_criterion?: string;  // A2 评分维度
+    b1_criterion?: string;  // B1 评分维度
+    b2_criterion?: string;  // B2 评分维度
+  }>;
+  improved_version: string;     // 改进后的完整句子
+  suggestions: string[];        // 学习建议（固定3条）
+  overall_quality: 'excellent' | 'good' | 'fair' | 'poor'; // 整体质量
+  a2_assessment?: {             // KET 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  b1_assessment?: {             // PET 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  b2_assessment?: {             // FCE 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  relevance_score: number;      // 相关性分数 (0.0-1.0)
+  relevance_level: 'on_topic' | 'partially_on_topic' | 'off_topic'; // 相关性等级
+  relevance_reason: string;     // 相关性判断理由
+}
+
+/**
  * 消息数据接口定义
  */
 interface Message {
   id: number;           // 消息ID
-  content: string | ScoreContent; // 消息内容（文本或评分对象）
+  content: string | ScoreContent | GrammarFeedbackContent; // 消息内容（文本、评分或语法反馈对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
   fullTimestamp?: Date; // 完整时间戳（保存用）
   audioFilePath?: string; // 音频文件路径（用户语音消息，本地Blob URL）
   serverAudioPath?: string; // 🔥 新增：服务器音频路径（用于保存到数据库）
-  messageType?: 'text' | 'voice' | 'image' | 'score' | 'finish'; // 消息类型（新增 finish 类型）
+  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'finish'; // 消息类型（新增 grammar_feedback 类型）
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
   // AI消息音频相关字段
@@ -105,6 +142,9 @@ interface Message {
   imageUrl?: string;      // 图片URL
   // 评分消息相关字段
   score?: string;         // 总分
+  // 语法反馈关联字段
+  grammarFeedback?: GrammarFeedbackContent;  // 关联的语法反馈内容
+  grammarFeedbackStatus?: 'pending' | 'received'; // 语法反馈接收状态
 }
 
 // AI音频基础URL
@@ -181,6 +221,10 @@ const SpokenPractice: React.FC = () => {
   // 图片放大状态管理：记录哪些图片消息处于放大状态
   const [expandedImages, setExpandedImages] = useState<Set<number>>(new Set());
   
+  // 🆕 语法反馈弹窗状态管理
+  const [grammarFeedbackModalVisible, setGrammarFeedbackModalVisible] = useState(false);
+  const [currentGrammarFeedback, setCurrentGrammarFeedback] = useState<GrammarFeedbackContent | null>(null);
+  
   // 历史消息加载状态
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -199,8 +243,10 @@ const SpokenPractice: React.FC = () => {
   const [vipRemainingDays, setVipRemainingDays] = useState(0);
   const [vipLoading, setVipLoading] = useState(false);
   
-  // 💡 新增：测试面板显示状态
-  const [showTestPanel, setShowTestPanel] = useState(false);
+  // 💡 新增：试卷相关全局变量（使用 Ref 避免重渲染）
+  const currentWorkflowTypeRef = useRef<string>(''); // 当前 workflow_type
+  const currentTotalPriceRef = useRef<number>(0); // 当前总价格
+  const currentExerciseIdsRef = useRef<Record<string, number>>({}); // 当前 exercise IDs
 
   // 🎆 烟花动画状态
   const [showFirework, setShowFirework] = useState(false);
@@ -611,25 +657,19 @@ const SpokenPractice: React.FC = () => {
         }
         
         // 获取工作流类型和价格
-        const { workflowType, price } = getCurrentWorkflowInfo();
-        // let price = 100.0
-        // workflowType = 'ket_full'
-        // 检查价格是否有效
-        // if (price <= 0) {
-        //   console.warn('⚠️ 练习价格为 0，跳过扣款');
-        //   return true;
-        // }
-        
+        // const { workflowType, price } = getCurrentWorkflowInfo();
+        const price = currentTotalPriceRef.current
+        const workflowType = currentWorkflowTypeRef.current
         // 获取课程名称（作为 remark）
-        // const remark = `口语练习 - ${workflowType}`;
+        const remark = `口语考试练习 - ${workflowType}`;
         
-        console.log(`💳 开始扣款: exercise_id=${exerciseId}, price=${price}, remark=${remark}`);
+        console.log(`💳 开始扣款: paper_id=${paperId}, workflow_type=${workflowType}, price=${price}`);
         
         // 调用扣款接口
         const response = await consumeCoins({
           coin_amount: price,
           biz_type: 'consume_practice',
-          biz_id: exerciseId,
+          biz_id: paperId, // 使用 paperId 作为业务 ID
           remark: remark,
         });
         
@@ -844,46 +884,428 @@ const SpokenPractice: React.FC = () => {
     };
 
     /**
-     * 创建新的口语练习会话
-     * @returns 返回新创建的会话 ID，失败返回 null
+     * 设置接收消息事件监听器和处理逻辑
+     * @param wsSocket WebSocket 实例
+     * @param realConversationId 真实会话 ID
      */
-    const createNewConversation = async (): Promise<number | null> => {
-      console.log('开始创建新会话...');
-      
-      // 获取练习题目 ID 和工作流类型
-      const exerciseId = getPaperIdFromUrl();
-      const workflowType = searchParams.get('workflow_type') || 'fce_part1';
-      
+    /**
+     * 处理语法反馈消息（关联到对应的音频消息）
+     * @param data WebSocket 接收的语法反馈消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleGrammarFeedbackMessage = (
+      data: { content: any; round_num?: number; origin_message_id?: number },
+      messageId: number,
+    ) => {
       try {
-        const createResponse = await createSpokenConversation({
-          exercise_id: exerciseId,
-          workflow_type: workflowType,
-          title: `口语练习 - ${new Date().toLocaleString('zh-CN')}`,
-        });
-        
-        if (createResponse.success && createResponse.data) {
-          const newConversationId = createResponse.data.id;
-          console.log('新会话创建成功, ID:', newConversationId);
-          
-          // 更新 localStorage 中的会话 ID
-          localStorage.setItem(CONVERSATION_ID_KEY, newConversationId.toString());
-          
-          // 初始化为空消息列表
-          setMessages([]);
-          setHistoryLoaded(true);
-          
-          console.log('新会话已创建，等待用户发送消息');
-          return newConversationId;
+        // 解析 JSON 内容
+        let grammarFeedback: GrammarFeedbackContent;
+        if (typeof data.content === 'string') {
+          grammarFeedback = JSON.parse(data.content);
         } else {
-          console.error('创建会话失败:', createResponse);
-          setHistoryLoaded(true);
-          return null;
+          grammarFeedback = data.content;
         }
-      } catch (createError) {
-        console.error('创建会话异常:', createError);
-        setHistoryLoaded(true);
-        return null;
+    
+        const now = new Date();
+        const grammarMessage: Message = {
+          id: messageId,
+          content: grammarFeedback,
+          sender: 'ai',
+          timestamp: now.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          fullTimestamp: now,
+          roundNum: data.round_num,
+          messageType: 'grammar_feedback',
+        };
+    
+        // ⚭ 仍然添加到缓存（用于数据库保存）
+        messageCacheRef.current.push(grammarMessage);
+            
+        // 🆕 根据 origin_message_id 关联到原始音频消息
+        const originMessageId = data.origin_message_id;
+            
+        if (originMessageId) {
+          console.log(`🔗 关联语法反馈到音频消息, origin_message_id: ${originMessageId}`);
+              
+          // 更新对应的音频消息，添加语法反馈
+          setMessages(prevMessages => 
+            prevMessages.map(msg => {
+              if (msg.id === originMessageId) {
+                console.log(`✅ 找到匹配的音频消息, id: ${msg.id}, 错误数: ${grammarFeedback.errors?.length || 0}`);
+                return {
+                  ...msg,
+                  grammarFeedback: grammarFeedback,
+                  grammarFeedbackStatus: 'received' as const
+                };
+              }
+              return msg;
+            })
+          );
+              
+          // 同步更新缓存
+          messageCacheRef.current = messageCacheRef.current.map(msg =>
+            msg.id === originMessageId
+              ? {
+                  ...msg,
+                  grammarFeedback: grammarFeedback,
+                  grammarFeedbackStatus: 'received' as const
+                }
+              : msg
+          );
+              
+          console.log('📝 收到语法反馈消息并已关联:', {
+            origin_message_id: originMessageId,
+            round_num: data.round_num,
+            overall_quality: grammarFeedback.overall_quality,
+            errors_count: grammarFeedback.errors?.length || 0,
+            relevance_level: grammarFeedback.relevance_level,
+          });
+        } else {
+          // 降级方案：如果没有 origin_message_id，使用 round_num 匹配
+          console.warn('⚠️ 未收到 origin_message_id，尝试使用 round_num 匹配');
+              
+          const targetRoundNum = data.round_num;
+          if (targetRoundNum) {
+            setMessages(prevMessages => 
+              prevMessages.map(msg => {
+                // 找到对应轮次的用户语音消息
+                if (msg.sender === 'user' && 
+                    msg.messageType === 'voice' && 
+                    msg.roundNum === targetRoundNum &&
+                    !msg.grammarFeedback) {  // 避免重复关联
+                  console.log(`✅ 通过 round_num 匹配到音频消息, roundNum: ${targetRoundNum}`);
+                  return {
+                    ...msg,
+                    grammarFeedback: grammarFeedback,
+                    grammarFeedbackStatus: 'received' as const
+                  };
+                }
+                return msg;
+              })
+            );
+                
+            messageCacheRef.current = messageCacheRef.current.map(msg =>
+              msg.sender === 'user' && 
+              msg.messageType === 'voice' && 
+              msg.roundNum === targetRoundNum &&
+              !msg.grammarFeedback
+                ? {
+                    ...msg,
+                    grammarFeedback: grammarFeedback,
+                    grammarFeedbackStatus: 'received' as const
+                  }
+                : msg
+            );
+          } else {
+            console.error('❌ 无法关联语法反馈消息：缺少 origin_message_id 和 round_num');
+          }
+        }
+      } catch (error) {
+        console.error('❌ 解析语法反馈消息失败:', error, data);
       }
+    };
+
+    /**
+     * 处理文本消息
+     * @param data WebSocket 接收的文本消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleTextMessage = (
+      data: { content: any; round_num?: number },
+      messageId: number,
+    ) => {
+      const now = new Date();
+      const textMessage: Message = {
+        id: messageId,
+        content: typeof data.content === 'string' ? data.content : '我收到了你的消息!',
+        sender: 'ai',
+        timestamp: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        fullTimestamp: now,
+        roundNum: data.round_num,
+        messageType: 'text',
+      };
+
+      setMessages((prevMessages) => [...prevMessages, textMessage]);
+      messageCacheRef.current.push(textMessage);
+      console.log('📝 收到文本消息,已缓存');
+    };
+
+    /**
+     * 处理音频消息（带语音的AI回复）
+     * @param data WebSocket 接收的音频消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleAudioMessage = (
+      data: { content: any; audio_url?: string; round_num?: number },
+      messageId: number,
+    ) => {
+      // 构建完整音频URL
+      const fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
+      console.log('AI音频URL:', fullAudioUrl);
+
+      const now = new Date();
+      const audioMessage: Message = {
+        id: messageId,
+        content: typeof data.content === 'string' ? data.content : '我收到了你的消息!',
+        sender: 'ai',
+        timestamp: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        fullTimestamp: now,
+        audioUrl: fullAudioUrl,
+        audioLoaded: false,
+        roundNum: data.round_num,
+        messageType: 'text', // AI音频消息也标记为text类型
+      };
+
+      setMessages((prevMessages) => [...prevMessages, audioMessage]);
+      messageCacheRef.current.push(audioMessage);
+      console.log('📝 收到音频消息,已缓存');
+
+      // 预加载并自动播放音频
+      preloadAndPlayAiAudio(messageId, fullAudioUrl);
+    };
+
+    /**
+     * 处理图片消息
+     * @param data WebSocket 接收的图片消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleImageMessage = (
+      data: { content: any; round_num?: number },
+      messageId: number,
+    ) => {
+      const now = new Date();
+      const imageMessage: Message = {
+        id: messageId,
+        content: data.content,
+        sender: 'ai',
+        timestamp: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        fullTimestamp: now,
+        messageType: 'image',
+        imageUrl: data.content,
+        roundNum: data.round_num,
+      };
+
+      setMessages((prevMessages) => [...prevMessages, imageMessage]);
+      messageCacheRef.current.push(imageMessage);
+      console.log('📝 收到图片消息,已缓存:', data.content);
+    };
+
+    /**
+     * 解析评分内容
+     * @param text 评分文本内容
+     * @returns 解析后的评分结构
+     */
+    const parseScoreContent = (text: string): ScoreContent => {
+      const lines = text.split('\n');
+      const result: ScoreContent = { rawText: text };
+
+      // 提取第一行维度分数
+      if (lines.length > 0) {
+        result.dimensionScores = lines[0];
+      }
+
+      // 查找各部分
+      let currentSection = '';
+      let advantagesText = '';
+      let disadvantagesText = '';
+      let suggestionsText = '';
+      let improvedAnswerText = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // 识别总分行
+        if (line.startsWith('总分:')) {
+          result.totalScore = line;
+          continue;
+        }
+
+        // 识别章节标题
+        if (line === '详细评价:') {
+          currentSection = 'detail';
+          continue;
+        }
+        if (line === '优势:') {
+          currentSection = 'advantages';
+          continue;
+        }
+        if (line === '不足:') {
+          currentSection = 'disadvantages';
+          continue;
+        }
+        if (line === '改进建议:') {
+          currentSection = 'suggestions';
+          continue;
+        }
+        if (line === '改进的回答:') {
+          currentSection = 'improved_answer';
+          continue;
+        }
+
+        // 收集各部分内容
+        if (currentSection === 'advantages' && line) {
+          advantagesText += line + '\n';
+        } else if (currentSection === 'disadvantages' && line) {
+          disadvantagesText += line + '\n';
+        } else if (currentSection === 'suggestions' && line) {
+          suggestionsText += line + '\n';
+        } else if (currentSection === 'improved_answer' && line) {
+          improvedAnswerText += line + '\n';
+        }
+      }
+
+      result.advantages = advantagesText.trim();
+      result.disadvantages = disadvantagesText.trim();
+      result.suggestions = suggestionsText.trim();
+      result.improvedAnswer = improvedAnswerText.trim();
+
+      return result;
+    };
+
+    /**
+     * 处理评分消息
+     * @param data WebSocket 接收的评分消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleScoreMessage = (
+      data: { content: any; score?: string; round_num?: number },
+      messageId: number,
+    ) => {
+      // 解析文本内容
+      const contentText = typeof data.content === 'string' ? data.content : '';
+      const parsedContent = parseScoreContent(contentText);
+
+      const now = new Date();
+      const scoreMessage: Message = {
+        id: messageId,
+        content: parsedContent,
+        sender: 'ai',
+        timestamp: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        fullTimestamp: now,
+        messageType: 'score',
+        score: data.score,
+        roundNum: data.round_num,
+      };
+
+      setMessages((prevMessages) => [...prevMessages, scoreMessage]);
+      messageCacheRef.current.push(scoreMessage);
+      console.log('📝 收到评分消息,已缓存, 总分:', data.score);
+    };
+
+    const setupReceiveMessageHandler = (wsSocket: any, realConversationId: number) => {
+      // 监听接收消息事件
+      wsSocket.on('receive_message', async (data: { 
+        type?: string;
+        content: any;
+        timestamp?: number;
+        round_num?: number;
+        audio_url?: string;
+        audio_cached?: boolean;
+        score?: string;
+      }) => {
+        console.log('📨 收到 WebSocket 消息:', data);
+        
+        // 🏁 检查是否是 finish 消息
+        if (data.type === 'finish') {
+          console.log('🏁 对话结束,开始保存缓存消息...');
+          
+          try {
+            // 1. 批量保存缓存消息
+            await batchSaveMessages(realConversationId, messageCacheRef.current);
+
+            // 2. 清空缓存
+            messageCacheRef.current = [];
+            
+            // 3. 处理对话结束扣款
+            await handleFinishConsumeCoins();
+            
+            // 4. 设置会话结束状态(触发 UI 禁用)
+            setConversationFinished(true);
+            
+            // 🎆 触发烟花动画
+            setShowFirework(true);
+            console.log('🎆 烟花动画已触发');
+            
+            // 5. 移除 disconnect 事件监听器(避免触发自动刷新)
+            console.log('🔌 移除 disconnect 事件监听器');
+            wsSocket.off('disconnect');
+            
+            // 6. 断开 WebSocket
+            console.log('🔌 断开 WebSocket 连接');
+            wsSocket.disconnect();
+            setSocket(null);
+            setIsConnected(false);
+            setIsAuthenticated(false);
+            
+            // 7. 插入结束消息到消息列表
+            const now = new Date();
+            const finishMessage: Message = {
+              id: generateMessageId(),
+              content: '🎉 对话已结束,您的口语练习已完成,成绩已保存!',
+              sender: 'ai',
+              timestamp: now.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              fullTimestamp: now, // ⭐ 保存完整时间戳
+              messageType: 'finish',
+            };
+            
+            setMessages(prevMessages => [...prevMessages, finishMessage]);
+            console.log('✅ 对话结束处理完成,已插入结束消息');
+            
+          } catch (error) {
+            console.error('❌ 保存消息失败:', error);
+            
+            Modal.error({
+              title: '保存失败',
+              content: '消息保存失败,请稍后重试',
+            });
+          }
+          
+          return; // finish 消息处理完毕,不继续处理
+        }
+                
+        const messageId = generateMessageId();
+                
+        // 判断消息类型
+        if (data.type === 'image_url') {
+          // 图片消息
+          handleImageMessage(data, messageId);
+                  
+        } else if (data.type === 'score') {
+          // 评分消息
+          handleScoreMessage(data, messageId);
+          
+        } else if (data.type === 'grammar_feedback') {
+          // 语法反馈消息（仅缓存，不显示）
+          handleGrammarFeedbackMessage(data, messageId);
+          
+        } else {
+          // 文本或音频消息
+          if (data.audio_url) {
+            // 带音频的AI回复
+            handleAudioMessage(data, messageId);
+          } else {
+            // 纯文本消息
+            handleTextMessage(data, messageId);
+          }
+        }
+      });
     };
     
     /**
@@ -914,13 +1336,12 @@ const SpokenPractice: React.FC = () => {
         console.log('从服务器获取的workflowTypes:', workflowTypes, totalPrice );
         console.log('从服务器获取的exerciseIds:', exerciseIds);
         
-        // 从 URL 获取 workflow_type
-        // let workflowType = searchParams.get('workflow_type');
-        // if (!workflowType) {
-        //   workflowType = 'ket_all';
-        //   console.log('没有从URL获取workflow_type使用默认workflow_type :', workflowType);
-        // }
-        // console.log('从URL获取的workflow_type:', workflowType);
+        // 🔥 保存到全局变量，供其他函数使用
+        currentWorkflowTypeRef.current = workflowTypes;
+        currentTotalPriceRef.current = totalPrice;
+        currentExerciseIdsRef.current = exerciseIds;
+        console.log('✅ 已将试卷数据保存到全局变量');
+        
        
         // 连接 WebSocket，传入 token、workflow_type、paper_id 和 exercise_ids
         const wsSocket = webSocketService.connect(userId, realConversationId, token, workflowTypes, paperId, exerciseIds);
@@ -1009,233 +1430,8 @@ const SpokenPractice: React.FC = () => {
           }));
         });
         
-        // 监听接收消息事件
-        wsSocket.on('receive_message', async (data: { 
-          type?: string;
-          content: any;
-          timestamp?: number;
-          round_num?: number;
-          audio_url?: string;
-          audio_cached?: boolean;
-          score?: string;
-        }) => {
-          console.log('📨 收到 WebSocket 消息:', data);
-          
-          // 🏁 检查是否是 finish 消息
-          if (data.type === 'finish') {
-            console.log('🏁 对话结束，开始保存缓存消息...');
-            
-            try {
-              // 1. 批量保存缓存消息
-              await batchSaveMessages(realConversationId, messageCacheRef.current);
-
-              // 2. 清空缓存
-              messageCacheRef.current = [];
-              
-              // 3. 处理对话结束扣款
-              await handleFinishConsumeCoins();
-              
-              // 4. 设置会话结束状态（触发 UI 禁用）
-              setConversationFinished(true);
-              
-              // 🎆 触发烟花动画
-              setShowFirework(true);
-              console.log('🎆 烟花动画已触发');
-              
-              // 5. 移除 disconnect 事件监听器（避免触发自动刷新）
-              console.log('🔌 移除 disconnect 事件监听器');
-              wsSocket.off('disconnect');
-              
-              // 6. 断开 WebSocket
-              console.log('🔌 断开 WebSocket 连接');
-              wsSocket.disconnect();
-              setSocket(null);
-              setIsConnected(false);
-              setIsAuthenticated(false);
-              
-              // 7. 插入结束消息到消息列表
-              const now = new Date();
-              const finishMessage: Message = {
-                id: generateMessageId(),
-                content: '🎉 对话已结束，您的口语练习已完成，成绩已保存！',
-                sender: 'ai',
-                timestamp: now.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }),
-                fullTimestamp: now, // ⭐ 保存完整时间戳
-                messageType: 'finish',
-              };
-              
-              setMessages(prevMessages => [...prevMessages, finishMessage]);
-              console.log('✅ 对话结束处理完成，已插入结束消息');
-              
-            } catch (error) {
-              console.error('❌ 保存消息失败:', error);
-              
-              Modal.error({
-                title: '保存失败',
-                content: '消息保存失败，请稍后重试',
-              });
-            }
-            
-            return; // finish 消息处理完毕，不继续处理
-          }
-                  
-          const messageId = generateMessageId();
-                  
-          // 判断消息类型
-          if (data.type === 'image_url') {
-            // 图片消息
-            const now = new Date();
-            const imageMessage: Message = {
-              id: messageId,
-              content: data.content,
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              messageType: 'image',
-              imageUrl: data.content,
-              roundNum: data.round_num,
-            };
-                    
-            setMessages(prevMessages => [...prevMessages, imageMessage]);
-            messageCacheRef.current.push(imageMessage); // ⭐ 添加到缓存
-            console.log('📝 收到图片消息，已缓存:', data.content);
-                    
-          } else if (data.type === 'score') {
-            // 评分消息 - 解析文本内容
-            const contentText = typeof data.content === 'string' ? data.content : '';
-            
-            // 解析评分内容
-            const parseScoreContent = (text: string): ScoreContent => {
-              const lines = text.split('\n');
-              const result: ScoreContent = { rawText: text };
-              
-              // 提取第一行维度分数
-              if (lines.length > 0) {
-                result.dimensionScores = lines[0];
-              }
-              
-              // 查找各部分
-              let currentSection = '';
-              let advantagesText = '';
-              let disadvantagesText = '';
-              let suggestionsText = '';
-              let improvedAnswerText = '';
-
-              
-              for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // 识别总分行
-                if (line.startsWith('总分：')) {
-                  result.totalScore = line;
-                  continue;
-                }
-                
-                // 识别章节标题
-                if (line === '详细评价：') {
-                  currentSection = 'detail';
-                  continue;
-                }
-                if (line === '优势：') {
-                  currentSection = 'advantages';
-                  continue;
-                }
-                if (line === '不足：') {
-                  currentSection = 'disadvantages';
-                  continue;
-                }
-                if (line === '改进建议：') {
-                  currentSection = 'suggestions';
-                  continue;
-                }
-                if (line === '改进的回答：') {
-                  currentSection = 'improved_answer';
-                  continue;
-                }
-                
-                // 收集各部分内容
-                if (currentSection === 'advantages' && line) {
-                  advantagesText += line + '\n';
-                } else if (currentSection === 'disadvantages' && line) {
-                  disadvantagesText += line + '\n';
-                } else if (currentSection === 'suggestions' && line) {
-                  suggestionsText += line + '\n';
-                }
-                else if (currentSection === 'improved_answer' && line) {
-                  improvedAnswerText += line + '\n';
-                }
-              }
-              
-              result.advantages = advantagesText.trim();
-              result.disadvantages = disadvantagesText.trim();
-              result.suggestions = suggestionsText.trim();
-              result.improvedAnswer = improvedAnswerText.trim();
-              
-              return result;
-            };
-            
-            const parsedContent = parseScoreContent(contentText);
-            
-            const now = new Date();
-            const scoreMessage: Message = {
-              id: messageId,
-              content: parsedContent,
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              messageType: 'score',
-              score: data.score,
-              roundNum: data.round_num,
-            };
-            
-            setMessages(prevMessages => [...prevMessages, scoreMessage]);
-            messageCacheRef.current.push(scoreMessage); // ⭐ 添加到缓存
-            console.log('📝 收到评分消息，已缓存, 总分:', data.score);
-          } else {
-            // 文本/音频消息
-            // 构建完整音频URL
-            let fullAudioUrl: string | undefined;
-            if (data.audio_url) {
-              fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
-              console.log('AI音频URL:', fullAudioUrl);
-            }
-            
-            // 创建AI回复消息
-            const now = new Date();
-            const aiMessage: Message = {
-              id: messageId,
-              content: typeof data.content === 'string' ? data.content : '我收到了你的消息！',
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              audioUrl: fullAudioUrl,
-              audioLoaded: false,
-              roundNum: data.round_num,
-              messageType: 'text',
-            };
-            
-            setMessages(prevMessages => [...prevMessages, aiMessage]);
-            messageCacheRef.current.push(aiMessage); // ⭐ 添加到缓存
-            console.log('📝 收到文本消息，已缓存');
-            
-            // 预加载并自动播放音频
-            if (fullAudioUrl) {
-              preloadAndPlayAiAudio(messageId, fullAudioUrl);
-            }
-          }
-        });
+        // 设置接收消息事件监听
+        setupReceiveMessageHandler(wsSocket, realConversationId);
         
         // 监听错误事件
         wsSocket.on('error', (error: any) => {
@@ -1252,7 +1448,7 @@ const SpokenPractice: React.FC = () => {
     /**
      * 加载历史消息
      * @param conversationId 会话 ID
-     * @returns 返回真实的会话 ID（可能创建了新会话）
+     * @returns 返回会话 ID
      */
     const loadHistoryMessages = async (conversationId: number): Promise<number> => {
       if (historyLoaded || isLoadingHistory) {
@@ -1264,13 +1460,11 @@ const SpokenPractice: React.FC = () => {
         setIsLoadingHistory(true);
         console.log('加载历史消息, 会话 ID:', conversationId);
             
-        // 使用 skipErrorHandler 跳过全局错误处理，手动处理响应
         const response = await getSpokenMessages(conversationId, {
           skipErrorHandler: true,
         });
         
-        // 🔍 调试：打印完整响应
-        console.log('📦 getSpokenMessages 完整响应:', JSON.stringify(response, null, 2));
+        console.log('📦 getSpokenMessages 响应:', JSON.stringify(response, null, 2));
             
         if (response.success && response.data) {
           console.log(`✅ 成功加载 ${response.data.length} 条历史消息`);
@@ -1316,49 +1510,15 @@ const SpokenPractice: React.FC = () => {
               
           setMessages(historyMessages);
           setHistoryLoaded(true);
-          
-          // 会话存在，返回当前 ID
-          return conversationId;
         } else {
-          // success=false 或其他情况，统一处理
-          console.warn('⚠️ 加载失败，响应:', {
-            success: response.success,
-            error_code: response.error_code,
-            message: response.message,
-            data: response.data,
-          });
-          
-          // 🎯 判断是否是会话不存在（多种方式）
-          const isConversationNotFound = 
-            response.error_code === 'CONVERSATION_NOT_FOUND' ||  // 方式1: error_code
-            (response.message && response.message.includes('不存在')) ||  // 方式2: message内容
-            (response.message && response.message.includes('not found')) ||  // 方式3: 英文message
-            (response.data && Array.isArray(response.data) && response.data.length === 0 && response.total === 0);  // 方式4: 空数据
-          
-          if (isConversationNotFound) {
-            console.log('💡 判断为会话不存在，创建新会话...');
-            const newId = await createNewConversation();
-            return newId || conversationId;
-          }
-          
-          return conversationId;
+          console.warn('⚠️ 加载历史消息失败或无历史消息');
+          setHistoryLoaded(true);
         }
+        
+        return conversationId;
       } catch (error: any) {
         console.error('❌ 加载历史消息异常:', error);
-        console.error('异常详情:', {
-          name: error.name,
-          message: error.message,
-          info: error.info,
-        });
-        
-        // 🔧 由于 skipErrorHandler 可能无效，异常仍会抛出
-        // 这种情况下，我们直接认为是新会话，创建它
-        if (error.name === 'BizError') {
-          console.log('🔄 捕获到 BizError，默认创建新会话...');
-          const newId = await createNewConversation();
-          return newId || conversationId;
-        }
-        
+        setHistoryLoaded(true);
         return conversationId;
       } finally {
         setIsLoadingHistory(false);
@@ -1434,6 +1594,9 @@ const SpokenPractice: React.FC = () => {
       // 缓存音频对象
       aiAudioCacheRef.current.set(messageId, audio);
       
+      // 标记是否已经自动播放过（防止重复播放）
+      let hasAutoPlayed = false;
+      
       // 监听加载完成事件
       audio.onloadeddata = () => {
         console.log('AI音频加载完成:', messageId);
@@ -1443,10 +1606,12 @@ const SpokenPractice: React.FC = () => {
         ));
       };
       
-      // 监听可以播放事件
+      // 监听可以播放事件（只在这里触发自动播放）
       audio.oncanplaythrough = () => {
-        // 如果开启了自动播放，开始播放
-        if (autoPlayEnabled) {
+        console.log('AI音频可以播放:', messageId);
+        // 如果开启了自动播放且还没有播放过，开始播放
+        if (autoPlayEnabled && !hasAutoPlayed) {
+          hasAutoPlayed = true; // 标记已播放，防止重复
           console.log('自动播放AI音频:', messageId);
           setPlayingMessageId(messageId);
           setAudioElement(audio);
@@ -1611,13 +1776,19 @@ const SpokenPractice: React.FC = () => {
     };
   }, []); // 空依赖数组，仅在组件挂载时执行一次
   
-  // 💡 新增：beforeunload 事件处理（页面刷新/关闭时清除 conversationId）
+  // 💡 新增：beforeunload 事件处理（页面刷新/关闭时清除 conversationId 并关闭 WebSocket）
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // 如果有未保存的消息，提示用户
       if (messageCacheRef.current.length > 0 && !conversationFinished) {
         e.preventDefault();
         e.returnValue = '对话尚未结束，离开将丢失未保存的消息！';
+      }
+      
+      // 🔌 关闭 WebSocket 连接
+      if (socket) {
+        console.log('🔌 页面关闭/刷新，断开 WebSocket 连接');
+        socket.disconnect();
       }
       
       // 无论如何都清除 conversationId
@@ -1628,6 +1799,12 @@ const SpokenPractice: React.FC = () => {
     // 监听浏览器返回/前进事件（使用 popstate）
     const handlePopState = () => {
       console.log('🔙 检测到浏览器返回操作，开始清理资源...');
+      
+      // 🔌 关闭 WebSocket 连接
+      if (socket) {
+        console.log('🔌 浏览器返回，断开 WebSocket 连接');
+        socket.disconnect();
+      }
       
       // 🧹 清理所有缓存的 AI 音频
       if (aiAudioCacheRef.current.size > 0) {
@@ -1657,7 +1834,7 @@ const SpokenPractice: React.FC = () => {
       // 只有用户主动开始新会话时才清除
       console.log('🧹 组件卸载，保留 conversationId 以便下次进入时恢复');
     };
-  }, [conversationFinished]); // ⚠️ 移除 audioElement 依赖，使用 Ref 访问最新值
+  }, [conversationFinished, socket]); // 添加 socket 依赖，确保事件处理函数中能访问到最新的 socket
 
 
   /**
@@ -2133,9 +2310,25 @@ const SpokenPractice: React.FC = () => {
                       'type': 'answer',
                       conversation_id: conversationId,
                       'content': transcriptionText,
-                      round_num: 1,
+                      round_num: newMessage.roundNum,  // 使用音频消息的轮次号
+                      origin_message_id: newMessageId,  // 🆕 添加原始消息ID用于关联
                     }));
-                    console.log('已将转写结果通过WebSocket发送');
+                    console.log('已将转写结果通过WebSocket发送, origin_message_id:', newMessageId);
+                    
+                    // 🆕 标记该消息正在等待语法反馈
+                    setMessages(prevMessages => 
+                      prevMessages.map(msg => 
+                        msg.id === newMessageId 
+                          ? { ...msg, grammarFeedbackStatus: 'pending' } 
+                          : msg
+                      )
+                    );
+                    
+                    messageCacheRef.current = messageCacheRef.current.map(msg =>
+                      msg.id === newMessageId
+                        ? { ...msg, grammarFeedbackStatus: 'pending' }
+                        : msg
+                    );
                   } catch (error) {
                     console.error('WebSocket发送转写结果失败:', error);
                   }
@@ -2328,6 +2521,22 @@ const SpokenPractice: React.FC = () => {
     setAudioElement(null);
   };
 
+  /**
+   * 🆕 打开语法反馈弹窗
+   */
+  const openGrammarFeedbackModal = (grammarFeedback: GrammarFeedbackContent) => {
+    setCurrentGrammarFeedback(grammarFeedback);
+    setGrammarFeedbackModalVisible(true);
+  };
+
+  /**
+   * 🆕 关闭语法反馈弹窗
+   */
+  const closeGrammarFeedbackModal = () => {
+    setGrammarFeedbackModalVisible(false);
+    setCurrentGrammarFeedback(null);
+  };
+
   // 渲染组件UI
   return (
     <Layout className="spoken-practice-layout">
@@ -2390,14 +2599,6 @@ const SpokenPractice: React.FC = () => {
               onClick={() => setShowTextInput(!showTextInput)}
               title={showTextInput ? "隐藏文本输入" : "显示文本输入"}
             />
-            <Button
-              icon={<ExperimentOutlined />}
-              ghost
-              className="header-button"
-              onClick={() => setShowTestPanel(!showTestPanel)}
-              title={showTestPanel ? "隐藏测试面板" : "显示测试面板"}
-              style={{ color: showTestPanel ? '#52c41a' : undefined }}
-            />
             <UserAvatar showName={false} size={40} />
           </Space>
         </div>
@@ -2405,325 +2606,6 @@ const SpokenPractice: React.FC = () => {
       
       {/* 主内容区域 */}
       <Content className="spoken-practice-content">
-        {/* 测试面板 */}
-        {showTestPanel && (
-          <Card
-            title={
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>🧪 测试面板</span>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => setShowTestPanel(false)}
-                />
-              </div>
-            }
-            style={{
-              position: 'fixed',
-              top: '80px',
-              right: '20px',
-              width: '320px',
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              zIndex: 1000,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              borderRadius: '8px'
-            }}
-            bodyStyle={{ padding: '12px' }}
-          >
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
-              {/* 余额相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1890ff', marginTop: '4px' }}>
-                💰 余额测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：查询余额');
-                  try {
-                    const result = await checkBalance(false);
-                    Modal.info({
-                      title: '余额查询结果',
-                      content: (
-                        <div>
-                          <p>当前余额：{result.balance} 金币</p>
-                          <p>需要金币：{result.price} 金币</p>
-                          <p>是否充足：{result.sufficient ? '✅ 是' : '❌ 否'}</p>
-                        </div>
-                      ),
-                    });
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                    Modal.error({ title: '测试失败', content: String(error) });
-                  }
-                }}
-              >
-                查询余额
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：检查余额（带弹框）');
-                  try {
-                    await checkBalance(true);
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                  }
-                }}
-              >
-                检查余额（带提示）
-              </Button>
-              
-              {/* 价格相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#722ed1', marginTop: '8px' }}>
-                💎 价格测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：获取当前工作流信息');
-                  const info = getCurrentWorkflowInfo();
-                  Modal.info({
-                    title: '工作流信息',
-                    content: (
-                      <div>
-                        <p>工作流类型：{info.workflowType}</p>
-                        <p>价格：{info.price} 金币</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                获取工作流信息
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：重新加载价格映射');
-                  try {
-                    await fetchWorkflowPrices();
-                    Modal.success({ title: '成功', content: '价格映射已重新加载' });
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                    Modal.error({ title: '测试失败', content: String(error) });
-                  }
-                }}
-              >
-                重新加载价格
-              </Button>
-              
-              {/* 扣款相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fa8c16', marginTop: '8px' }}>
-                💳 扣款测试
-              </div>
-              <Button
-                size="small"
-                block
-                danger
-                onClick={async () => {
-                  console.log('🧪 测试：执行扣款');
-                  Modal.confirm({
-                    title: '确认测试扣款',
-                    content: '这将执行真实的扣款操作，确定继续吗？',
-                    okText: '确定',
-                    cancelText: '取消',
-                    onOk: async () => {
-                      try {
-                        const result = await handleConsumeCoins();
-                        if (result) {
-                          console.log('✅ 扣款成功');
-                        } else {
-                          console.log('❌ 扣款失败');
-                        }
-                      } catch (error) {
-                        console.error('测试失败:', error);
-                      }
-                    },
-                  });
-                }}
-              >
-                执行扣款（危险）
-              </Button>
-              
-              {/* WebSocket 测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#52c41a', marginTop: '8px' }}>
-                🔌 WebSocket 测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：WebSocket 连接状态');
-                  Modal.info({
-                    title: 'WebSocket 状态',
-                    content: (
-                      <div>
-                        <p>连接状态：{isConnected ? '✅ 已连接' : '❌ 未连接'}</p>
-                        <p>认证状态：{isAuthenticated ? '✅ 已认证' : '❌ 未认证'}</p>
-                        <p>会话ID：{conversationId}</p>
-                        <p>用户ID：{userId}</p>
-                        <p>是否结束：{conversationFinished ? '✅ 是' : '❌ 否'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看连接状态
-              </Button>
-              
-              {/* 状态测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#eb2f96', marginTop: '8px' }}>
-                🎯 状态测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看当前状态');
-                  const priceMapSize = workflowPriceMapRef.current.size || workflowPriceMap.size;
-                  Modal.info({
-                    title: '当前状态',
-                    content: (
-                      <div>
-                        <p>消息数量：{messages.length}</p>
-                        <p>缓存消息：{messageCacheRef.current.length}</p>
-                        <p>余额已检查：{balanceCheckedRef.current ? '✅ 是' : '❌ 否'}</p>
-                        <p>对话结束：{conversationFinished ? '✅ 是' : '❌ 否'}</p>
-                        <p>价格加载：{priceLoading ? '⏳ 加载中' : '✅ 完成'}</p>
-                        <p>价格映射数量：{priceMapSize} 条</p>
-                        <p>历史加载：{historyLoaded ? '✅ 是' : '❌ 否'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看当前状态
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看缓存消息');
-                  const cachedMessages = messageCacheRef.current;
-                  console.group('📦 缓存消息详情');
-                  console.log('缓存消息数量:', cachedMessages.length);
-                  cachedMessages.forEach((msg, index) => {
-                    console.group(`消息 [${index + 1}/${cachedMessages.length}]`);
-                    console.log('ID:', msg.id);
-                    console.log('类型:', msg.messageType);
-                    console.log('发送者:', msg.sender);
-                    console.log('时间:', msg.timestamp);
-                    if (msg.messageType === 'voice') {
-                      console.log('🎤 本地路径:', msg.audioFilePath);
-                      console.log('🔥 服务器路径:', msg.serverAudioPath || '未设置');
-                      console.log('转写文本:', msg.transcriptionText);
-                      console.log('转写状态:', msg.transcriptionStatus);
-                    }
-                    console.groupEnd();
-                  });
-                  console.groupEnd();
-                  Modal.info({
-                    title: '缓存消息',
-                    content: (
-                      <div>
-                        <p>缓存消息数量：{cachedMessages.length}</p>
-                        <p>语音消息数量：{cachedMessages.filter(m => m.messageType === 'voice').length}</p>
-                        <p style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
-                          详细信息已输出到控制台
-                        </p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看缓存消息
-              </Button>
-              
-              {/* URL 参数测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#13c2c2', marginTop: '8px' }}>
-                🔗 URL 参数
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看URL参数');
-                  const exerciseId = getPaperIdFromUrl();
-                  const workflowType = searchParams.get('workflow_type');
-                  Modal.info({
-                    title: 'URL 参数',
-                    content: (
-                      <div>
-                        <p>exercise_id: {exerciseId || '未设置'}</p>
-                        <p>workflow_type: {workflowType || '未设置'}</p>
-                        <p>conversationId: {searchParams.get('conversationId') || '未设置'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看URL参数
-              </Button>
-              
-              {/* 工具按钮 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#595959', marginTop: '8px' }}>
-                🛠️ 工具
-              </div>
-              <Button
-                size="small"
-                block
-                type="dashed"
-                onClick={() => {
-                  console.log('🧪 测试：打印所有状态到控制台');
-                  console.group('📊 完整状态信息');
-                  console.log('消息列表:', messages);
-                  console.log('缓存消息:', messageCacheRef.current);
-                  console.log('余额已检查:', balanceCheckedRef.current);
-                  console.log('对话结束:', conversationFinished);
-                  console.log('WebSocket连接:', isConnected);
-                  console.log('WebSocket认证:', isAuthenticated);
-                  console.log('会话 ID:', conversationId);
-                  console.log('用户ID:', userId);
-                  console.log('价格映射(State):', Object.fromEntries(workflowPriceMap));
-                  console.log('价格映射(Ref)⭐:', Object.fromEntries(workflowPriceMapRef.current));
-                  console.groupEnd();
-                  Modal.success({ title: '完成', content: '状态已打印到控制台' });
-                }}
-              >
-                打印完整状态
-              </Button>
-                            
-              {/* 动画测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fa8c16', marginTop: '8px' }}>
-                🎆 动画测试
-              </div>
-              <Button
-                size="small"
-                block
-                type="primary"
-                onClick={() => {
-                  console.log('🎆 测试：触发烟花动画');
-                  setShowFirework(true);
-                  Modal.success({ 
-                    title: '烟花动画已触发', 
-                    content: '烟花动画将持续5秒，发射15朵烟花' 
-                  });
-                }}
-              >
-                🎆 触发烟花动画
-              </Button>
-            </Space>
-          </Card>
-        )}
-        
         {/* 对话消息显示区域 */}
       <div className="conversation-area">
         {messages.map((message) => (
@@ -2781,6 +2663,25 @@ const SpokenPractice: React.FC = () => {
                       {message.transcriptionStatus === 'done' && '✅ '}
                       {message.transcriptionStatus === 'failed' && '❌ '}
                       {message.transcriptionText}
+                    </div>
+                  )}
+                  
+                  {/* 🆕 语法反馈按钮 */}
+                  {message.grammarFeedback && message.grammarFeedbackStatus === 'received' && (
+                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<FileTextOutlined />}
+                        onClick={() => openGrammarFeedbackModal(message.grammarFeedback!)}
+                        style={{
+                          backgroundColor: '#52c41a',
+                          borderColor: '#52c41a',
+                          fontSize: '12px',
+                        }}
+                      >
+                        查看语法反馈 ({message.grammarFeedback.errors?.length || 0} 个错误)
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -3243,6 +3144,190 @@ const SpokenPractice: React.FC = () => {
           console.log('🎆 烟花动画完成');
         }}
       />
+
+      {/* 🆕 语法反馈弹窗 */}
+      <Modal
+        title={
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1890ff' }}>
+            📝 语法反馈详情
+          </div>
+        }
+        open={grammarFeedbackModalVisible}
+        onCancel={closeGrammarFeedbackModal}
+        footer={[
+          <Button key="close" type="primary" onClick={closeGrammarFeedbackModal}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+        style={{ top: 20 }}
+      >
+        {currentGrammarFeedback && (
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {/* 整体质量 */}
+            <Card size="small" style={{ marginBottom: '16px', backgroundColor: '#f0f5ff' }}>
+              <div style={{ fontSize: '14px' }}>
+                <strong>整体质量：</strong>
+                <span style={{ 
+                  marginLeft: '8px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 
+                    currentGrammarFeedback.overall_quality === 'excellent' ? '#52c41a' :
+                    currentGrammarFeedback.overall_quality === 'good' ? '#1890ff' :
+                    currentGrammarFeedback.overall_quality === 'fair' ? '#faad14' : '#ff4d4f',
+                  color: '#fff',
+                  fontWeight: 'bold'
+                }}>
+                  {currentGrammarFeedback.overall_quality === 'excellent' ? '优秀' :
+                   currentGrammarFeedback.overall_quality === 'good' ? '良好' :
+                   currentGrammarFeedback.overall_quality === 'fair' ? '一般' : '较差'}
+                </span>
+              </div>
+            </Card>
+
+            {/* 相关性评估 */}
+            <Card size="small" style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                <strong>相关性：</strong>
+                <span style={{ 
+                  marginLeft: '8px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 
+                    currentGrammarFeedback.relevance_level === 'on_topic' ? '#52c41a' :
+                    currentGrammarFeedback.relevance_level === 'partially_on_topic' ? '#faad14' : '#ff4d4f',
+                  color: '#fff'
+                }}>
+                  {currentGrammarFeedback.relevance_level === 'on_topic' ? '切题' :
+                   currentGrammarFeedback.relevance_level === 'partially_on_topic' ? '部分切题' : '离题'}
+                </span>
+                <span style={{ marginLeft: '8px', color: '#666' }}>(分数: {currentGrammarFeedback.relevance_score.toFixed(2)})</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                {currentGrammarFeedback.relevance_reason}
+              </div>
+            </Card>
+
+            {/* 错误列表 */}
+            {currentGrammarFeedback.errors && currentGrammarFeedback.errors.length > 0 && (
+              <Card 
+                size="small" 
+                title={
+                  <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
+                    ❌ 错误列表 ({currentGrammarFeedback.errors.length} 个)
+                  </span>
+                }
+                style={{ marginBottom: '16px' }}
+              >
+                {currentGrammarFeedback.errors.map((error, index) => (
+                  <div 
+                    key={index} 
+                    style={{ 
+                      padding: '12px',
+                      marginBottom: index < currentGrammarFeedback.errors.length - 1 ? '12px' : '0',
+                      backgroundColor: error.severity === 'critical' ? '#fff1f0' : '#fffbe6',
+                      borderLeft: `4px solid ${error.severity === 'critical' ? '#ff4d4f' : '#faad14'}`,
+                      borderRadius: '4px'
+                    }}
+                  >
+                    <div style={{ marginBottom: '8px' }}>
+                      <span style={{ 
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        backgroundColor: error.severity === 'critical' ? '#ff4d4f' : '#faad14',
+                        color: '#fff',
+                        fontSize: '12px',
+                        marginRight: '8px'
+                      }}>
+                        {error.severity === 'critical' ? '严重' : '轻微'}
+                      </span>
+                      <strong>{error.type}</strong>
+                    </div>
+                    <div style={{ fontSize: '13px', marginBottom: '4px' }}>
+                      <span style={{ color: '#ff4d4f', textDecoration: 'line-through' }}>{error.original}</span>
+                      <span style={{ margin: '0 8px', color: '#666' }}>→</span>
+                      <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{error.corrected}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                      {error.explanation}
+                    </div>
+                    {(error.a2_criterion || error.b1_criterion || error.b2_criterion) && (
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                        评分维度: {error.a2_criterion || error.b1_criterion || error.b2_criterion}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </Card>
+            )}
+
+            {/* 改进版本 */}
+            <Card 
+              size="small" 
+              title={<span style={{ color: '#52c41a', fontWeight: 'bold' }}>✅ 改进后的句子</span>}
+              style={{ marginBottom: '16px', backgroundColor: '#f6ffed' }}
+            >
+              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                {currentGrammarFeedback.improved_version}
+              </div>
+            </Card>
+
+            {/* 学习建议 */}
+            {currentGrammarFeedback.suggestions && currentGrammarFeedback.suggestions.length > 0 && (
+              <Card 
+                size="small" 
+                title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}>💡 学习建议</span>}
+                style={{ marginBottom: '16px' }}
+              >
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {currentGrammarFeedback.suggestions.map((suggestion, index) => (
+                    <li key={index} style={{ fontSize: '13px', lineHeight: '1.8', color: '#333' }}>
+                      {suggestion}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {/* 评估维度 (A2/B1/B2) */}
+            {(currentGrammarFeedback.a2_assessment || currentGrammarFeedback.b1_assessment || currentGrammarFeedback.b2_assessment) && (
+              <Card size="small" title={<span style={{ fontWeight: 'bold' }}>📊 维度评估</span>}>
+                {currentGrammarFeedback.a2_assessment && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>A2 (KET):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.a2_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.a2_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.a2_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+                {currentGrammarFeedback.b1_assessment && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>B1 (PET):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.b1_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.b1_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.b1_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+                {currentGrammarFeedback.b2_assessment && (
+                  <div>
+                    <strong>B2 (FCE):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.b2_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.b2_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.b2_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        )}
+      </Modal>
     </Layout>
   );
 };
