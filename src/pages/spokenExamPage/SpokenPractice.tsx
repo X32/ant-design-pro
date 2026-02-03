@@ -31,6 +31,7 @@ import {
   createSpokenVoiceMessage,
   createSpokenImageMessage,
   createSpokenScoreMessage,
+  createGrammarAnalysisMessage,
   getWorkflowTypes,
   consumeCoins,
   getWalletBalance,
@@ -121,17 +122,28 @@ interface GrammarFeedbackContent {
 }
 
 /**
+ * 🆕 总分汇总内容接口
+ */
+interface FinalScoreSummaryContent {
+  type: 'final_score_summary';
+  content: string;              // 显示的文本内容
+  timestamp: number;            // 时间戳
+  part_scores: Record<string, number>; // 各 Part 得分，如 {"1": 18, "2": 22}
+  total_score: number;          // 总分
+}
+
+/**
  * 消息数据接口定义
  */
 interface Message {
   id: number;           // 消息ID
-  content: string | ScoreContent | GrammarFeedbackContent; // 消息内容（文本、评分或语法反馈对象）
+  content: string | ScoreContent | GrammarFeedbackContent | FinalScoreSummaryContent; // 消息内容（文本、评分、语法反馈或总分汇总对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
   fullTimestamp?: Date; // 完整时间戳（保存用）
   audioFilePath?: string; // 音频文件路径（用户语音消息，本地Blob URL）
   serverAudioPath?: string; // 🔥 新增：服务器音频路径（用于保存到数据库）
-  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'finish'; // 消息类型（新增 grammar_feedback 类型）
+  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'final_score_summary' | 'finish'; // 消息类型（新增 final_score_summary 类型）
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
   // AI消息音频相关字段
@@ -142,9 +154,12 @@ interface Message {
   imageUrl?: string;      // 图片URL
   // 评分消息相关字段
   score?: string;         // 总分
+  partNo?: number;        // 🆕 评分阶段号（第几个 Part）
+  totalParts?: number;    // 🆕 总阶段数（一共几个 Part）
   // 语法反馈关联字段
   grammarFeedback?: GrammarFeedbackContent;  // 关联的语法反馈内容
   grammarFeedbackStatus?: 'pending' | 'received'; // 语法反馈接收状态
+  originMessageId?: number; // 🆕 原始消息ID（语法反馈消息关联到音频消息）
 }
 
 // AI音频基础URL
@@ -234,6 +249,13 @@ const SpokenPractice: React.FC = () => {
   
   // 💡 新增：消息缓存 Ref（待保存的消息）
   const messageCacheRef = useRef<Message[]>([]);
+  
+  // 🆕 新增：score 消息临时缓存（等待收集所有 part 后再显示）
+  const scoreMessagesCache = useRef<Map<number, Message>>(new Map()); // key: part_no, value: Message
+  const [expectedTotalParts, setExpectedTotalParts] = useState<number | null>(null); // 总 part 数
+  
+  // 💡 新增：真实会话 ID Ref（数据库会话 ID）
+  const realConversationIdRef = useRef<number>(0);
   
   // 💡 新增：余额检查标记（避免重复检查）
   const balanceCheckedRef = useRef(false);
@@ -785,7 +807,7 @@ const SpokenPractice: React.FC = () => {
     ): Promise<any | null> => {
       // 将前端的 timestamp 转换为 ISO 8601 格式
       const createdAt = convertTimestampToISO(msg.timestamp, msg.fullTimestamp);
-      console.log(`💾 [${index + 1}/${total}] 准备保存消息: ${msg.messageType}, sender: ${msg.sender}, created_at: ${createdAt}`);
+      console.log(`💾 [🔹 conversationId: ${conversationId}] [🔹 messageId: ${msg.id}] [🔹 messageType: ${msg.messageType}] 准备保存消息 [${index + 1}/${total}], sender: ${msg.sender}, created_at: ${createdAt}`);
       
       try {
         // 根据消息类型调用相应的 API
@@ -835,6 +857,75 @@ const SpokenPractice: React.FC = () => {
               disadvantages: content.disadvantages,
               suggestions: content.suggestions,
               improved_answer: content.improvedAnswer,
+              created_at: createdAt,
+            });
+          }
+
+          case 'grammar_feedback': {
+            // 🆕 语法分析消息
+            const grammarContent = msg.content as GrammarFeedbackContent;
+            
+            // 从 workflowType 中提取考试等级
+            const workflowType = currentWorkflowTypeRef.current || '';
+            let examLevel = 'FCE'; // 默认 FCE
+            
+            if (workflowType.toLowerCase().includes('ket') || workflowType.toLowerCase().includes('a2')) {
+              examLevel = 'KET';
+            } else if (workflowType.toLowerCase().includes('pet') || workflowType.toLowerCase().includes('b1')) {
+              examLevel = 'PET';
+            } else if (workflowType.toLowerCase().includes('fce') || workflowType.toLowerCase().includes('b2')) {
+              examLevel = 'FCE';
+            }
+            
+            console.log(`📝 准备保存语法分析消息, exam_level: ${examLevel}, workflowType: ${workflowType}`);
+            
+            // 转换 errors 格式
+            const errorsJson = JSON.stringify(
+              grammarContent.errors.map(err => ({
+                error_type: err.type,
+                original_text: err.original,
+                corrected_text: err.corrected,
+                explanation: err.explanation,
+                severity: err.severity,
+                criterion: err.a2_criterion || err.b1_criterion || err.b2_criterion || 'general'
+              }))
+            );
+            
+            // 转换 assessment 格式
+            let assessmentJson = '{}';
+            if (examLevel === 'KET' && grammarContent.a2_assessment) {
+              assessmentJson = JSON.stringify({
+                a2_grammar_structure: grammarContent.a2_assessment.grammar_structure,
+                a2_vocabulary: grammarContent.a2_assessment.vocabulary,
+                a2_coherence: grammarContent.a2_assessment.coherence,
+              });
+            } else if (examLevel === 'PET' && grammarContent.b1_assessment) {
+              assessmentJson = JSON.stringify({
+                b1_grammar_structure: grammarContent.b1_assessment.grammar_structure,
+                b1_vocabulary: grammarContent.b1_assessment.vocabulary,
+                b1_coherence: grammarContent.b1_assessment.coherence,
+              });
+            } else if (examLevel === 'FCE' && grammarContent.b2_assessment) {
+              assessmentJson = JSON.stringify({
+                grammar: grammarContent.b2_assessment.grammar_structure,
+                vocabulary: grammarContent.b2_assessment.vocabulary,
+                coherence: grammarContent.b2_assessment.coherence,
+              });
+            }
+            
+            return await createGrammarAnalysisMessage(conversationId, {
+              origin_message_id: msg.originMessageId ? msg.originMessageId.toString() : undefined, // 🆕 使用关联的音频消息ID
+              exam_level: examLevel,
+              errors_json: errorsJson,
+              error_count: grammarContent.errors.length,
+              improved_version: grammarContent.improved_version,
+              suggestions_json: JSON.stringify(grammarContent.suggestions),
+              overall_quality: grammarContent.overall_quality,
+              assessment_json: assessmentJson,
+              relevance_score: grammarContent.relevance_score,
+              relevance_level: grammarContent.relevance_level,
+              relevance_reason: grammarContent.relevance_reason,
+              round_num: msg.roundNum,
               created_at: createdAt,
             });
           }
@@ -918,6 +1009,7 @@ const SpokenPractice: React.FC = () => {
           fullTimestamp: now,
           roundNum: data.round_num,
           messageType: 'grammar_feedback',
+          originMessageId: data.origin_message_id, // 🆕 保存原始消息ID用于数据库保存
         };
     
         // ⚭ 仍然添加到缓存（用于数据库保存）
@@ -1174,14 +1266,27 @@ const SpokenPractice: React.FC = () => {
     };
 
     /**
-     * 处理评分消息
+     * 处理评分消息（🆕 修改：只缓存不显示，等待所有 part 收到后再统一显示）
      * @param data WebSocket 接收的评分消息数据
      * @param messageId 消息唯一标识
      */
     const handleScoreMessage = (
-      data: { content: any; score?: string; round_num?: number },
+      data: { 
+        content: any; 
+        score?: string; 
+        round_num?: number;
+        part_no?: number;      // 🆕 新增：评分阶段号
+        total_parts?: number;  // 🆕 新增：总阶段数
+      },
       messageId: number,
     ) => {
+      console.log('📝 收到评分消息:', {
+        score: data.score,
+        part_no: data.part_no,
+        total_parts: data.total_parts,
+        round_num: data.round_num,
+      });
+      
       // 解析文本内容
       const contentText = typeof data.content === 'string' ? data.content : '';
       const parsedContent = parseScoreContent(contentText);
@@ -1199,11 +1304,111 @@ const SpokenPractice: React.FC = () => {
         messageType: 'score',
         score: data.score,
         roundNum: data.round_num,
+        partNo: data.part_no,        // 🆕 保存 part_no
+        totalParts: data.total_parts, // 🆕 保存 total_parts
       };
 
-      setMessages((prevMessages) => [...prevMessages, scoreMessage]);
+      // 🆕 仅缓存到数据库缓存，不显示
       messageCacheRef.current.push(scoreMessage);
-      console.log('📝 收到评分消息,已缓存, 总分:', data.score);
+      
+      // 🆕 如果有 part_no 和 total_parts，添加到临时缓存
+      if (data.part_no !== undefined && data.total_parts !== undefined) {
+        // 保存到临时缓存
+        scoreMessagesCache.current.set(data.part_no, scoreMessage);
+        
+        // 设置预期总 part 数
+        if (expectedTotalParts === null) {
+          setExpectedTotalParts(data.total_parts);
+        }
+        
+        console.log(`📋 评分消息已缓存: Part ${data.part_no}/${data.total_parts}, 当前已收到 ${scoreMessagesCache.current.size} 个`);
+        
+        // 🆕 检查是否收到所有 part
+        if (scoreMessagesCache.current.size === data.total_parts) {
+          console.log('✅ 所有评分消息已收齐，开始统一显示');
+          
+          // 按 part_no 顺序排列并显示
+          const sortedScores = Array.from(scoreMessagesCache.current.entries())
+            .sort((a, b) => a[0] - b[0])  // 按 part_no 排序
+            .map(([_, message]) => message);
+          
+          // 统一显示所有评分消息
+          setMessages((prevMessages) => [...prevMessages, ...sortedScores]);
+          
+          console.log(`🎉 已显示 ${sortedScores.length} 条评分消息`);
+          
+          // 清空临时缓存
+          scoreMessagesCache.current.clear();
+          setExpectedTotalParts(null);
+        }
+      } else {
+        // 🔙 如果没有 part_no 和 total_parts，恢复原来的逼辑：直接显示
+        console.warn('⚠️ 评分消息缺少 part_no 或 total_parts，直接显示');
+        setMessages((prevMessages) => [...prevMessages, scoreMessage]);
+      }
+      
+      console.log('📝 评分消息处理完成');
+    };
+
+    /**
+     * 🆕 处理总分汇总消息
+     * @param data WebSocket 接收的总分汇总消息数据
+     * @param messageId 消息唯一标识
+     */
+    const handleFinalScoreSummaryMessage = (
+      data: any,
+      messageId: number,
+    ) => {
+      console.log('🏆 收到总分汇总消息:', data);
+      
+      // 解析消息内容
+      let summaryContent: FinalScoreSummaryContent;
+      
+      if (typeof data.content === 'string') {
+        // 如果 content 是字符串，尝试解析
+        try {
+          summaryContent = JSON.parse(data.content);
+        } catch (e) {
+          // 解析失败，使用默认结构
+          summaryContent = {
+            type: 'final_score_summary',
+            content: data.content || '未知总分汇总',
+            timestamp: data.timestamp || Date.now() / 1000,
+            part_scores: data.part_scores || {},
+            total_score: data.total_score || 0,
+          };
+        }
+      } else {
+        // 已经是对象格式
+        summaryContent = {
+          type: 'final_score_summary',
+          content: data.content || '未知总分汇总',
+          timestamp: data.timestamp || Date.now() / 1000,
+          part_scores: data.part_scores || {},
+          total_score: data.total_score || 0,
+        };
+      }
+      
+      const now = new Date();
+      const summaryMessage: Message = {
+        id: messageId,
+        content: summaryContent,
+        sender: 'ai',
+        timestamp: now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        fullTimestamp: now,
+        messageType: 'final_score_summary',
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, summaryMessage]);
+      messageCacheRef.current.push(summaryMessage);
+      console.log('🏆 总分汇总消息已显示并缓存:', {
+        content: summaryContent.content,
+        total_score: summaryContent.total_score,
+        part_scores: summaryContent.part_scores,
+      });
     };
 
     const setupReceiveMessageHandler = (wsSocket: any, realConversationId: number) => {
@@ -1225,7 +1430,8 @@ const SpokenPractice: React.FC = () => {
           
           try {
             // 1. 批量保存缓存消息
-            await batchSaveMessages(realConversationId, messageCacheRef.current);
+            console.log('💾 开始保存消息，使用会话 ID:', realConversationIdRef.current);
+            await batchSaveMessages(realConversationIdRef.current, messageCacheRef.current);
 
             // 2. 清空缓存
             messageCacheRef.current = [];
@@ -1294,6 +1500,10 @@ const SpokenPractice: React.FC = () => {
         } else if (data.type === 'grammar_feedback') {
           // 语法反馈消息（仅缓存，不显示）
           handleGrammarFeedbackMessage(data, messageId);
+          
+        } else if (data.type === 'final_score_summary') {
+          // 🆕 总分汇总消息
+          handleFinalScoreSummaryMessage(data, messageId);
           
         } else {
           // 文本或音频消息
@@ -1446,29 +1656,99 @@ const SpokenPractice: React.FC = () => {
     };
 
     /**
-     * 加载历史消息
-     * @param conversationId 会话 ID
-     * @returns 返回会话 ID
+     * 🆕 创建新的口语考试会话
+     * @returns 返回新创建的会话 ID，失败返回 null
      */
-    const loadHistoryMessages = async (conversationId: number): Promise<number> => {
+    const createNewConversation = async (): Promise<number | null> => {
+      console.log('开始创建新会话...');
+      
+      // 获取试卷 ID
+      const paperId = getPaperIdFromUrl();
+      
+      // 获取工作流类型（从全局 ref 中获取）
+      const workflowTypes = currentWorkflowTypeRef.current;
+      
+      if (!workflowTypes || workflowTypes.length === 0) {
+        console.error('❌ 无法创建会话：缺少 workflowTypes');
+        return null;
+      }
+      
+      try {
+        const createResponse = await createSpokenConversation({
+          exercise_id: paperId,
+          workflow_type: workflowTypes,
+          title: `口语考试 - ${new Date().toLocaleString('zh-CN')}`,
+        });
+        
+        if (createResponse.success && createResponse.data) {
+          const newConversationId = createResponse.data.id;
+          console.log('新会话创建成功, ID:', newConversationId);
+          
+          // 更新 localStorage 中的会话 ID
+          localStorage.setItem(CONVERSATION_ID_KEY, newConversationId.toString());
+          
+          // 初始化为空消息列表
+          setMessages([]);
+          setHistoryLoaded(true);
+          
+          console.log('新会话已创建，等待用户发送消息');
+          return newConversationId;
+        } else {
+          console.error('创建会话失败:', createResponse);
+          setHistoryLoaded(true);
+          return null;
+        }
+      } catch (createError) {
+        console.error('创建会话异常:', createError);
+        setHistoryLoaded(true);
+        return null;
+      }
+    };
+
+    /**
+     * 🔄 加载历史消息或创建新会话
+     * 新逻辑：
+     * 1. 如果 conversationId 为 null，直接创建新会话
+     * 2. 如果 conversationId 有值，尝试加载历史消息
+     *    - 如果有历史消息，继续使用该 ID
+     *    - 如果没有历史消息，创建新会话
+     * @param conversationId 会话 ID（可能为 null）
+     * @returns 返回真实的会话 ID（数据库 ID）
+     */
+    const loadHistoryMessages = async (conversationId: number | null): Promise<number> => {
       if (historyLoaded || isLoadingHistory) {
         console.log('历史消息已加载或正在加载中');
-        return conversationId;
+        return conversationId || 0;
       }
-          
+      
       try {
         setIsLoadingHistory(true);
-        console.log('加载历史消息, 会话 ID:', conversationId);
-            
+        
+        // 🆕 情况 1：conversationId 为 null，直接创建新会话
+        if (conversationId === null) {
+          console.log('🆕 conversationId 为 null，直接创建新会话');
+          const newId = await createNewConversation();
+          if (newId) {
+            console.log('✅ 新会话创建成功, ID:', newId);
+            return newId;
+          } else {
+            console.error('❌ 创建新会话失败');
+            return 0;
+          }
+        }
+        
+        // 🔍 情况 2：conversationId 有值，尝试加载历史消息
+        console.log('🔍 尝试加载会话历史消息, ID:', conversationId);
         const response = await getSpokenMessages(conversationId, {
           skipErrorHandler: true,
         });
         
         console.log('📦 getSpokenMessages 响应:', JSON.stringify(response, null, 2));
-            
-        if (response.success && response.data) {
-          console.log(`✅ 成功加载 ${response.data.length} 条历史消息`);
-              
+        
+        // ✅ 有历史消息，加载并继续使用该 ID
+        if (response.success && response.data && response.data.length > 0) {
+          console.log(`✅ 找到 ${response.data.length} 条历史消息，继续使用会话 ID: ${conversationId}`);
+          
           // 将后端数据转换为前端 Message 格式
           const historyMessages: Message[] = response.data.map((msg) => {
             const baseMessage: Message = {
@@ -1482,7 +1762,7 @@ const SpokenPractice: React.FC = () => {
               messageType: msg.message_type,
               roundNum: msg.round_num,
             };
-                
+            
             // 根据消息类型添加额外字段
             if (msg.message_type === 'voice') {
               baseMessage.audioFilePath = msg.audio_file_path;
@@ -1504,65 +1784,65 @@ const SpokenPractice: React.FC = () => {
                 improvedAnswer: msg.improved_answer,
               };
             }
-                
+            
             return baseMessage;
           });
-              
+          
           setMessages(historyMessages);
           setHistoryLoaded(true);
-        } else {
-          console.warn('⚠️ 加载历史消息失败或无历史消息');
-          setHistoryLoaded(true);
+          return conversationId;
         }
         
-        return conversationId;
+        // ⚠️ 没有历史消息，创建新会话
+        console.log('⚠️ 会话 ID', conversationId, '没有历史消息，创建新会话');
+        const newId = await createNewConversation();
+        if (newId) {
+          console.log('✅ 新会话创建成功, ID:', newId);
+          return newId;
+        } else {
+          console.error('❌ 创建新会话失败，使用原 ID');
+          return conversationId;
+        }
+        
       } catch (error: any) {
         console.error('❌ 加载历史消息异常:', error);
-        setHistoryLoaded(true);
-        return conversationId;
+        
+        // 🔧 异常情况，尝试创建新会话
+        console.log('🔧 发生异常，尝试创建新会话');
+        const newId = await createNewConversation();
+        return newId || conversationId || 0;
+        
       } finally {
         setIsLoadingHistory(false);
       }
     };
         
     /**
-     * 获取或生成会话 ID
-     * 优先级: URL参数 > localStorage > 生成新ID
-     * 注意：此函数仅返回 ID，不执行异步操作（避免无限循环）
+     * 🔄 获取或生成会话 ID
+     * 新逻辑：
+     * 1. 先尝试从 URL 参数获取
+     * 2. 如果没有 URL 参数，返回 null（稍后创建新会话）
      */
-    const getOrCreateConversationId = (): number => {
-      // 1. 尝试从URL参数获取
+    const getOrCreateConversationId = (): number | null => {
+      // 1. 尝试从 URL 参数获取
       const urlConversationId = searchParams.get('conversationId');
       if (urlConversationId) {
         const id = parseInt(urlConversationId, 10);
         if (!isNaN(id) && id > 0) {
-          // 保存到localStorage
-          localStorage.setItem(CONVERSATION_ID_KEY, id.toString());
-          console.log('从URL获取会话 ID:', id);
+          console.log('🔗 从 URL 获取会话 ID:', id);
           return id;
         }
       }
-          
-      // 2. 尝试从localStorage获取
-      const storedId = localStorage.getItem(CONVERSATION_ID_KEY);
-      if (storedId) {
-        const id = parseInt(storedId, 10);
-        if (!isNaN(id) && id > 0) {
-          console.log('从localStorage获取会话 ID:', id);
-          return id;
-        }
-      }
-            
-      // 3. 生成新的会话ID（使用时间戳确保唯一性）
-      const newId = Date.now();
-      localStorage.setItem(CONVERSATION_ID_KEY, newId.toString());
-      console.log('生成临时会话ID:', newId);
-      return newId;
+              
+      // 2. URL 没有参数，返回 null（需要创建新会话）
+      console.log('🆕 URL 无会话 ID，需要创建新会话');
+      return null;
     };
     
     // 会话 ID 和用户 ID（从 localStorage 获取用户 ID）
     // ⚠️ 使用 useState 保证只初始化一次，避免每次渲染都生成新 ID
-    const [conversationId] = useState(() => getOrCreateConversationId());
+    // 🔄 新逻辑：初始值可能为 null，需要在 useEffect 中创建新会话
+    const [conversationId] = useState<number | null>(() => getOrCreateConversationId());
     const userId = parseInt(localStorage.getItem(USER_ID_KEY) || '1', 10);
     
    
@@ -1703,31 +1983,57 @@ const SpokenPractice: React.FC = () => {
   useEffect(() => {
     const initializeConversation = async () => {
       try {
-        // 0. 加载工作流价格映射和VIP订阅状态（使用 allSettled 确保所有接口都执行完）
+        // 0. 加载工作流价格映射和 VIP 订阅状态（使用 allSettled 确保所有接口都执行完）
         const configResults = await Promise.allSettled([
           fetchWorkflowPrices(),
           fetchVipSubscriptionStatus(),
         ]);
-        
+          
         // 检查配置加载结果
         const [priceResult, vipResult] = configResults;
-        
+          
         if (priceResult.status === 'rejected') {
           console.warn('⚠️ 工作流价格加载失败，将使用默认值:', priceResult.reason);
         }
-        
+          
         if (vipResult.status === 'rejected') {
           console.warn('⚠️ VIP订阅状态加载失败，将使用默认值:', vipResult.reason);
         }
-        
+          
         // 统计成功/失败数量
         const successCount = configResults.filter(r => r.status === 'fulfilled').length;
         console.log(`📊 配置加载完成: ${successCount}/${configResults.length} 成功`);
-        
+          
+        // 🔹 0.5. 预先加载试卷数据（为 createNewConversation 准备）
+        const paperId = getPaperIdFromUrl();
+        console.log('📝 预加载试卷数据, paper_id:', paperId);
+          
+        if (paperId) {
+          try {
+            const { workflowTypes, totalPrice, exerciseIds } = await fetchExamPaperQuestionsAndPrice(paperId);
+            console.log('✅ 试卷数据加载成功:', { workflowTypes, totalPrice });
+              
+            // 🔥 保存到全局变量，供 createNewConversation 使用
+            currentWorkflowTypeRef.current = workflowTypes;
+            currentTotalPriceRef.current = totalPrice;
+            currentExerciseIdsRef.current = exerciseIds;
+            console.log('✅ 已将试卷数据保存到全局变量');
+          } catch (paperError) {
+            console.error('❌ 加载试卷数据失败:', paperError);
+            // 不阻塞后续流程，继续执行
+          }
+        } else {
+          console.warn('⚠️ URL 中未找到 paper_id，跳过试卷数据加载');
+        }
+          
         // 1. 加载历史消息（如果会话不存在会创建新会话）
         console.log('初始化会话 ID:', conversationId);
         const realConversationId = await loadHistoryMessages(conversationId);
-        
+          
+        // 🔹 保存真实会话 ID 到 Ref
+        realConversationIdRef.current = realConversationId;
+        console.log('✅ 真实会话 ID 已保存到 Ref:', realConversationId);
+          
         // 2. 使用真实的会话 ID 连接 WebSocket
         console.log('使用真实会话 ID 连接 WebSocket:', realConversationId);
         await connectWebSocket(realConversationId);
@@ -1961,11 +2267,11 @@ const SpokenPractice: React.FC = () => {
     
     const currentInputValue = inputValue;
     const currentRoundNum = Math.floor(messages.length / 2) + 1; // 简单计算轮次
-    
+    const newMessageId = generateMessageId();
     // 创建用户消息
     const now = new Date();
     const userMessage: Message = {
-      id: generateMessageId(),
+      id: newMessageId,
       content: currentInputValue,
       sender: 'user',
       timestamp: now.toLocaleTimeString([], {
@@ -1996,6 +2302,7 @@ const SpokenPractice: React.FC = () => {
           conversation_id: conversationId,
           'content': currentInputValue,
           round_num: currentRoundNum,
+          origin_message_id: newMessageId,
         }));
         console.log('📤 通过 WebSocket 发送消息');
       } catch (error) {
@@ -2925,7 +3232,98 @@ const SpokenPractice: React.FC = () => {
                     </div>
                   )}
                 </div>
-              ) : message.sender === 'ai' && message.messageType === 'finish' ? (
+              ) : message.sender === 'ai' && message.messageType === 'final_score_summary' ? (
+                              /* 🏆 总分汇总消息 */
+                              <div className="ai-final-score-summary-content" style={{
+                                padding: '24px',
+                                backgroundColor: '#f6ffed',
+                                borderRadius: '12px',
+                                border: '2px solid #52c41a',
+                                boxShadow: '0 4px 12px rgba(82, 196, 26, 0.15)'
+                              }}>
+                                {/* 标题 */}
+                                <div style={{
+                                  fontSize: '20px',
+                                  fontWeight: 'bold',
+                                  color: '#52c41a',
+                                  marginBottom: '16px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px'
+                                }}>
+                                  <span style={{ fontSize: '28px' }}>🏆</span>
+                                  <span>总分汇总</span>
+                                </div>
+                                
+                                {/* 文本内容 */}
+                                <div style={{
+                                  fontSize: '16px',
+                                  color: '#262626',
+                                  marginBottom: '20px',
+                                  lineHeight: '1.8',
+                                  textAlign: 'center',
+                                  fontWeight: '500'
+                                }}>
+                                  {typeof message.content === 'object' && 'content' in message.content
+                                    ? (message.content as FinalScoreSummaryContent).content
+                                    : '未知总分汇总'}
+                                </div>
+                                
+                                {/* 分数详情 */}
+                                {typeof message.content === 'object' && 'part_scores' in message.content && (
+                                  <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px',
+                                    backgroundColor: '#fff',
+                                    padding: '16px',
+                                    borderRadius: '8px'
+                                  }}>
+                                    {/* 各 Part 得分 */}
+                                    {Object.entries((message.content as FinalScoreSummaryContent).part_scores).map(([part, score]) => (
+                                      <div
+                                        key={part}
+                                        style={{
+                                          display: 'flex',
+                                          justifyContent: 'space-between',
+                                          alignItems: 'center',
+                                          padding: '8px 12px',
+                                          backgroundColor: '#fafafa',
+                                          borderRadius: '6px'
+                                        }}
+                                      >
+                                        <span style={{ fontSize: '15px', color: '#595959', fontWeight: '500' }}>
+                                          Part {part}
+                                        </span>
+                                        <span style={{ fontSize: '18px', color: '#1890ff', fontWeight: 'bold' }}>
+                                          {score} 分
+                                        </span>
+                                      </div>
+                                    ))}
+                                    
+                                    {/* 总分 */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      padding: '12px',
+                                      backgroundColor: '#e6f7ff',
+                                      borderRadius: '6px',
+                                      marginTop: '8px',
+                                      border: '2px solid #1890ff'
+                                    }}>
+                                      <span style={{ fontSize: '17px', color: '#262626', fontWeight: 'bold' }}>
+                                        🏆 总分
+                                      </span>
+                                      <span style={{ fontSize: '24px', color: '#1890ff', fontWeight: 'bold' }}>
+                                        {(message.content as FinalScoreSummaryContent).total_score} 分
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : message.sender === 'ai' && message.messageType === 'finish' ? (
                 /* 🏁 对话结束消息 */
                 <div className="ai-finish-message-content" style={{
                   padding: '20px',
@@ -3022,7 +3420,28 @@ const SpokenPractice: React.FC = () => {
                 </div>
               ) : (
                 /* 普通文本消息 */
-                <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
+                <div>
+                  <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
+                  
+                  {/* 🆕 语法反馈按钮（用户消息且有语法反馈） */}
+                  {message.sender === 'user' && message.grammarFeedback && message.grammarFeedbackStatus === 'received' && (
+                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<FileTextOutlined />}
+                        onClick={() => openGrammarFeedbackModal(message.grammarFeedback!)}
+                        style={{
+                          backgroundColor: '#52c41a',
+                          borderColor: '#52c41a',
+                          fontSize: '12px',
+                        }}
+                      >
+                        查看语法反馈 ({message.grammarFeedback.errors?.length || 0} 个错误)
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
               <p className="message-timestamp">{message.timestamp}</p>
             </div>

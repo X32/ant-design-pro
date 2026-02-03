@@ -1,26 +1,20 @@
 // 导入React及相关Hook
 import React, { useState, useEffect, useCallback } from 'react';
 // 导入Ant Design组件
-import { Card, List, Button, Space, Tag, Modal, Empty, Spin, App, Layout } from 'antd';
+import { Card, List, Button, Space, Tag, Empty, Spin, App, Layout } from 'antd';
 // 导入Ant Design图标
 import { 
   ReloadOutlined, 
   EyeOutlined, 
-  MessageOutlined, 
   ClockCircleOutlined,
   TrophyOutlined,
   HomeOutlined,
-  ArrowLeftOutlined,
-  PlayCircleOutlined,  // 新增：播放图标
-  PauseCircleOutlined  // 新增：暂停图标
+  ArrowLeftOutlined
 } from '@ant-design/icons';
 // 导入API服务
-import { 
-  getSpokenConversations,
-  getSpokenMessages
-} from '@/services/ant-design-pro/api';
+import { getSpokenConversations } from '@/services/ant-design-pro/api';
 // 导入类型定义
-import { SpokenConversation, SpokenMessage } from '../types';
+import { SpokenConversation } from '../types';
 // 导入样式文件
 import './index.less';
 // 导入history用于路由跳转
@@ -39,14 +33,6 @@ const UserPractice: React.FC = () => {
   // 数据状态
   const [conversations, setConversations] = useState<SpokenConversation[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedConversation, setSelectedConversation] = useState<SpokenConversation | null>(null);
-  const [messages, setMessages] = useState<SpokenMessage[]>([]);
-  const [messageModalVisible, setMessageModalVisible] = useState<boolean>(false);
-  const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
-  
-  // 🔊 新增：音频播放状态
-  const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   
   // 统计数据
   const [statistics, setStatistics] = useState({
@@ -97,104 +83,24 @@ const UserPractice: React.FC = () => {
   }, [message]);
 
   /**
-   * 查看会话详情
+   * 查看会话详情 - 跳转到查看页面
    */
-  const handleViewConversation = async (conversation: SpokenConversation) => {
-    setSelectedConversation(conversation);
-    setMessageModalVisible(true);
-    setLoadingMessages(true);
-    
-    try {
-      const response = await getSpokenMessages(conversation.id);
-      
-      if (response.success && response.data) {
-        setMessages(response.data);
-        message.success('加载消息成功');
-      } else {
-        throw new Error('获取消息失败');
-      }
-    } catch (error) {
-      console.error('获取消息失败:', error);
-      message.error('获取消息失败，请重试');
-      setMessages([]);
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
-
-  /**
-   * 关闭消息详情弹窗
-   */
-  const handleCloseModal = () => {
-    // 停止播放音频
-    if (audioElement) {
-      audioElement.pause();
-      audioElement.currentTime = 0;
-      setAudioElement(null);
-    }
-    setPlayingAudioId(null);
-    
-    setMessageModalVisible(false);
-    setSelectedConversation(null);
-    setMessages([]);
-  };
-  
-  /**
-   * 🔊 播放或暂停音频
-   */
-  const handlePlayAudio = (messageId: number, audioUrl: string) => {
-    // 如果当前正在播放该音频，则暂停
-    if (playingAudioId === messageId && audioElement) {
-      audioElement.pause();
-      setPlayingAudioId(null);
-      return;
-    }
-    
-    // 停止其他音频
-    if (audioElement) {
-      audioElement.pause();
-      audioElement.currentTime = 0;
-    }
-    
-    // 创建新的音频元素
-    const audio = new Audio(audioUrl);
-    
-    // 监听播放结束
-    audio.onended = () => {
-      setPlayingAudioId(null);
-      setAudioElement(null);
-    };
-    
-    // 监听错误
-    audio.onerror = () => {
-      message.error('音频播放失败');
-      setPlayingAudioId(null);
-      setAudioElement(null);
-    };
-    
-    // 开始播放
-    audio.play().catch(err => {
-      console.error('播放失败:', err);
-      message.error('音频播放失败');
-      setPlayingAudioId(null);
-    });
-    
-    setAudioElement(audio);
-    setPlayingAudioId(messageId);
+  const handleViewConversation = (conversation: SpokenConversation) => {
+    history.push(`/messages/viewpractice?conversationId=${conversation.id}`);
   };
 
   /**
    * 获取状态标签
    */
   const getStatusTag = (status: string) => {
-    const statusMap: Record<string, { color: string; text: string }> = {
-      active: { color: 'blue', text: '进行中' },
-      completed: { color: 'green', text: '已完成' },
-      archived: { color: 'default', text: '已归档' },
+    const statusMap: Record<string, { color: string; text: string; style?: React.CSSProperties }> = {
+      active: { color: 'blue', text: '进行中', style: { background: '#4ECDC4', border: '2px solid #000', fontWeight: 'bold', boxShadow: '2px 2px 0px #000' } },
+      completed: { color: 'green', text: '已完成', style: { background: '#FFD93D', border: '2px solid #000', fontWeight: 'bold', boxShadow: '2px 2px 0px #000' } },
+      archived: { color: 'default', text: '已归档', style: { background: '#FFF', border: '2px solid #000', fontWeight: 'bold', boxShadow: '2px 2px 0px #000' } },
     };
-    
-    const config = statusMap[status] || { color: 'default', text: status };
-    return <Tag color={config.color}>{config.text}</Tag>;
+
+    const config = statusMap[status] || { color: 'default', text: status, style: { background: '#FFF', border: '2px solid #000', fontWeight: 'bold', boxShadow: '2px 2px 0px #000' } };
+    return <Tag style={config.style}>{config.text}</Tag>;
   };
 
   /**
@@ -268,15 +174,15 @@ const UserPractice: React.FC = () => {
               <TrophyOutlined /> 我的口语练习记录
             </h1>
             <p className="page-description">
-              查看您的所有口语练习会话和成绩 · 共 <strong style={{ color: '#1890ff' }}>{statistics.total}</strong> 次练习
+              查看您的所有口语练习会话和成绩 · 共 <strong style={{ color: '#FF6B6B', textShadow: '1px 1px 0px #000' }}>{statistics.total}</strong> 次练习
             </p>
           </div>
           <div className="header-right">
             <Space>
-              <Tag color="blue" icon={<ClockCircleOutlined />}>
+              <Tag style={{ background: '#4ECDC4', border: '2px solid #000', fontWeight: 'bold', boxShadow: '3px 3px 0px #000', color: '#1A535C' }} icon={<ClockCircleOutlined />}>
                 进行中: {statistics.active}
               </Tag>
-              <Tag color="green" icon={<TrophyOutlined />}>
+              <Tag style={{ background: '#FFD93D', border: '2px solid #000', fontWeight: 'bold', boxShadow: '3px 3px 0px #000', color: '#1A535C' }} icon={<TrophyOutlined />}>
                 已完成: {statistics.completed}
               </Tag>
               <Button 
@@ -336,7 +242,9 @@ const UserPractice: React.FC = () => {
                           </div>
                         )}
                         {conversation.workflow_type && (
-                          <Tag color="purple">类型: {conversation.workflow_type}</Tag>
+                          <Tag style={{ background: '#95E1D3', border: '2px solid #000', fontWeight: 'bold', boxShadow: '2px 2px 0px #000', color: '#1A535C' }}>
+                            类型: {conversation.workflow_type}
+                          </Tag>
                         )}
                       </Space>
                     }
@@ -359,136 +267,6 @@ const UserPractice: React.FC = () => {
           )}
         </Spin>
       </Card>
-
-      {/* 消息详情弹窗 */}
-      <Modal
-        title={
-          <Space>
-            <MessageOutlined />
-            <span>{selectedConversation?.title || '会话详情'}</span>
-            {selectedConversation && getStatusTag(selectedConversation.status)}
-          </Space>
-        }
-        open={messageModalVisible}
-        onCancel={handleCloseModal}
-        footer={[
-          <Button key="close" onClick={handleCloseModal}>
-            关闭
-          </Button>
-        ]}
-        width={800}
-        className="message-detail-modal"
-      >
-        <Spin spinning={loadingMessages}>
-          {messages.length > 0 ? (
-            <List
-              dataSource={messages}
-              renderItem={(msg) => (
-                <List.Item
-                  key={msg.id}
-                  className={`message-item message-${msg.sender}`}
-                >
-                  <div className="message-content">
-                    <div className="message-header">
-                      <Space>
-                        <Tag color={msg.sender === 'user' ? 'blue' : 'green'}>
-                          {msg.sender === 'user' ? '我' : 'AI'}
-                        </Tag>
-                        <span>{getMessageTypeIcon(msg.message_type)}</span>
-                        <span className="message-time">
-                          {formatTime(msg.timestamp)}
-                        </span>
-                      </Space>
-                    </div>
-                    <div className="message-body">
-                      {msg.message_type === 'text' && (
-                        <p>{msg.content}</p>
-                      )}
-                      {msg.message_type === 'voice' && (
-                        <div className="voice-message-container">
-                          <div className="voice-info">
-                            <span>🎤 语音消息</span>
-                            {msg.transcription_text && (
-                              <p className="transcription">转写: {msg.transcription_text}</p>
-                            )}
-                          </div>
-                          {/* 🔥 优先使用 audio_file_path，没有再使用 audio_url */}
-                          {(msg.audio_file_path || msg.audio_url) && (
-                            <div className="audio-controls">
-                              <Button
-                                type="primary"
-                                shape="circle"
-                                size="large"
-                                icon={playingAudioId === msg.id ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                                onClick={() => handlePlayAudio(msg.id, msg.audio_file_path || msg.audio_url!)}
-                                style={{
-                                  backgroundColor: playingAudioId === msg.id ? '#ff4d4f' : '#1890ff',
-                                  borderColor: playingAudioId === msg.id ? '#ff4d4f' : '#1890ff',
-                                }}
-                              />
-                              <span style={{ marginLeft: '8px', color: '#999', fontSize: '12px' }}>
-                                {playingAudioId === msg.id ? '正在播放...' : '点击播放'}
-                              </span>
-                              {/* 📝 显示使用的音频源 */}
-                              <span style={{ marginLeft: 'auto', color: '#999', fontSize: '11px' }}>
-                                {msg.audio_file_path ? '💾 服务器路径' : '🌐 音频链接'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {msg.message_type === 'image' && msg.image_url && (
-                        <img 
-                          src={msg.image_url} 
-                          alt="图片消息" 
-                          style={{ maxWidth: '100%', borderRadius: '8px' }}
-                        />
-                      )}
-                      {msg.message_type === 'score' && (
-                        <div className="score-content">
-                          <p><strong>📊 评分结果</strong></p>
-                          {msg.total_score && (
-                            <p>总分: <strong style={{ fontSize: '18px', color: '#52c41a' }}>{msg.total_score}</strong></p>
-                          )}
-                          {msg.dimension_scores && (
-                            <p>维度评分: {msg.dimension_scores}</p>
-                          )}
-                          {msg.advantages && (
-                            <div>
-                              <p><strong>✅ 优势:</strong></p>
-                              <p>{msg.advantages}</p>
-                            </div>
-                          )}
-                          {msg.disadvantages && (
-                            <div>
-                              <p><strong>⚠️ 不足:</strong></p>
-                              <p>{msg.disadvantages}</p>
-                            </div>
-                          )}
-                          {msg.suggestions && (
-                            <div>
-                              <p><strong>💡 建议:</strong></p>
-                              <p>{msg.suggestions}</p>
-                            </div>
-                          )}
-                          {msg.improved_answer && (
-                            <div>
-                              <p><strong>✨ 改进的回答:</strong></p>
-                              <p style={{ whiteSpace: 'pre-wrap' }}>{msg.improved_answer}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Empty description="该会话暂无消息" />
-          )}
-        </Spin>
-      </Modal>
       </Content>
     </Layout>
   );

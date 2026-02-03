@@ -3024,6 +3024,14 @@ export interface SpokenMessage {
   suggestions?: string;
   improved_answer?: string;
   raw_text?: string;
+  // 🆕 语法分析相关字段
+  origin_message_id?: string;              // 原始消息ID（关联用户消息，客户端生成的ID）
+  exam_level?: string | null;              // 考试等级："FCE"/"PET"/"KET"
+  error_count?: number | null;             // 语法错误数量
+  grammar_improved_version?: string | null; // 语法改进后的版本
+  overall_quality?: string | null;         // 整体质量："excellent"/"good"/"fair"/"poor"
+  relevance_level?: string | null;         // 相关性等级："on_topic"/"partially_on_topic"/"off_topic"
+  relevance_score?: number | null;         // 相关性分数(0-1)
 }
 
 /** 创建口语会话请求参数 */
@@ -3066,6 +3074,7 @@ export interface CreateTextMessageParams {
   sender: 'user' | 'ai';
   content: string;
   round_num?: number;
+  origin_message_id?: string; // 🆕 客户端生成的消息ID（用于关联）
   created_at?: string;
 }
 
@@ -3076,6 +3085,7 @@ export interface CreateVoiceMessageParams {
   audio_url?: string;
   transcription_text?: string; // ⭐ 新增：转写文本
   round_num?: number;
+  origin_message_id?: string; // 🆕 客户端生成的消息ID（用于关联）
   task_id?: string;
   created_at?: string;
 }
@@ -3084,6 +3094,7 @@ export interface CreateVoiceMessageParams {
 export interface CreateImageMessageParams {
   image_url: string;
   round_num?: number;
+  origin_message_id?: string; // 🆕 客户端生成的消息ID（用于关联）
   image_width?: number;
   image_height?: number;
   created_at?: string;
@@ -3093,6 +3104,7 @@ export interface CreateImageMessageParams {
 export interface CreateScoreMessageParams {
   raw_text: string;
   round_num?: number;
+  origin_message_id?: string; // 🆕 客户端生成的消息ID（用于关联）
   total_score?: string;
   dimension_scores?: string;
   advantages?: string;
@@ -3430,6 +3442,149 @@ export async function getSpokenMessageDetail(
     `${API_ENDPOINTS.SPOKEN_MESSAGE_DETAIL}/${messageId}`,
     {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+// ==================== 语法分析消息相关 ====================
+
+/** 语法分析消息数据类型 */
+export interface GrammarAnalysisMessage {
+  id: number;
+  conversation_id: number;
+  user_id: number;
+  sender: 'ai';
+  message_type: 'text';
+  content: string;
+  round_num?: number;
+  timestamp: string;
+  origin_message_id?: string; // 🔄 客户端生成的消息ID（字符串类型）
+  exam_level: string;
+  errors_json?: string;
+  error_count?: number;
+  improved_version?: string;
+  suggestions_json?: string;
+  overall_quality?: string;
+  assessment_json?: string;
+  relevance_score?: number;
+  relevance_level?: string;
+  relevance_reason?: string;
+  raw_json?: string;
+}
+
+/** 创建语法分析消息请求参数 */
+export interface CreateGrammarAnalysisParams {
+  origin_message_id?: string; // 🔄 客户端生成的消息ID（字符串类型）
+  exam_level: string;
+  errors_json?: string;
+  error_count?: number;
+  improved_version?: string;
+  suggestions_json?: string;
+  overall_quality?: string;
+  assessment_json?: string;
+  relevance_score?: number;
+  relevance_level?: string;
+  relevance_reason?: string;
+  raw_json?: string;
+  round_num?: number;
+  created_at?: string;
+}
+
+/** 语法分析消息响应 */
+export interface GrammarAnalysisMessageResponse {
+  success: boolean;
+  message?: string;
+  data: GrammarAnalysisMessage;
+  error_code?: string;
+}
+
+/**
+ * 创建语法分析消息
+ * POST /api/spoken/conversations/{conversation_id}/messages/grammar
+ */
+export async function createGrammarAnalysisMessage(
+  conversationId: number,
+  params: CreateGrammarAnalysisParams,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GrammarAnalysisMessageResponse>(
+    `${API_ENDPOINTS.SPOKEN_MESSAGE_GRAMMAR}/${conversationId}/messages/grammar`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: params,
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 根据消息ID获取语法分析消息
+ * GET /api/spoken/messages/grammar/{message_id}
+ */
+export async function getGrammarAnalysisMessageById(
+  messageId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GrammarAnalysisMessageResponse>(
+    `${API_ENDPOINTS.SPOKEN_GRAMMAR_DETAIL}/${messageId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 根据原始消息ID获取语法分析消息
+ * GET /api/spoken/messages/grammar/origin/{origin_message_id}
+ */
+export async function getGrammarAnalysisMessageByOriginId(
+  originMessageId: string,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<GrammarAnalysisMessageResponse>(
+    `${API_ENDPOINTS.SPOKEN_GRAMMAR_BY_ORIGIN}/${originMessageId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/**
+ * 删除语法分析消息
+ * DELETE /api/spoken/messages/grammar/{message_id}
+ */
+export async function deleteGrammarAnalysisMessage(
+  messageId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  
+  return request<{ success: boolean; message?: string; data: { message_id: number }; error_code?: string }>(
+    `${API_ENDPOINTS.SPOKEN_GRAMMAR_DETAIL}/${messageId}`,
+    {
+      method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
       },

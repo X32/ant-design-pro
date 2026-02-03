@@ -1,0 +1,185 @@
+// 练习记录查看页面样式
+@import '~antd/es/style/themes/default.less';
+
+.view-practice-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.custom-header {
+  background: #fff;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 3px solid #000;
+  height: 64px;
+  line-height: 64px;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-left-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-button {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1890ff;
+  border: 2px solid #1890ff;
+  border-radius: 8px;
+  padding: 4px 16px;
+  height: auto;
+  transition: all 0.3s;
+
+  &:hover {
+    background: #1890ff;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
+  }
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.header-right-section {
+  display: flex;
+  gap: 12px;
+}
+
+.view-practice-container {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 0 24px;
+}
+
+.message-list-card {
+  border: 3px solid #000;
+  border-radius: 12px;
+  box-shadow: 6px 6px 0px #000;
+  background: #fff;
+
+  .ant-card-body {
+    padding: 24px;
+  }
+}
+
+.message-item {
+  border: none !important;
+  padding: 16px 0 !important;
+
+  &:not(:last-child) {
+    border-bottom: 2px dashed #e0e0e0 !important;
+  }
+}
+
+.message-content {
+  width: 100%;
+}
+
+.message-header {
+  margin-bottom: 12px;
+}
+
+.message-time {
+  color: #999;
+  font-size: 12px;
+}
+
+.message-body {
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border: 2px solid #000;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px #000;
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.message-user .message-body {
+  background: #FFE5B4;
+}
+
+.message-ai .message-body {
+  background: #E0F2F7;
+}
+
+.voice-message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.voice-info {
+  .transcription {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    font-size: 14px;
+    color: #666;
+  }
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-content {
+  p {
+    margin: 8px 0;
+    
+    strong {
+      color: #333;
+    }
+  }
+
+  div {
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 12px;
+  }
+
+  .header-title {
+    font-size: 16px;
+    
+    span {
+      display: none;
+    }
+  }
+
+  .view-practice-container {
+    padding: 0 12px;
+  }
+
+  .message-body {
+    font-size: 14px;
+  }
+}

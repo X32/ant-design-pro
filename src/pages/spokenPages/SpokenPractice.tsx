@@ -8,6 +8,7 @@ import {
   ExperimentOutlined, // 测试图标
   CloseOutlined,      // 关闭图标
   ArrowLeftOutlined,  // 返回箭头图标
+  FileTextOutlined,   // 🆕 文件文本图标（语法反馈）
 } from '@ant-design/icons';
 
 // 导入所需的Ant Design组件
@@ -31,6 +32,7 @@ import {
   createSpokenVoiceMessage,
   createSpokenImageMessage,
   createSpokenScoreMessage,
+  createGrammarAnalysisMessage,
   getWorkflowTypes,
   consumeCoins,
   getWalletBalance,
@@ -83,17 +85,54 @@ interface ScoreContent {
 }
 
 /**
+ * 🆕 语法反馈内容接口
+ */
+interface GrammarFeedbackContent {
+  errors: Array<{
+    type: string;           // 错误类型
+    original: string;       // 错误片段
+    corrected: string;      // 修正后
+    explanation: string;    // 错误说明
+    severity: 'critical' | 'minor'; // 严重程度
+    a2_criterion?: string;  // A2 评分维度
+    b1_criterion?: string;  // B1 评分维度
+    b2_criterion?: string;  // B2 评分维度
+  }>;
+  improved_version: string;     // 改进后的完整句子
+  suggestions: string[];        // 学习建议（固定3条）
+  overall_quality: 'excellent' | 'good' | 'fair' | 'poor'; // 整体质量
+  a2_assessment?: {             // KET 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  b1_assessment?: {             // PET 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  b2_assessment?: {             // FCE 评估
+    grammar_structure: 'excellent' | 'good' | 'fair' | 'poor';
+    vocabulary: 'excellent' | 'good' | 'fair' | 'poor';
+    coherence: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  relevance_score: number;      // 相关性分数 (0.0-1.0)
+  relevance_level: 'on_topic' | 'partially_on_topic' | 'off_topic'; // 相关性等级
+  relevance_reason: string;     // 相关性判断理由
+}
+
+/**
  * 消息数据接口定义
  */
 interface Message {
   id: number;           // 消息ID
-  content: string | ScoreContent; // 消息内容（文本或评分对象）
+  content: string | ScoreContent | GrammarFeedbackContent; // 消息内容（文本、评分或语法反馈对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
   fullTimestamp?: Date; // 完整时间戳（保存用）
   audioFilePath?: string; // 音频文件路径（用户语音消息，本地Blob URL）
   serverAudioPath?: string; // 🔥 新增：服务器音频路径（用于保存到数据库）
-  messageType?: 'text' | 'voice' | 'image' | 'score' | 'finish'; // 消息类型（新增 finish 类型）
+  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'finish'; // 消息类型（新增 grammar_feedback 类型）
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
   // AI消息音频相关字段
@@ -104,6 +143,10 @@ interface Message {
   imageUrl?: string;      // 图片URL
   // 评分消息相关字段
   score?: string;         // 总分
+  // 🆕 语法反馈关联字段
+  grammarFeedback?: GrammarFeedbackContent;  // 关联的语法反馈内容
+  grammarFeedbackStatus?: 'pending' | 'received'; // 语法反馈接收状态
+  originMessageId?: number; // 🆕 原始消息ID（语法反馈消息关联到音频消息）
 }
 
 // AI音频基础URL
@@ -180,6 +223,10 @@ const SpokenPractice: React.FC = () => {
   // 图片放大状态管理：记录哪些图片消息处于放大状态
   const [expandedImages, setExpandedImages] = useState<Set<number>>(new Set());
   
+  // 🆕 语法反馈弹窗状态管理
+  const [grammarFeedbackModalVisible, setGrammarFeedbackModalVisible] = useState(false);
+  const [currentGrammarFeedback, setCurrentGrammarFeedback] = useState<GrammarFeedbackContent | null>(null);
+  
   // 历史消息加载状态
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -189,6 +236,9 @@ const SpokenPractice: React.FC = () => {
   
   // 💡 新增：消息缓存 Ref（待保存的消息）
   const messageCacheRef = useRef<Message[]>([]);
+  
+  // 💡 新增：真实会话 ID Ref（数据库会话 ID）
+  const realConversationIdRef = useRef<number>(0);
   
   // 💡 新增：余额检查标记（避免重复检查）
   const balanceCheckedRef = useRef(false);
@@ -625,12 +675,92 @@ const SpokenPractice: React.FC = () => {
           case 'text':
           case undefined: // 兼容旧的无类型消息
             // 文本消息
-            return await createSpokenTextMessage(conversationId, {
+            const textResult = await createSpokenTextMessage(conversationId, {
               sender: msg.sender,
               content: typeof msg.content === 'string' ? msg.content : '',
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
+            
+            // 🆕 如果该文本消息关联了 grammar feedback，同时保存
+            if (textResult.success && textResult.data && msg.grammarFeedback) {
+              console.log(`📝 检测到文本消息关联了 grammar feedback，开始保存...`);
+              
+              const grammarContent = msg.grammarFeedback;
+              const savedTextMessageId = textResult.data.id;
+              
+              // 从 URL 参数中获取 workflowType
+              const workflowType = searchParams.get('workflow_type') || 'fce_part1';
+              let examLevel = 'FCE'; // 默认 FCE
+              
+              if (workflowType.toLowerCase().includes('ket') || workflowType.toLowerCase().includes('a2')) {
+                examLevel = 'KET';
+              } else if (workflowType.toLowerCase().includes('pet') || workflowType.toLowerCase().includes('b1')) {
+                examLevel = 'PET';
+              } else if (workflowType.toLowerCase().includes('fce') || workflowType.toLowerCase().includes('b2')) {
+                examLevel = 'FCE';
+              }
+              
+              console.log(`📝 准备保存语法分析消息, exam_level: ${examLevel}, origin_message_id: ${savedTextMessageId}`);
+              
+              // 转换 errors 格式
+              const errorsJson = JSON.stringify(
+                grammarContent.errors.map(err => ({
+                  error_type: err.type,
+                  original_text: err.original,
+                  corrected_text: err.corrected,
+                  explanation: err.explanation,
+                  severity: err.severity,
+                  criterion: err.a2_criterion || err.b1_criterion || err.b2_criterion || 'general'
+                }))
+              );
+              
+              // 转换 assessment 格式
+              let assessmentJson = '{}';
+              if (examLevel === 'KET' && grammarContent.a2_assessment) {
+                assessmentJson = JSON.stringify({
+                  a2_grammar_structure: grammarContent.a2_assessment.grammar_structure,
+                  a2_vocabulary: grammarContent.a2_assessment.vocabulary,
+                  a2_coherence: grammarContent.a2_assessment.coherence,
+                });
+              } else if (examLevel === 'PET' && grammarContent.b1_assessment) {
+                assessmentJson = JSON.stringify({
+                  b1_grammar_structure: grammarContent.b1_assessment.grammar_structure,
+                  b1_vocabulary: grammarContent.b1_assessment.vocabulary,
+                  b1_coherence: grammarContent.b1_assessment.coherence,
+                });
+              } else if (examLevel === 'FCE' && grammarContent.b2_assessment) {
+                assessmentJson = JSON.stringify({
+                  grammar: grammarContent.b2_assessment.grammar_structure,
+                  vocabulary: grammarContent.b2_assessment.vocabulary,
+                  coherence: grammarContent.b2_assessment.coherence,
+                });
+              }
+              
+              try {
+                await createGrammarAnalysisMessage(conversationId, {
+                  origin_message_id: msg.id.toString(), // 🔄 客户端消息ID（转为字符串）
+                  exam_level: examLevel,
+                  errors_json: errorsJson,
+                  error_count: grammarContent.errors.length,
+                  improved_version: grammarContent.improved_version,
+                  suggestions_json: JSON.stringify(grammarContent.suggestions),
+                  overall_quality: grammarContent.overall_quality,
+                  assessment_json: assessmentJson,
+                  relevance_score: grammarContent.relevance_score,
+                  relevance_level: grammarContent.relevance_level,
+                  relevance_reason: grammarContent.relevance_reason,
+                  round_num: msg.roundNum,
+                  created_at: createdAt,
+                });
+                console.log(`✅ 语法分析消息保存成功, 关联到 text message 客户端ID: ${msg.id}, 数据库ID: ${savedTextMessageId}`);
+              } catch (grammarError) {
+                console.error(`❌ 保存语法分析消息失败:`, grammarError);
+              }
+            }
+            
+            return textResult;
 
           case 'voice': {
             // 语音消息
@@ -638,13 +768,93 @@ const SpokenPractice: React.FC = () => {
             const audioPath = msg.serverAudioPath || msg.audioFilePath;
             console.log(`📦 保存语音消息 [${index + 1}/${total}], 音频路径:`, audioPath);
             
-            return await createSpokenVoiceMessage(conversationId, {
+            const voiceResult = await createSpokenVoiceMessage(conversationId, {
               sender: msg.sender,
               audio_file_path: audioPath,
               round_num: msg.roundNum,
               transcription_text: msg.transcriptionText || '',
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
+            
+            // 🆕 如果该语音消息关联了 grammar feedback，同时保存
+            if (voiceResult.success && voiceResult.data && msg.grammarFeedback) {
+              console.log(`📝 检测到语音消息关联了 grammar feedback，开始保存...`);
+              
+              const grammarContent = msg.grammarFeedback;
+              const savedVoiceMessageId = voiceResult.data.id;
+              
+              // 从 URL 参数中获取 workflowType
+              const workflowType = searchParams.get('workflow_type') || 'fce_part1';
+              let examLevel = 'FCE'; // 默认 FCE
+              
+              if (workflowType.toLowerCase().includes('ket') || workflowType.toLowerCase().includes('a2')) {
+                examLevel = 'KET';
+              } else if (workflowType.toLowerCase().includes('pet') || workflowType.toLowerCase().includes('b1')) {
+                examLevel = 'PET';
+              } else if (workflowType.toLowerCase().includes('fce') || workflowType.toLowerCase().includes('b2')) {
+                examLevel = 'FCE';
+              }
+              
+              console.log(`📝 准备保存语法分析消息, exam_level: ${examLevel}, origin_message_id: ${savedVoiceMessageId}`);
+              
+              // 转换 errors 格式
+              const errorsJson = JSON.stringify(
+                grammarContent.errors.map(err => ({
+                  error_type: err.type,
+                  original_text: err.original,
+                  corrected_text: err.corrected,
+                  explanation: err.explanation,
+                  severity: err.severity,
+                  criterion: err.a2_criterion || err.b1_criterion || err.b2_criterion || 'general'
+                }))
+              );
+              
+              // 转换 assessment 格式
+              let assessmentJson = '{}';
+              if (examLevel === 'KET' && grammarContent.a2_assessment) {
+                assessmentJson = JSON.stringify({
+                  a2_grammar_structure: grammarContent.a2_assessment.grammar_structure,
+                  a2_vocabulary: grammarContent.a2_assessment.vocabulary,
+                  a2_coherence: grammarContent.a2_assessment.coherence,
+                });
+              } else if (examLevel === 'PET' && grammarContent.b1_assessment) {
+                assessmentJson = JSON.stringify({
+                  b1_grammar_structure: grammarContent.b1_assessment.grammar_structure,
+                  b1_vocabulary: grammarContent.b1_assessment.vocabulary,
+                  b1_coherence: grammarContent.b1_assessment.coherence,
+                });
+              } else if (examLevel === 'FCE' && grammarContent.b2_assessment) {
+                assessmentJson = JSON.stringify({
+                  grammar: grammarContent.b2_assessment.grammar_structure,
+                  vocabulary: grammarContent.b2_assessment.vocabulary,
+                  coherence: grammarContent.b2_assessment.coherence,
+                });
+              }
+              
+              try {
+                await createGrammarAnalysisMessage(conversationId, {
+                  origin_message_id: msg.id.toString(), // 🔄 客户端消息ID（转为字符串）
+                  exam_level: examLevel,
+                  errors_json: errorsJson,
+                  error_count: grammarContent.errors.length,
+                  improved_version: grammarContent.improved_version,
+                  suggestions_json: JSON.stringify(grammarContent.suggestions),
+                  overall_quality: grammarContent.overall_quality,
+                  assessment_json: assessmentJson,
+                  relevance_score: grammarContent.relevance_score,
+                  relevance_level: grammarContent.relevance_level,
+                  relevance_reason: grammarContent.relevance_reason,
+                  round_num: msg.roundNum,
+                  created_at: createdAt,
+                });
+                console.log(`✅ 语法分析消息保存成功, 关联到 voice message 客户端ID: ${msg.id}, 数据库ID: ${savedVoiceMessageId}`);
+              } catch (grammarError) {
+                console.error(`❌ 保存语法分析消息失败:`, grammarError);
+              }
+            }
+            
+            return voiceResult;
           }
 
           case 'image':
@@ -652,6 +862,7 @@ const SpokenPractice: React.FC = () => {
             return await createSpokenImageMessage(conversationId, {
               image_url: msg.imageUrl!,
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
 
@@ -661,6 +872,7 @@ const SpokenPractice: React.FC = () => {
             return await createSpokenScoreMessage(conversationId, {
               raw_text: content.rawText,
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               total_score: msg.score,
               dimension_scores: content.dimensionScores,
               advantages: content.advantages,
@@ -878,6 +1090,80 @@ const SpokenPractice: React.FC = () => {
           }));
         });
         
+        /**
+         * 🆕 处理语法反馈消息
+         * @param data WebSocket 消息数据
+         * @param messageId 消息 ID
+         */
+        const handleGrammarFeedbackMessage = (
+          data: { content: any; round_num?: number; origin_message_id?: number },
+          messageId: number,
+        ) => {
+          try {
+            // 解析 JSON 内容
+            let grammarFeedback: GrammarFeedbackContent;
+            if (typeof data.content === 'string') {
+              grammarFeedback = JSON.parse(data.content);
+            } else {
+              grammarFeedback = data.content;
+            }
+        
+            // 🔥 仅使用 origin_message_id 精确匹配，如果没有则丢弃
+            const originMessageId = data.origin_message_id;
+                
+            if (!originMessageId) {
+              console.warn('⚠️ 语法反馈消息缺少 origin_message_id，丢弃该消息');
+              return;
+            }
+            
+            console.log(`🔗 关联语法反馈到用户消息, origin_message_id: ${originMessageId}`);
+                  
+            // 更新对应的用户消息，添加语法反馈
+            setMessages(prevMessages => {
+              const updated = prevMessages.map(msg => {
+                if (msg.id === originMessageId) {
+                  console.log(`✅ 找到匹配的用户消息, id: ${msg.id}, type: ${msg.messageType}, 错误数: ${grammarFeedback.errors?.length || 0}`);
+                  return {
+                    ...msg,
+                    grammarFeedback: grammarFeedback,
+                    grammarFeedbackStatus: 'received' as const
+                  };
+                }
+                return msg;
+              });
+              
+              // 检查是否找到匹配
+              const found = updated.some(msg => msg.id === originMessageId);
+              if (!found) {
+                console.warn(`⚠️ 未找到 id=${originMessageId} 的消息，丢弃该语法反馈`);
+              }
+              
+              return updated;
+            });
+                  
+            // 同步更新缓存
+            messageCacheRef.current = messageCacheRef.current.map(msg =>
+              msg.id === originMessageId
+                ? {
+                    ...msg,
+                    grammarFeedback: grammarFeedback,
+                    grammarFeedbackStatus: 'received' as const
+                  }
+                : msg
+            );
+                  
+            console.log('📝 收到语法反馈消息并已关联:', {
+              origin_message_id: originMessageId,
+              round_num: data.round_num,
+              overall_quality: grammarFeedback.overall_quality,
+              errors_count: grammarFeedback.errors?.length || 0,
+              relevance_level: grammarFeedback.relevance_level,
+            });
+          } catch (error) {
+            console.error('❌ 处理语法反馈消息失败:', error);
+          }
+        };
+        
         // 监听接收消息事件
         wsSocket.on('receive_message', async (data: { 
           type?: string;
@@ -896,7 +1182,8 @@ const SpokenPractice: React.FC = () => {
             
             try {
               // 1. 批量保存缓存消息
-              await batchSaveMessages(realConversationId, messageCacheRef.current);
+              console.log('💾 开始保存消息，使用会话 ID:', realConversationIdRef.current);
+              await batchSaveMessages(realConversationIdRef.current, messageCacheRef.current);
 
               // 2. 清空缓存
               messageCacheRef.current = [];
@@ -1069,8 +1356,31 @@ const SpokenPractice: React.FC = () => {
             setMessages(prevMessages => [...prevMessages, scoreMessage]);
             messageCacheRef.current.push(scoreMessage); // ⭐ 添加到缓存
             console.log('📝 收到评分消息，已缓存, 总分:', data.score);
+          } else if (data.type === 'grammar_feedback') {
+            // 🆕 语法反馈消息（仅缓存，不显示）
+            handleGrammarFeedbackMessage(data, messageId);
+          } else if (data.type === 'loading') {
+            // 🔄 loading 消息（仅显示，不缓存）
+            const now = new Date();
+            const loadingMessage: Message = {
+              id: messageId,
+              content: typeof data.content === 'string' ? data.content : '正在分析您的答案，请稍后...',
+              sender: 'ai',
+              timestamp: now.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              fullTimestamp: now,
+              messageType: 'text',
+            };
+            
+            setMessages(prevMessages => [...prevMessages, loadingMessage]);
+            // ⚠️ 不添加到缓存！loading 消息不保存到数据库
+            console.log('🔄 收到 loading 消息，仅显示不缓存');
           } else {
             // 文本/音频消息
+            console.log('📝 收到普通消息, type:', data.type, ', content:', data.content?.substring(0, 50));
+            
             // 构建完整音频URL
             let fullAudioUrl: string | undefined;
             if (data.audio_url) {
@@ -1097,7 +1407,7 @@ const SpokenPractice: React.FC = () => {
             
             setMessages(prevMessages => [...prevMessages, aiMessage]);
             messageCacheRef.current.push(aiMessage); // ⭐ 添加到缓存
-            console.log('📝 收到文本消息，已缓存');
+            console.log('📝 收到文本消息，已缓存, messageId:', messageId, ', round_num:', data.round_num);
             
             // 预加载并自动播放音频
             if (fullAudioUrl) {
@@ -1119,31 +1429,49 @@ const SpokenPractice: React.FC = () => {
     };
 
     /**
-     * 加载历史消息
-     * @param conversationId 会话 ID
-     * @returns 返回真实的会话 ID（可能创建了新会话）
+     * 🔄 加载历史消息或创建新会话
+     * 新逻辑：
+     * 1. 如果 conversationId 为 null，直接创建新会话
+     * 2. 如果 conversationId 有值，尝试加载历史消息
+     *    - 如果有历史消息，继续使用该 ID
+     *    - 如果没有历史消息，创建新会话
+     * @param conversationId 会话 ID（可能为 null）
+     * @returns 返回真实的会话 ID（数据库 ID）
      */
-    const loadHistoryMessages = async (conversationId: number): Promise<number> => {
+    const loadHistoryMessages = async (conversationId: number | null): Promise<number> => {
       if (historyLoaded || isLoadingHistory) {
         console.log('历史消息已加载或正在加载中');
-        return conversationId;
+        return conversationId || 0;
       }
-          
+      
       try {
         setIsLoadingHistory(true);
-        console.log('加载历史消息, 会话 ID:', conversationId);
-            
-        // 使用 skipErrorHandler 跳过全局错误处理，手动处理响应
+        
+        // 🆕 情况 1：conversationId 为 null，直接创建新会话
+        if (conversationId === null) {
+          console.log('🆕 conversationId 为 null，直接创建新会话');
+          const newId = await createNewConversation();
+          if (newId) {
+            console.log('✅ 新会话创建成功, ID:', newId);
+            return newId;
+          } else {
+            console.error('❌ 创建新会话失败');
+            return 0;
+          }
+        }
+        
+        // 🔍 情况 2：conversationId 有值，尝试加载历史消息
+        console.log('🔍 尝试加载会话历史消息, ID:', conversationId);
         const response = await getSpokenMessages(conversationId, {
           skipErrorHandler: true,
         });
         
-        // 🔍 调试：打印完整响应
-        console.log('📦 getSpokenMessages 完整响应:', JSON.stringify(response, null, 2));
-            
-        if (response.success && response.data) {
-          console.log(`✅ 成功加载 ${response.data.length} 条历史消息`);
-              
+        console.log('📦 getSpokenMessages 响应:', JSON.stringify(response, null, 2));
+        
+        // ✅ 有历史消息，加载并继续使用该 ID
+        if (response.success && response.data && response.data.length > 0) {
+          console.log(`✅ 找到 ${response.data.length} 条历史消息，继续使用会话 ID: ${conversationId}`);
+          
           // 将后端数据转换为前端 Message 格式
           const historyMessages: Message[] = response.data.map((msg) => {
             const baseMessage: Message = {
@@ -1157,7 +1485,7 @@ const SpokenPractice: React.FC = () => {
               messageType: msg.message_type,
               roundNum: msg.round_num,
             };
-                
+            
             // 根据消息类型添加额外字段
             if (msg.message_type === 'voice') {
               baseMessage.audioFilePath = msg.audio_file_path;
@@ -1179,99 +1507,65 @@ const SpokenPractice: React.FC = () => {
                 improvedAnswer: msg.improved_answer,
               };
             }
-                
+            
             return baseMessage;
           });
-              
+          
           setMessages(historyMessages);
           setHistoryLoaded(true);
-          
-          // 会话存在，返回当前 ID
-          return conversationId;
-        } else {
-          // success=false 或其他情况，统一处理
-          console.warn('⚠️ 加载失败，响应:', {
-            success: response.success,
-            error_code: response.error_code,
-            message: response.message,
-            data: response.data,
-          });
-          
-          // 🎯 判断是否是会话不存在（多种方式）
-          const isConversationNotFound = 
-            response.error_code === 'CONVERSATION_NOT_FOUND' ||  // 方式1: error_code
-            (response.message && response.message.includes('不存在')) ||  // 方式2: message内容
-            (response.message && response.message.includes('not found')) ||  // 方式3: 英文message
-            (response.data && Array.isArray(response.data) && response.data.length === 0 && response.total === 0);  // 方式4: 空数据
-          
-          if (isConversationNotFound) {
-            console.log('💡 判断为会话不存在，创建新会话...');
-            const newId = await createNewConversation();
-            return newId || conversationId;
-          }
-          
           return conversationId;
         }
+        
+        // ⚠️ 没有历史消息，创建新会话
+        console.log('⚠️ 会话 ID', conversationId, '没有历史消息，创建新会话');
+        const newId = await createNewConversation();
+        if (newId) {
+          console.log('✅ 新会话创建成功, ID:', newId);
+          return newId;
+        } else {
+          console.error('❌ 创建新会话失败，使用原 ID');
+          return conversationId;
+        }
+        
       } catch (error: any) {
         console.error('❌ 加载历史消息异常:', error);
-        console.error('异常详情:', {
-          name: error.name,
-          message: error.message,
-          info: error.info,
-        });
         
-        // 🔧 由于 skipErrorHandler 可能无效，异常仍会抛出
-        // 这种情况下，我们直接认为是新会话，创建它
-        if (error.name === 'BizError') {
-          console.log('🔄 捕获到 BizError，默认创建新会话...');
-          const newId = await createNewConversation();
-          return newId || conversationId;
-        }
+        // 🔧 异常情况，尝试创建新会话
+        console.log('🔧 发生异常，尝试创建新会话');
+        const newId = await createNewConversation();
+        return newId || conversationId || 0;
         
-        return conversationId;
       } finally {
         setIsLoadingHistory(false);
       }
     };
         
     /**
-     * 获取或生成会话 ID
-     * 优先级: URL参数 > localStorage > 生成新ID
-     * 注意：此函数仅返回 ID，不执行异步操作（避免无限循环）
+     * 🔄 获取或生成会话 ID
+     * 新逻辑：
+     * 1. 先尝试从 URL 参数获取
+     * 2. 如果没有 URL 参数，返回 null（稍后创建新会话）
      */
-    const getOrCreateConversationId = (): number => {
-      // 1. 尝试从URL参数获取
+    const getOrCreateConversationId = (): number | null => {
+      // 1. 尝试从 URL 参数获取
       const urlConversationId = searchParams.get('conversationId');
       if (urlConversationId) {
         const id = parseInt(urlConversationId, 10);
         if (!isNaN(id) && id > 0) {
-          // 保存到localStorage
-          localStorage.setItem(CONVERSATION_ID_KEY, id.toString());
-          console.log('从URL获取会话 ID:', id);
+          console.log('🔗 从 URL 获取会话 ID:', id);
           return id;
         }
       }
-          
-      // 2. 尝试从localStorage获取
-      const storedId = localStorage.getItem(CONVERSATION_ID_KEY);
-      if (storedId) {
-        const id = parseInt(storedId, 10);
-        if (!isNaN(id) && id > 0) {
-          console.log('从localStorage获取会话 ID:', id);
-          return id;
-        }
-      }
-            
-      // 3. 生成新的会话ID（使用时间戳确保唯一性）
-      const newId = Date.now();
-      localStorage.setItem(CONVERSATION_ID_KEY, newId.toString());
-      console.log('生成临时会话ID:', newId);
-      return newId;
+              
+      // 2. URL 没有参数，返回 null（需要创建新会话）
+      console.log('🆕 URL 无会话 ID，需要创建新会话');
+      return null;
     };
     
     // 会话 ID 和用户 ID（从 localStorage 获取用户 ID）
     // ⚠️ 使用 useState 保证只初始化一次，避免每次渲染都生成新 ID
-    const [conversationId] = useState(() => getOrCreateConversationId());
+    // 🔄 新逻辑：初始值可能为 null，需要在 useEffect 中创建新会话
+    const [conversationId] = useState<number | null>(() => getOrCreateConversationId());
     const userId = parseInt(localStorage.getItem(USER_ID_KEY) || '1', 10);
     
    
@@ -1416,6 +1710,10 @@ const SpokenPractice: React.FC = () => {
         // 1. 加载历史消息（如果会话不存在会创建新会话）
         console.log('初始化会话 ID:', conversationId);
         const realConversationId = await loadHistoryMessages(conversationId);
+        
+        // 🔹 保存真实会话 ID 到 Ref
+        realConversationIdRef.current = realConversationId;
+        console.log('✅ 真实会话 ID 已保存到 Ref:', realConversationId);
         
         // 2. 使用真实的会话 ID 连接 WebSocket
         console.log('使用真实会话 ID 连接 WebSocket:', realConversationId);
@@ -1648,11 +1946,11 @@ const SpokenPractice: React.FC = () => {
     
     const currentInputValue = inputValue;
     const currentRoundNum = Math.floor(messages.length / 2) + 1; // 简单计算轮次
-    
+    const nextMessageId = generateMessageId();
     // 创建用户消息
     const now = new Date();
     const userMessage: Message = {
-      id: generateMessageId(),
+      id: nextMessageId,
       content: currentInputValue,
       sender: 'user',
       timestamp: now.toLocaleTimeString([], {
@@ -1683,6 +1981,8 @@ const SpokenPractice: React.FC = () => {
           conversation_id: conversationId,
           'content': currentInputValue,
           round_num: currentRoundNum,
+          origin_message_id: nextMessageId, 
+
         }));
         console.log('📤 通过 WebSocket 发送消息');
       } catch (error) {
@@ -1998,6 +2298,7 @@ const SpokenPractice: React.FC = () => {
                       conversation_id: conversationId,
                       'content': transcriptionText,
                       round_num: 1,
+                      origin_message_id: newMessageId, 
                     }));
                     console.log('已将转写结果通过WebSocket发送');
                   } catch (error) {
@@ -2190,6 +2491,22 @@ const SpokenPractice: React.FC = () => {
     
     setPlayingMessageId(null);
     setAudioElement(null);
+  };
+
+  /**
+   * 🆕 打开语法反馈弹窗
+   */
+  const openGrammarFeedbackModal = (grammarFeedback: GrammarFeedbackContent) => {
+    setCurrentGrammarFeedback(grammarFeedback);
+    setGrammarFeedbackModalVisible(true);
+  };
+
+  /**
+   * 🆕 关闭语法反馈弹窗
+   */
+  const closeGrammarFeedbackModal = () => {
+    setGrammarFeedbackModalVisible(false);
+    setCurrentGrammarFeedback(null);
   };
 
   // 渲染组件UI
@@ -2647,6 +2964,25 @@ const SpokenPractice: React.FC = () => {
                       {message.transcriptionText}
                     </div>
                   )}
+                  
+                  {/* 🆕 语法反馈按钮 */}
+                  {message.grammarFeedback && message.grammarFeedbackStatus === 'received' && (
+                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<FileTextOutlined />}
+                        onClick={() => openGrammarFeedbackModal(message.grammarFeedback!)}
+                        style={{
+                          backgroundColor: '#52c41a',
+                          borderColor: '#52c41a',
+                          fontSize: '12px',
+                        }}
+                      >
+                        查看语法反馈 ({message.grammarFeedback.errors?.length || 0} 个错误)
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : message.sender === 'ai' && message.messageType === 'image' && message.imageUrl ? (
                 /* AI图片消息 */
@@ -2985,7 +3321,28 @@ const SpokenPractice: React.FC = () => {
                 </div>
               ) : (
                 /* 普通文本消息 */
-                <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
+                <div>
+                  <p className="message-content">{typeof message.content === 'string' ? message.content : 'AI消息'}</p>
+                  
+                  {/* 🆕 语法反馈按钮（用户消息且有语法反馈） */}
+                  {message.sender === 'user' && message.grammarFeedback && message.grammarFeedbackStatus === 'received' && (
+                    <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<FileTextOutlined />}
+                        onClick={() => openGrammarFeedbackModal(message.grammarFeedback!)}
+                        style={{
+                          backgroundColor: '#52c41a',
+                          borderColor: '#52c41a',
+                          fontSize: '12px',
+                        }}
+                      >
+                        查看语法反馈 ({message.grammarFeedback.errors?.length || 0} 个错误)
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
               <p className="message-timestamp">{message.timestamp}</p>
             </div>
@@ -3107,6 +3464,190 @@ const SpokenPractice: React.FC = () => {
           console.log('🎆 烟花动画完成');
         }}
       />
+
+      {/* 🆕 语法反馈弹窗 */}
+      <Modal
+        title={
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1890ff' }}>
+            📝 语法反馈详情
+          </div>
+        }
+        open={grammarFeedbackModalVisible}
+        onCancel={closeGrammarFeedbackModal}
+        footer={[
+          <Button key="close" type="primary" onClick={closeGrammarFeedbackModal}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+        style={{ top: 20 }}
+      >
+        {currentGrammarFeedback && (
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            {/* 整体质量 */}
+            <Card size="small" style={{ marginBottom: '16px', backgroundColor: '#f0f5ff' }}>
+              <div style={{ fontSize: '14px' }}>
+                <strong>整体质量：</strong>
+                <span style={{ 
+                  marginLeft: '8px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 
+                    currentGrammarFeedback.overall_quality === 'excellent' ? '#52c41a' :
+                    currentGrammarFeedback.overall_quality === 'good' ? '#1890ff' :
+                    currentGrammarFeedback.overall_quality === 'fair' ? '#faad14' : '#ff4d4f',
+                  color: '#fff',
+                  fontWeight: 'bold'
+                }}>
+                  {currentGrammarFeedback.overall_quality === 'excellent' ? '优秀' :
+                   currentGrammarFeedback.overall_quality === 'good' ? '良好' :
+                   currentGrammarFeedback.overall_quality === 'fair' ? '一般' : '较差'}
+                </span>
+              </div>
+            </Card>
+
+            {/* 相关性评估 */}
+            <Card size="small" style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                <strong>相关性：</strong>
+                <span style={{ 
+                  marginLeft: '8px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: 
+                    currentGrammarFeedback.relevance_level === 'on_topic' ? '#52c41a' :
+                    currentGrammarFeedback.relevance_level === 'partially_on_topic' ? '#faad14' : '#ff4d4f',
+                  color: '#fff'
+                }}>
+                  {currentGrammarFeedback.relevance_level === 'on_topic' ? '切题' :
+                   currentGrammarFeedback.relevance_level === 'partially_on_topic' ? '部分切题' : '离题'}
+                </span>
+                <span style={{ marginLeft: '8px', color: '#666' }}>(分数: {currentGrammarFeedback.relevance_score.toFixed(2)})</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                {currentGrammarFeedback.relevance_reason}
+              </div>
+            </Card>
+
+            {/* 错误列表 */}
+            {currentGrammarFeedback.errors && currentGrammarFeedback.errors.length > 0 && (
+              <Card 
+                size="small" 
+                title={
+                  <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
+                    ❌ 错误列表 ({currentGrammarFeedback.errors.length} 个)
+                  </span>
+                }
+                style={{ marginBottom: '16px' }}
+              >
+                {currentGrammarFeedback.errors.map((error, index) => (
+                  <div 
+                    key={index} 
+                    style={{ 
+                      padding: '12px',
+                      marginBottom: index < currentGrammarFeedback.errors.length - 1 ? '12px' : '0',
+                      backgroundColor: error.severity === 'critical' ? '#fff1f0' : '#fffbe6',
+                      borderLeft: `4px solid ${error.severity === 'critical' ? '#ff4d4f' : '#faad14'}`,
+                      borderRadius: '4px'
+                    }}
+                  >
+                    <div style={{ marginBottom: '8px' }}>
+                      <span style={{ 
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        backgroundColor: error.severity === 'critical' ? '#ff4d4f' : '#faad14',
+                        color: '#fff',
+                        fontSize: '12px',
+                        marginRight: '8px'
+                      }}>
+                        {error.severity === 'critical' ? '严重' : '轻微'}
+                      </span>
+                      <strong>{error.type}</strong>
+                    </div>
+                    <div style={{ fontSize: '13px', marginBottom: '4px' }}>
+                      <span style={{ color: '#ff4d4f', textDecoration: 'line-through' }}>{error.original}</span>
+                      <span style={{ margin: '0 8px', color: '#666' }}>→</span>
+                      <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{error.corrected}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                      {error.explanation}
+                    </div>
+                    {(error.a2_criterion || error.b1_criterion || error.b2_criterion) && (
+                      <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                        评分维度: {error.a2_criterion || error.b1_criterion || error.b2_criterion}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </Card>
+            )}
+
+            {/* 改进版本 */}
+            <Card 
+              size="small" 
+              title={<span style={{ color: '#52c41a', fontWeight: 'bold' }}>✅ 改进后的句子</span>}
+              style={{ marginBottom: '16px', backgroundColor: '#f6ffed' }}
+            >
+              <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                {currentGrammarFeedback.improved_version}
+              </div>
+            </Card>
+
+            {/* 学习建议 */}
+            {currentGrammarFeedback.suggestions && currentGrammarFeedback.suggestions.length > 0 && (
+              <Card 
+                size="small" 
+                title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}>💡 学习建议</span>}
+                style={{ marginBottom: '16px' }}
+              >
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {currentGrammarFeedback.suggestions.map((suggestion, index) => (
+                    <li key={index} style={{ fontSize: '13px', lineHeight: '1.8', color: '#333' }}>
+                      {suggestion}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {/* 评估维度 (A2/B1/B2) */}
+            {(currentGrammarFeedback.a2_assessment || currentGrammarFeedback.b1_assessment || currentGrammarFeedback.b2_assessment) && (
+              <Card size="small" title={<span style={{ fontWeight: 'bold' }}>📊 维度评估</span>}>
+                {currentGrammarFeedback.a2_assessment && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>A2 (KET):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.a2_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.a2_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.a2_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+                {currentGrammarFeedback.b1_assessment && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>B1 (PET):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.b1_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.b1_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.b1_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+                {currentGrammarFeedback.b2_assessment && (
+                  <div>
+                    <strong>B2 (FCE):</strong>
+                    <div style={{ fontSize: '13px', marginLeft: '16px', marginTop: '4px' }}>
+                      语法: {currentGrammarFeedback.b2_assessment.grammar_structure} | 
+                      词汇: {currentGrammarFeedback.b2_assessment.vocabulary} | 
+                      连贯性: {currentGrammarFeedback.b2_assessment.coherence}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        )}
+      </Modal>
     </Layout>
   );
 };

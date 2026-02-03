@@ -283,6 +283,14 @@ export default [
     component: './messages/userpractice',
     layout: false,  // 不显示侧边栏
   },
+  
+  // ========== 练习记录查看页面（不显示侧边栏）==========
+  {
+    path: '/messages/viewpractice',
+    name: 'view-practice',
+    component: './messages/viewpractice',
+    layout: false,  // 不显示侧边栏
+  },
  
   // ========== 根路径重定向到首页 ==========
   {

@@ -150,6 +150,11 @@ export const API_ENDPOINTS = {
   SPOKEN_MESSAGE_DETAIL: `${API_BASE_URL}/api/spoken/messages`, // 动态拼接 /{message_id}
   SPOKEN_TRANSCRIPTION: `${API_BASE_URL}/api/spoken/messages`, // 动态拼接 /{message_id}/transcription
 
+  // 语法分析消息相关
+  SPOKEN_MESSAGE_GRAMMAR: `${API_BASE_URL}/api/spoken/conversations`, // 动态拼接 /{conversation_id}/messages/grammar
+  SPOKEN_GRAMMAR_DETAIL: `${API_BASE_URL}/api/spoken/messages/grammar`, // 动态拼接 /{message_id}
+  SPOKEN_GRAMMAR_BY_ORIGIN: `${API_BASE_URL}/api/spoken/messages/grammar/origin`, // 动态拼接 /{origin_message_id}
+
   // 管理员口语会话管理（包含用户信息）
   ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
 
