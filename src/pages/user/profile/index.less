@@ -1,15 +1,103 @@
 .user-profile-container {
   min-height: 100vh;
-  background: #f0f2f5;
+  background: #FFF9E6;
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+
+  // 漂浮装饰图形
+  &::after {
+    content: "👤 💎 ⭐";
+    position: fixed;
+    top: 100px;
+    right: 50px;
+    font-size: 2rem;
+    opacity: 0.3;
+    animation: floatAround 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  @keyframes floatAround {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(5deg);
+    }
+  }
+
+  // 全局按钮样式覆盖
+  .ant-btn-primary {
+    background: #FF6B6B !important;
+    border-color: #000 !important;
+    border-width: 3px !important;
+    border-radius: 20px 15px 25px 18px !important;
+    box-shadow: 4px 4px 0px #000 !important;
+    font-weight: 700 !important;
+    color: white !important;
+    height: auto !important;
+    padding: 0.6rem 2rem !important;
+    transition: all 0.2s !important;
+
+    &:hover {
+      transform: translate(-2px, -2px) !important;
+      box-shadow: 6px 6px 0px #000 !important;
+      background: #FF5252 !important;
+      color: white !important;
+    }
+
+    &:active {
+      transform: translate(2px, 2px) !important;
+      box-shadow: 2px 2px 0px #000 !important;
+    }
+  }
+
+  // 全局标签样式
+  .ant-tag {
+    border: 2px solid #000 !important;
+    font-weight: 700 !important;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2) !important;
+  }
 }
 
 .profile-header {
-  background: #fff;
+  background: #FFD93D;
+  border-bottom: 4px solid #000;
   padding: 12px 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
+
+  .ant-btn {
+    background: #4ECDC4;
+    border: 3px solid #000;
+    border-radius: 15px 20px 12px 18px;
+    box-shadow: 4px 4px 0px #000;
+    font-weight: 700;
+    color: #1A535C;
+    height: auto;
+    padding: 0.4rem 1.2rem;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000;
+      background: #3DBDB5;
+      color: #1A535C;
+      border-color: #000;
+    }
+
+    &:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000;
+    }
+  }
 }
 
 .profile-content {
@@ -18,34 +106,71 @@
   margin: 24px auto;
   gap: 24px;
   padding: 0 24px;
+  position: relative;
+  z-index: 1;
+
+  // 波点背景装饰
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(#FFD93D 20%, transparent 20%);
+    background-size: 40px 40px;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .profile-sidebar {
-  background: #fff;
-  border-radius: 8px;
+  background: #4ECDC4;
+  border-radius: 25px 20px 30px 15px;
+  border: 3px solid #000;
   padding: 32px 24px;
   width: 280px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 8px 8px 0px #000;
   text-align: center;
   height: fit-content;
+  transform: rotate(-1deg);
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.02) rotate(0deg);
+  }
+
+  .ant-avatar {
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0px #000;
+    background: #FFD93D !important;
+  }
 }
 
 .user-name {
   margin-top: 16px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #262626;
+  font-size: 22px;
+  font-weight: 900;
+  color: #1A535C;
+  text-shadow: 2px 2px 0px #FFF;
 }
 
 .user-email {
-  color: #8c8c8c;
+  color: #1A535C;
   margin-top: 8px;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .user-phone {
-  color: #8c8c8c;
+  color: #1A535C;
   margin-top: 8px;
-  
+  font-weight: 600;
+  font-size: 14px;
+
   .anticon {
     margin-right: 4px;
   }
@@ -53,30 +178,176 @@
 
 .user-role {
   display: inline-block;
-  padding: 4px 12px;
-  background: #e6f7ff;
-  color: #1890ff;
-  border-radius: 12px;
+  padding: 6px 16px;
+  background: #FFD93D;
+  color: #1A535C;
+  border: 2px solid #000;
+  border-radius: 12px 8px 15px 10px;
   font-size: 12px;
+  font-weight: 700;
   margin-top: 8px;
+  box-shadow: 3px 3px 0px #000;
 }
 
 .wallet-card {
-  border: 1px solid #ffd666;
-  background: linear-gradient(135deg, #fffbf0 0%, #fff7e6 100%);
-  
+  border: 3px solid #000;
+  background: #FFD93D;
+  border-radius: 20px 25px 18px 22px;
+  box-shadow: 6px 6px 0px #000;
+  transform: rotate(1deg);
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.05) rotate(0deg);
+    box-shadow: 8px 8px 0px #000;
+  }
+
   .ant-card-body {
     padding: 20px !important;
   }
-  
+
   .ant-statistic-title {
-    font-size: 14px;
-    color: #8c8c8c;
+    font-size: 16px;
+    color: #1A535C;
     margin-bottom: 8px;
+    font-weight: 700;
   }
-  
+
   .ant-statistic-content {
     font-size: 28px;
+    color: #FF6B6B;
+    font-weight: 900;
+    text-shadow: 2px 2px 0px #000;
+  }
+}
+
+// VIP订阅卡片
+.vip-subscription-card {
+  border: 3px solid #000;
+  background: #FFD93D;
+  border-radius: 20px 25px 18px 22px;
+  box-shadow: 6px 6px 0px #000;
+  transform: rotate(-1deg);
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.05) rotate(0deg);
+    box-shadow: 8px 8px 0px #000;
+  }
+
+  .ant-card-body {
+    padding: 20px !important;
+  }
+}
+
+.profile-main {
+  flex: 1;
+
+  .ant-card {
+    background: #FFF;
+    border: 3px solid #000;
+    border-radius: 25px 20px 30px 15px;
+    box-shadow: 8px 8px 0px #000;
+    transform: rotate(-1deg);
+    transition: all 0.2s;
+
+    &:hover {
+      transform: scale(1.02) rotate(0deg);
+      box-shadow: 10px 10px 0px #000;
+    }
+
+    .ant-card-head {
+      background: #4ECDC4;
+      border-bottom: 3px solid #000;
+      border-radius: 22px 17px 0 0;
+
+      .ant-card-head-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #1A535C;
+        text-shadow: 2px 2px 0px #FFF;
+      }
+    }
+
+    // 续费选项列表
+    .ant-list-item {
+      border: 2px solid #000;
+      border-radius: 12px 15px 10px 18px;
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+
+      &:hover {
+        background: #FFD93D;
+        box-shadow: 6px 6px 0px #000;
+        transform: scale(1.02);
+      }
+    }
+  }
+
+  // 表单样式
+  .ant-form-item-label > label {
+    font-weight: 700;
+    color: #1A535C;
+  }
+
+  .ant-input,
+  .ant-input-password {
+    border: 2px solid #000;
+    border-radius: 10px 12px 8px 14px;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #FFD93D;
+      box-shadow: 4px 4px 0px #000;
+    }
+
+    &:focus,
+    .ant-input:focus {
+      border-color: #FF6B6B;
+      box-shadow: 4px 4px 0px #000;
+    }
+  }
+
+  // 按钮样式
+  .ant-btn {
+    background: #FF6B6B;
+    border: 3px solid #000;
+    border-radius: 20px 15px 25px 18px;
+    box-shadow: 4px 4px 0px #000;
+    font-weight: 700;
+    color: white;
+    height: auto;
+    padding: 0.6rem 2rem;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000;
+      background: #FF5252;
+      color: white;
+      border-color: #000;
+    }
+
+    &:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000;
+    }
+
+    &.ant-btn-danger {
+      background: #FF5252;
+
+      &:hover {
+        background: #FF0000;
+      }
+    }
+  }
+
+  // 标签样式
+  .ant-tag {
+    border: 2px solid #000;
+    font-weight: 700;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -87,9 +358,34 @@
 @media (max-width: 768px) {
   .profile-content {
     flex-direction: column;
+    padding: 0 16px;
   }
 
   .profile-sidebar {
     width: 100%;
+    transform: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  .profile-main {
+    .ant-card {
+      transform: none;
+
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+
+  .wallet-card,
+  .vip-subscription-card {
+    transform: none;
+
+    &:hover {
+      transform: none;
+    }
   }
 }

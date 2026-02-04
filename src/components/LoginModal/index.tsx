@@ -402,7 +402,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onCancel, onSuccess })
 
   // 跳转到用户协议页面
   const handleViewAgreement = (type: 'terms' | 'privacy') => {
-    const url = type === 'terms' ? '/user/terms' : '/user/privacy';
+    const url = type === 'terms' ? '/home/proto/user-agreement' : '/home/proto/privacy-policy';
     window.open(url, '_blank');
   };
 

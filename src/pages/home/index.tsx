@@ -1,4 +1,4 @@
-import { history, useModel } from '@umijs/max';
+import { history, useModel, Helmet } from '@umijs/max';
 import { Button } from 'antd';
 import React, { useState, useEffect } from 'react';
 import LoginModal from '@/components/LoginModal';
@@ -49,13 +49,110 @@ const HomePage: React.FC = () => {
     history.push('/user/profile');
   };
 
+  // 结构化数据 - 教育机构
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "SpeakCube",
+    "alternateName": "SpeakCube AI口语练习",
+    "description": "专为5-12岁少儿设计的AI英语口语练习平台,通过游戏化学习让孩子爱上说英语",
+    "url": "https://www.qtoplay.com",
+    "logo": "https://www.qtoplay.com/logo.png",
+    "image": "https://www.qtoplay.com/og-image.jpg",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "1520",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "offers": {
+      "@type": "Offer",
+      "category": "教育服务",
+      "priceCurrency": "CNY",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
+  // 面包屑导航数据
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "首页",
+        "item": "https://www.qtoplay.com"
+      }
+    ]
+  };
+
   return (
     <div className="home-page">
+      {/* SEO Meta 标签 */}
+      <Helmet>
+        {/* 基础 Meta 标签 */}
+        <title>SpeakCube - AI少儿英语口语练习平台 | 让孩子像玩游戏一样学英语</title>
+        <meta 
+          name="description" 
+          content="SpeakCube是专为5-12岁少儿设计的AI英语口语练习平台。通过游戏化学习方式，让孩子每天10分钟轻松练口语。AI智能陪练，实时反馈发音和语法，95%家长好评，已有10000+小朋友在用。免费体验，随时随地练习英语口语。" 
+        />
+        <meta 
+          name="keywords" 
+          content="少儿英语口语,AI英语口语练习,儿童英语学习,英语口语APP,在线英语学习,英语口语训练,少儿英语启蒙,英语口语陪练,游戏化学习英语,小学生英语口语" 
+        />
+        <meta name="author" content="SpeakCube" />
+        <link rel="canonical" href="https://www.qtoplay.com/" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.qtoplay.com/" />
+        <meta property="og:title" content="SpeakCube - AI少儿英语口语练习平台" />
+        <meta property="og:description" content="让孩子像玩游戏一样学英语,AI陪练,每天10分钟提升口语能力。95%家长好评,10000+小朋友都在用!" />
+        <meta property="og:image" content="https://www.qtoplay.com/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="SpeakCube" />
+        <meta property="og:locale" content="zh_CN" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://www.qtoplay.com/" />
+        <meta name="twitter:title" content="SpeakCube - AI少儿英语口语练习平台" />
+        <meta name="twitter:description" content="让孩子像玩游戏一样学英语,AI陪练,每天10分钟提升口语能力" />
+        <meta name="twitter:image" content="https://www.qtoplay.com/twitter-image.jpg" />
+
+        {/* 移动端优化 */}
+        <meta name="theme-color" content="#1890ff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="SpeakCube" />
+
+        {/* 搜索引擎验证 (需要替换为实际的验证码) */}
+        {/* <meta name="baidu-site-verification" content="YOUR_BAIDU_CODE" /> */}
+        {/* <meta name="google-site-verification" content="YOUR_GOOGLE_CODE" /> */}
+
+        {/* 结构化数据 */}
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbData)}
+        </script>
+      </Helmet>
       {/* 导航栏 */}
       <nav className="navbar">
         <div className="nav-container">
           <div className="logo">
-            <img src={logoIcon} alt="SpeakCube Logo" className="logo-icon" />
+            <img 
+              src={logoIcon} 
+              alt="SpeakCube Logo - AI少儿英语口语练习平台" 
+              className="logo-icon"
+              width="48"
+              height="48"
+              loading="eager"
+            />
             <span className="logo-text">SpeakCube AI 口语练习</span>
           </div>
           <ul className="nav-links">
@@ -82,7 +179,7 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* 英雄区域 */}
-      <section className="hero">
+      <section className="hero" aria-label="主要内容区域">
         {/* 漂浮装饰图形 */}
         <div className="floating-shapes">
           <div className="shape shape-1">⭐</div>
@@ -124,8 +221,8 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 特性区域 */}
-      <section id="features" className="features">
-        <h2 className="section-title">为什么小朋友都喜欢？</h2>
+      <section id="features" className="features" aria-labelledby="features-title">
+        <h2 id="features-title" className="section-title">为什么小朋友都喜欢？</h2>
         <p className="section-subtitle">
           超级好玩的 AI 老师，让学英语像玩游戏一样上瘾！
         </p>
@@ -180,10 +277,10 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 优势区域 */}
-      <section id="advantages" className="advantages">
+      <section id="advantages" className="advantages" aria-labelledby="advantages-title">
         <div className="advantages-container">
           <div>
-            <h2 className="section-title">爸爸妈妈也放心！</h2>
+            <h2 id="advantages-title" className="section-title">爸爸妈妈也放心！</h2>
             <ul className="advantages-list">
               <li className="advantage-item">
                 <div className="advantage-icon">
@@ -230,8 +327,8 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 统计数据 */}
-      <section id="stats" className="stats">
-        <h2 className="section-title">大家都在用！</h2>
+      <section id="stats" className="stats" aria-labelledby="stats-title">
+        <h2 id="stats-title" className="section-title">大家都在用！</h2>
         <p className="section-subtitle">
           已经有好多小朋友在这里学会说英语啦~
         </p>
@@ -256,7 +353,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* CTA 区域 */}
-      <section className="cta-section">
+      <section className="cta-section" aria-label="行动号召区域">
         <h2>准备好了吗？开始你的英语冒险！</h2>
         <p>现在就加入，免费体验超好玩的口语练习</p>
         <div className="hero-buttons">
@@ -268,7 +365,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* 页脚 */}
-      <footer className="footer">
+      <footer className="footer" role="contentinfo">
         <div className="footer-content">{/* 预留的页脚链接区域 */}</div>
         <div className="footer-bottom">
           <p>&copy; 2026 AI 口语练习平台. All rights reserved.</p>

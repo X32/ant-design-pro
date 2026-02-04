@@ -259,6 +259,7 @@ const SpokenPractice: React.FC = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [socket, setSocket] = useState<any>(null);
+    const socketRef = useRef<any>(null); // 🆕 新增：用于 cleanup 函数中获取最新的 socket
     // WebSocket重试状态管理
     const [retryStatus, setRetryStatus] = useState<{
       isRetrying: boolean;
@@ -1003,6 +1004,7 @@ const SpokenPractice: React.FC = () => {
         // 连接 WebSocket，传入 token、workflow_type 和 paper_id
         const wsSocket = webSocketService.connect(userId, realConversationId, token, workflowType, paperId);
         setSocket(wsSocket);
+        socketRef.current = wsSocket; // 🆕 同步更新 ref
         
         // 监听认证成功事件
         wsSocket.on('auth_success', (data: any) => {
@@ -1736,9 +1738,10 @@ const SpokenPractice: React.FC = () => {
       console.log('🧹 组件卸载，开始清理资源...');
       
       // 1. 断开 WebSocket 连接
-      if (socket) {
+      if (socketRef.current) { // ✅ 使用 ref 获取最新值
         console.log('🔌 断开 WebSocket 连接');
-        socket.disconnect();
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
       
       // 2. 停止并清理当前正在播放的音频

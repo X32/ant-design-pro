@@ -75,6 +75,22 @@ export default [
     layout: false,
   },
 
+  // ========== 用户协议页面（公开访问，无需登录）==========
+  {
+    path: '/home/proto/user-agreement',
+    name: 'user-agreement',
+    component: './home/proto/user-agreement',
+    layout: false,
+  },
+
+  // ========== 隐私政策页面（公开访问，无需登录）==========
+  {
+    path: '/home/proto/privacy-policy',
+    name: 'privacy-policy',
+    component: './home/proto/privacy-policy',
+    layout: false,
+  },
+
   // ========== 考试目录（公开访问，无需登录，不显示菜单）==========
   {
     path: '/exam-catalog',
@@ -219,6 +235,13 @@ export default [
             icon: 'CrownOutlined',
             path: '/back/orders/vip-subscriptions',
             component: './orders/vipSubscription',
+          },
+          {
+            name: 'admin-operations',
+            icon: 'SettingOutlined',
+            path: '/back/orders/admin-operations',
+            component: './orders/viphandle/admin-operations',
+            access: 'canAdmin',
           },
         ],
       },

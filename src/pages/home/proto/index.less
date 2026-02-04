@@ -1,0 +1,316 @@
+.proto-container {
+  min-height: 100vh;
+  background: #FFF9E6;
+  padding-bottom: 60px;
+  position: relative;
+
+  // 波点背景图案
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(#FFD93D 20%, transparent 20%);
+    background-size: 40px 40px;
+    opacity: 0.08;
+    pointer-events: none;
+  }
+
+  .proto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: #FFD93D;
+    border-bottom: 4px solid #000;
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    h2 {
+      color: #1A535C;
+      font-weight: 900;
+      text-shadow: 2px 2px 0px #FF6B6B;
+      transform: rotate(-1deg);
+    }
+
+    .ant-btn {
+      color: #1A535C;
+      font-weight: 700;
+
+      &:hover {
+        color: #FF6B6B;
+        background: #FFF;
+        border-color: #000;
+        transform: rotate(-2deg) scale(1.05);
+        box-shadow: 3px 3px 0px #000;
+      }
+    }
+  }
+
+  .proto-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .proto-card {
+    border-radius: 25px 20px 30px 15px;
+    box-shadow: 8px 8px 0px #000;
+    border: 3px solid #000;
+    transition: all 0.2s;
+    background: #FFF;
+    padding: 40px;
+
+    &:hover {
+      transform: scale(1.01);
+      box-shadow: 10px 10px 0px #000;
+    }
+
+    .proto-header-text {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .ant-typography {
+        font-size: 14px;
+      }
+    }
+
+    .proto-section {
+      margin-bottom: 32px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      h3 {
+        color: #1A535C;
+        font-weight: 800;
+        font-size: 24px;
+        margin-bottom: 16px;
+      }
+
+      h4 {
+        color: #1A535C;
+        font-weight: 700;
+        font-size: 20px;
+        margin-bottom: 16px;
+        margin-top: 8px;
+      }
+
+      h5 {
+        color: #1A535C;
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 12px;
+        margin-top: 16px;
+      }
+
+      .ant-typography {
+        font-size: 15px;
+        line-height: 1.8;
+        color: #333;
+        margin-bottom: 12px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      .proto-list {
+        margin-left: 20px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+
+        li {
+          font-size: 15px;
+          line-height: 1.8;
+          color: #333;
+          margin-bottom: 8px;
+          list-style-type: disc;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          strong {
+            color: #1A535C;
+            font-weight: 600;
+          }
+        }
+      }
+
+      ul:not(.proto-list) {
+        margin-left: 20px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+
+        li {
+          font-size: 15px;
+          line-height: 1.8;
+          color: #333;
+          margin-bottom: 6px;
+          list-style-type: circle;
+        }
+      }
+    }
+
+    .ant-divider {
+      border-top-color: rgba(0, 0, 0, 0.1);
+      margin: 24px 0;
+    }
+
+    .proto-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 2px solid rgba(0, 0, 0, 0.1);
+      text-align: center;
+
+      .ant-typography {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .proto-action-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+
+    .ant-btn {
+      min-width: 120px;
+      height: 44px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 3px solid #000;
+      border-radius: 12px 10px 14px 8px;
+      box-shadow: 4px 4px 0px #000;
+      transition: all 0.2s;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 6px 6px 0px #000;
+      }
+
+      &:active {
+        transform: translateY(0px);
+        box-shadow: 2px 2px 0px #000;
+      }
+
+      &.ant-btn-default {
+        background: #FFF;
+        color: #1A535C;
+
+        &:hover {
+          background: #FFF9E6;
+          border-color: #000;
+          color: #1A535C;
+        }
+      }
+
+      &.ant-btn-primary {
+        background: #FFD93D;
+        border-color: #000;
+        color: #1A535C;
+
+        &:hover {
+          background: #FFC700;
+          border-color: #000;
+          color: #1A535C;
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .proto-container {
+    .proto-header {
+      padding: 16px 16px;
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .ant-btn {
+        font-size: 14px;
+      }
+    }
+
+    .proto-content {
+      padding: 24px 16px;
+    }
+
+    .proto-card {
+      padding: 24px 20px;
+      border-radius: 20px 15px 25px 10px;
+
+      .proto-section {
+        h3 {
+          font-size: 20px;
+        }
+
+        h4 {
+          font-size: 18px;
+        }
+
+        h5 {
+          font-size: 15px;
+        }
+
+        .ant-typography {
+          font-size: 14px;
+        }
+
+        .proto-list li,
+        ul:not(.proto-list) li {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .proto-action-footer {
+      flex-direction: column;
+      width: 100%;
+
+      .ant-btn {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  }
+}
+
+// 打印样式优化
+@media print {
+  .proto-container {
+    background: #FFF;
+
+    &::before {
+      display: none;
+    }
+
+    .proto-header,
+    .proto-action-footer {
+      display: none;
+    }
+
+    .proto-card {
+      box-shadow: none;
+      border: 1px solid #000;
+      border-radius: 0;
+      page-break-inside: avoid;
+    }
+  }
+}

@@ -143,7 +143,7 @@ interface Message {
   fullTimestamp?: Date; // 完整时间戳（保存用）
   audioFilePath?: string; // 音频文件路径（用户语音消息，本地Blob URL）
   serverAudioPath?: string; // 🔥 新增：服务器音频路径（用于保存到数据库）
-  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'final_score_summary' | 'finish'; // 消息类型（新增 final_score_summary 类型）
+  messageType?: 'text' | 'voice' | 'image' | 'score' | 'grammar_feedback' | 'final_score_summary' | 'finish' | 'score_panel'; // 消息类型（新增 score_panel 类型）
   transcriptionText?: string; // 转写文本（语音消息专用）
   transcriptionStatus?: 'pending' | 'processing' | 'done' | 'failed'; // 转写状态
   // AI消息音频相关字段
@@ -156,6 +156,8 @@ interface Message {
   score?: string;         // 总分
   partNo?: number;        // 🆕 评分阶段号（第几个 Part）
   totalParts?: number;    // 🆕 总阶段数（一共几个 Part）
+  // 🆕 评分面板专用字段
+  scoreParts?: Message[]; // 多个评分消息（用于 score_panel 类型）
   // 语法反馈关联字段
   grammarFeedback?: GrammarFeedbackContent;  // 关联的语法反馈内容
   grammarFeedbackStatus?: 'pending' | 'received'; // 语法反馈接收状态
@@ -278,6 +280,7 @@ const SpokenPractice: React.FC = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [socket, setSocket] = useState<any>(null);
+    const socketRef = useRef<any>(null); // 🆕 新增：用于 cleanup 函数中获取最新的 socket
     // WebSocket重试状态管理
     const [retryStatus, setRetryStatus] = useState<{
       isRetrying: boolean;
@@ -1173,17 +1176,31 @@ const SpokenPractice: React.FC = () => {
     };
 
     /**
-     * 解析评分内容
+     * 解析评分内容（🆕 适配新格式）
      * @param text 评分文本内容
      * @returns 解析后的评分结构
+     * 
+     * 新格式示例：
+     * 语法与词汇：4分 | 话语管理：4分 | 发音：4分 | 互动交流：4分
+     * 总分：4.0分（A2水平达标：是）
+     * 
+     * 详细评价：
+     * 优势：
+     * - 内容...
+     * 
+     * 不足：
+     * - 内容...
+     * 
+     * 改进建议：
+     * - 内容...
      */
     const parseScoreContent = (text: string): ScoreContent => {
       const lines = text.split('\n');
       const result: ScoreContent = { rawText: text };
 
-      // 提取第一行维度分数
+      // 🆕 提取第一行维度分数（新格式：语法与词汇：4分 | 话语管理：4分 ...）
       if (lines.length > 0) {
-        result.dimensionScores = lines[0];
+        result.dimensionScores = lines[0].trim();
       }
 
       // 查找各部分
@@ -1196,42 +1213,42 @@ const SpokenPractice: React.FC = () => {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
 
-        // 识别总分行
-        if (line.startsWith('总分:')) {
+        // 🆕 识别总分行（新格式：总分：X.X分）
+        if (line.startsWith('总分：') || line.startsWith('总分:')) {
           result.totalScore = line;
           continue;
         }
 
-        // 识别章节标题
-        if (line === '详细评价:') {
+        // 🆕 识别章节标题（新格式：直接是"优势：" "不足：" "改进建议："）
+        if (line === '详细评价：' || line === '详细评价:') {
           currentSection = 'detail';
           continue;
         }
-        if (line === '优势:') {
+        if (line === '优势：' || line === '优势:') {
           currentSection = 'advantages';
           continue;
         }
-        if (line === '不足:') {
+        if (line === '不足：' || line === '不足:') {
           currentSection = 'disadvantages';
           continue;
         }
-        if (line === '改进建议:') {
+        if (line === '改进建议：' || line === '改进建议:') {
           currentSection = 'suggestions';
           continue;
         }
-        if (line === '改进的回答:') {
+        if (line === '改进的回答：' || line === '改进的回答:') {
           currentSection = 'improved_answer';
           continue;
         }
 
-        // 收集各部分内容
-        if (currentSection === 'advantages' && line) {
+        // 🆕 收集各部分内容（包括空行，保持原始格式）
+        if (currentSection === 'advantages') {
           advantagesText += line + '\n';
-        } else if (currentSection === 'disadvantages' && line) {
+        } else if (currentSection === 'disadvantages') {
           disadvantagesText += line + '\n';
-        } else if (currentSection === 'suggestions' && line) {
+        } else if (currentSection === 'suggestions') {
           suggestionsText += line + '\n';
-        } else if (currentSection === 'improved_answer' && line) {
+        } else if (currentSection === 'improved_answer') {
           improvedAnswerText += line + '\n';
         }
       }
@@ -1264,11 +1281,24 @@ const SpokenPractice: React.FC = () => {
         part_no: data.part_no,
         total_parts: data.total_parts,
         round_num: data.round_num,
+        content类型: typeof data.content,
+        content预览: typeof data.content === 'string' ? data.content.substring(0, 100) + '...' : data.content,
       });
       
       // 解析文本内容
       const contentText = typeof data.content === 'string' ? data.content : '';
       const parsedContent = parseScoreContent(contentText);
+      
+      // 🔍 调试日志：查看解析结果
+      console.log('🔍 评分消息解析结果:', {
+        原始文本长度: contentText.length,
+        维度分数: parsedContent.dimensionScores,
+        总分行: parsedContent.totalScore,
+        优势: parsedContent.advantages ? '有(' + parsedContent.advantages.length + '字)' : '无',
+        不足: parsedContent.disadvantages ? '有(' + parsedContent.disadvantages.length + '字)' : '无',
+        改进建议: parsedContent.suggestions ? '有(' + parsedContent.suggestions.length + '字)' : '无',
+        改进的回答: parsedContent.improvedAnswer ? '有(' + parsedContent.improvedAnswer.length + '字)' : '无',
+      });
 
       const now = new Date();
       const scoreMessage: Message = {
@@ -1304,26 +1334,58 @@ const SpokenPractice: React.FC = () => {
         
         // 🆕 检查是否收到所有 part
         if (scoreMessagesCache.current.size === data.total_parts) {
-          console.log('✅ 所有评分消息已收齐，开始统一显示');
+          console.log('✅ 所有评分消息已收齐，开始创建统一面板');
           
-          // 按 part_no 顺序排列并显示
+          // 按 part_no 顺序排列
           const sortedScores = Array.from(scoreMessagesCache.current.entries())
             .sort((a, b) => a[0] - b[0])  // 按 part_no 排序
             .map(([_, message]) => message);
           
-          // 统一显示所有评分消息
-          setMessages((prevMessages) => [...prevMessages, ...sortedScores]);
+          // 🆕 创建一个评分面板消息，包含所有评分消息
+          const now = new Date();
+          const scorePanelMessage: Message = {
+            id: `panel_${messageId}`,
+            content: '口语评分结果汇总',
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString('zh-CN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            fullTimestamp: now,
+            messageType: 'score_panel',
+            scoreParts: sortedScores, // 保存所有评分消息
+            totalParts: data.total_parts,
+          };
           
-          console.log(`🎉 已显示 ${sortedScores.length} 条评分消息`);
+          // 显示评分面板
+          setMessages((prevMessages) => [...prevMessages, scorePanelMessage]);
+          
+          console.log(`🎉 已创建评分面板，包含 ${sortedScores.length} 个 Part`);
           
           // 清空临时缓存
           scoreMessagesCache.current.clear();
           setExpectedTotalParts(null);
         }
       } else {
-        // 🔙 如果没有 part_no 和 total_parts，恢复原来的逼辑：直接显示
-        console.warn('⚠️ 评分消息缺少 part_no 或 total_parts，直接显示');
-        setMessages((prevMessages) => [...prevMessages, scoreMessage]);
+        // 🔙 如果没有 part_no 和 total_parts，也创建一个面板来显示（只包含一个 Part）
+        console.warn('⚠️ 评分消息缺少 part_no 或 total_parts，创建单Part面板');
+              
+        const now = new Date();
+        const scorePanelMessage: Message = {
+          id: `panel_${messageId}`,
+          content: '口语评分结果',
+          sender: 'ai',
+          timestamp: now.toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          fullTimestamp: now,
+          messageType: 'score_panel',
+          scoreParts: [scoreMessage], // 只包含一个评分消息
+          totalParts: 1,
+        };
+              
+        setMessages((prevMessages) => [...prevMessages, scorePanelMessage]);
       }
       
       console.log('📝 评分消息处理完成');
@@ -1400,6 +1462,8 @@ const SpokenPractice: React.FC = () => {
         audio_url?: string;
         audio_cached?: boolean;
         score?: string;
+        part_no?: number;        // 🆕 评分阶段号
+        total_parts?: number;    // 🆕 总阶段数
       }) => {
         console.log('📨 收到 WebSocket 消息:', data);
         
@@ -1535,6 +1599,7 @@ const SpokenPractice: React.FC = () => {
         // 连接 WebSocket，传入 token、workflow_type、paper_id 和 exercise_ids
         const wsSocket = webSocketService.connect(userId, realConversationId, token, workflowTypes, paperId, exerciseIds);
         setSocket(wsSocket);
+        socketRef.current = wsSocket; // 🆕 同步更新 ref
         
         // 监听认证成功事件
         wsSocket.on('auth_success', (data: any) => {
@@ -2039,9 +2104,10 @@ const SpokenPractice: React.FC = () => {
       console.log('🧹 组件卸载，开始清理资源...');
       
       // 1. 断开 WebSocket 连接
-      if (socket) {
+      if (socketRef.current) { // ✅ 使用 ref 获取最新值
         console.log('🔌 断开 WebSocket 连接');
-        socket.disconnect();
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
       
       // 2. 停止并清理当前正在播放的音频
@@ -3023,200 +3089,206 @@ const SpokenPractice: React.FC = () => {
                     {expandedImages.has(message.id) ? '点击缩小' : '点击放大'}
                   </div>
                 </div>
-              ) : message.sender === 'ai' && message.messageType === 'score' ? (
-                /* AI评分消息 */
-                <div className="ai-score-message-content" style={{
-                  padding: '16px',
+              ) : message.sender === 'ai' && message.messageType === 'score_panel' ? (
+                /* 🆕 评分面板消息 */
+                <div className="ai-score-panel-content" style={{
+                  padding: '20px',
                   backgroundColor: '#f6ffed',
                   borderRadius: '12px',
-                  border: '2px solid #b7eb8f',
-                  maxWidth: '600px'
+                  border: '2px solid #52c41a',
+                  boxShadow: '0 4px 12px rgba(82, 196, 26, 0.15)',
+                  maxWidth: '800px'
                 }}>
                   {/* 标题 */}
                   <div style={{ 
-                    fontSize: '18px', 
+                    fontSize: '20px', 
                     fontWeight: 'bold', 
                     color: '#52c41a',
-                    marginBottom: '12px',
+                    marginBottom: '20px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    justifyContent: 'center',
+                    gap: '8px',
+                    paddingBottom: '16px',
+                    borderBottom: '2px solid #b7eb8f'
                   }}>
-                    <span style={{ fontSize: '24px' }}>📊</span>
-                    <span>口语评分结果</span>
+                    <span style={{ fontSize: '28px' }}>📊</span>
+                    <span>口语评分结果汇总</span>
+                    <span style={{ fontSize: '14px', color: '#8c8c8c', fontWeight: 'normal' }}>
+                      (共 {message.totalParts} 个 Part)
+                    </span>
                   </div>
                   
-                  {/* 总分 */}
-                  {message.score && (
-                    <div style={{ 
-                      fontSize: '32px', 
-                      fontWeight: 'bold', 
-                      color: '#52c41a',
-                      marginBottom: '16px',
-                      textAlign: 'center',
-                      padding: '12px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '8px',
-                      border: '1px solid #d9f7be'
-                    }}>
-                      总分: {message.score}
-                    </div>
-                  )}
-                  
-                  {typeof message.content === 'object' && message.content !== null && (
-                    <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
-                      {/* 维度分数 */}
-                      {(message.content as ScoreContent).dimensionScores && (
-                        <div style={{ 
-                          marginBottom: '16px',
-                          padding: '12px',
+                  {/* 渲染所有 Part 的评分 */}
+                  {message.scoreParts && message.scoreParts.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {message.scoreParts.map((scorePart, index) => (
+                        <div key={scorePart.id} style={{
                           backgroundColor: '#ffffff',
                           borderRadius: '8px',
-                          border: '1px solid #d9f7be'
+                          border: '1px solid #d9f7be',
+                          padding: '16px',
+                          transition: 'all 0.2s'
                         }}>
-                          <div style={{ 
-                            fontWeight: 'bold', 
-                            color: '#389e0d', 
-                            marginBottom: '8px',
-                            fontSize: '15px'
-                          }}>
-                            📈 各维度评分
-                          </div>
-                          <div style={{ color: '#595959', whiteSpace: 'pre-wrap' }}>
-                            {(message.content as ScoreContent).dimensionScores}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* 总分行 */}
-                      {(message.content as ScoreContent).totalScore && (
-                        <div style={{ 
-                          marginBottom: '16px',
-                          padding: '10px',
-                          backgroundColor: '#e6f7ff',
-                          borderRadius: '6px',
-                          color: '#0050b3',
-                          fontWeight: '500'
-                        }}>
-                          {(message.content as ScoreContent).totalScore}
-                        </div>
-                      )}
-                      
-                      {/* 优势 */}
-                      {(message.content as ScoreContent).advantages && (
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ 
-                            fontWeight: 'bold', 
-                            color: '#52c41a', 
-                            marginBottom: '8px',
-                            fontSize: '15px',
+                          {/* Part 标题 */}
+                          <div style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            color: '#389e0d',
+                            marginBottom: '12px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px'
+                            gap: '8px',
+                            paddingBottom: '8px',
+                            borderBottom: '1px solid #f0f0f0'
                           }}>
-                            <span>✅</span>
-                            <span>优势</span>
+                            <span style={{ 
+                              backgroundColor: '#52c41a',
+                              color: '#fff',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '14px'
+                            }}>
+                              Part {scorePart.partNo}
+                            </span>
+                            {scorePart.score && (
+                              <span style={{ color: '#52c41a', fontSize: '18px' }}>
+                                总分: {scorePart.score}
+                              </span>
+                            )}
                           </div>
-                          <div style={{ 
-                            paddingLeft: '12px',
-                            color: '#262626',
-                            whiteSpace: 'pre-wrap',
-                            backgroundColor: '#ffffff',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            borderLeft: '3px solid #52c41a'
-                          }}>
-                            {(message.content as ScoreContent).advantages}
-                          </div>
+                          
+                          {/* Part 内容 */}
+                          {typeof scorePart.content === 'object' && scorePart.content !== null && (
+                            <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                              {/* 维度分数 */}
+                              {(scorePart.content as ScoreContent).dimensionScores && (
+                                <div style={{ marginBottom: '12px' }}>
+                                  <div style={{ 
+                                    fontWeight: '600', 
+                                    color: '#595959', 
+                                    marginBottom: '6px',
+                                    fontSize: '13px'
+                                  }}>
+                                    📈 各维度评分
+                                  </div>
+                                  <div style={{ 
+                                    color: '#595959', 
+                                    whiteSpace: 'pre-wrap',
+                                    paddingLeft: '8px',
+                                    fontSize: '13px'
+                                  }}>
+                                    {(scorePart.content as ScoreContent).dimensionScores}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* 总分行 */}
+                              {(scorePart.content as ScoreContent).totalScore && (
+                                <div style={{ 
+                                  marginBottom: '12px',
+                                  padding: '8px',
+                                  backgroundColor: '#e6f7ff',
+                                  borderRadius: '4px',
+                                  color: '#0050b3',
+                                  fontWeight: '500',
+                                  fontSize: '13px'
+                                }}>
+                                  {(scorePart.content as ScoreContent).totalScore}
+                                </div>
+                              )}
+                              
+                              {/* 优势 */}
+                              {(scorePart.content as ScoreContent).advantages && (
+                                <div style={{ marginBottom: '12px' }}>
+                                  <div style={{ 
+                                    fontWeight: '600', 
+                                    color: '#52c41a', 
+                                    marginBottom: '6px',
+                                    fontSize: '13px'
+                                  }}>
+                                    ✅ 优势
+                                  </div>
+                                  <div style={{ 
+                                    color: '#262626',
+                                    whiteSpace: 'pre-wrap',
+                                    paddingLeft: '8px',
+                                    fontSize: '13px'
+                                  }}>
+                                    {(scorePart.content as ScoreContent).advantages}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* 不足 */}
+                              {(scorePart.content as ScoreContent).disadvantages && (
+                                <div style={{ marginBottom: '12px' }}>
+                                  <div style={{ 
+                                    fontWeight: '600', 
+                                    color: '#fa8c16', 
+                                    marginBottom: '6px',
+                                    fontSize: '13px'
+                                  }}>
+                                    ⚠️ 不足
+                                  </div>
+                                  <div style={{ 
+                                    color: '#262626',
+                                    whiteSpace: 'pre-wrap',
+                                    paddingLeft: '8px',
+                                    fontSize: '13px'
+                                  }}>
+                                    {(scorePart.content as ScoreContent).disadvantages}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* 改进建议 */}
+                              {(scorePart.content as ScoreContent).suggestions && (
+                                <div style={{ marginBottom: '12px' }}>
+                                  <div style={{ 
+                                    fontWeight: '600', 
+                                    color: '#1890ff', 
+                                    marginBottom: '6px',
+                                    fontSize: '13px'
+                                  }}>
+                                    💡 改进建议
+                                  </div>
+                                  <div style={{ 
+                                    color: '#262626',
+                                    whiteSpace: 'pre-wrap',
+                                    paddingLeft: '8px',
+                                    fontSize: '13px'
+                                  }}>
+                                    {(scorePart.content as ScoreContent).suggestions}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* 改进的回答 */}
+                              {(scorePart.content as ScoreContent).improvedAnswer && (
+                                <div>
+                                  <div style={{ 
+                                    fontWeight: '600', 
+                                    color: '#722ed1', 
+                                    marginBottom: '6px',
+                                    fontSize: '13px'
+                                  }}>
+                                    ✨ 改进的回答
+                                  </div>
+                                  <div style={{ 
+                                    color: '#262626',
+                                    whiteSpace: 'pre-wrap',
+                                    paddingLeft: '8px',
+                                    fontSize: '13px'
+                                  }}>
+                                    {(scorePart.content as ScoreContent).improvedAnswer}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      
-                      {/* 不足 */}
-                      {(message.content as ScoreContent).disadvantages && (
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ 
-                            fontWeight: 'bold', 
-                            color: '#fa8c16', 
-                            marginBottom: '8px',
-                            fontSize: '15px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}>
-                            <span>⚠️</span>
-                            <span>不足</span>
-                          </div>
-                          <div style={{ 
-                            paddingLeft: '12px',
-                            color: '#262626',
-                            whiteSpace: 'pre-wrap',
-                            backgroundColor: '#ffffff',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            borderLeft: '3px solid #fa8c16'
-                          }}>
-                            {(message.content as ScoreContent).disadvantages}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* 改进建议 */}
-                      {(message.content as ScoreContent).suggestions && (
-                        <div>
-                          <div style={{ 
-                            fontWeight: 'bold', 
-                            color: '#1890ff', 
-                            marginBottom: '8px',
-                            fontSize: '15px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}>
-                            <span>💡</span>
-                            <span>改进建议</span>
-                          </div>
-                          <div style={{ 
-                            paddingLeft: '12px',
-                            color: '#262626',
-                            whiteSpace: 'pre-wrap',
-                            backgroundColor: '#ffffff',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            borderLeft: '3px solid #1890ff'
-                          }}>
-                            {(message.content as ScoreContent).suggestions}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* 改进的回答 */}
-                      {(message.content as ScoreContent).improvedAnswer && (
-                        <div>
-                          <div style={{ 
-                            fontWeight: 'bold', 
-                            color: '#722ed1', 
-                            marginBottom: '8px',
-                            fontSize: '15px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}>
-                            <span>✨</span>
-                            <span>改进的回答</span>
-                          </div>
-                          <div style={{ 
-                            paddingLeft: '12px',
-                            color: '#262626',
-                            whiteSpace: 'pre-wrap',
-                            backgroundColor: '#ffffff',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            borderLeft: '3px solid #722ed1'
-                          }}>
-                            {(message.content as ScoreContent).improvedAnswer}
-                          </div>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   )}
                 </div>

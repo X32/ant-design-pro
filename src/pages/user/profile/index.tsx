@@ -186,28 +186,47 @@ const UserProfile: React.FC = () => {
         </div>
 
         {/* 未登录提示 */}
-        <div className="profile-content" style={{ 
-          display: 'flex', 
+        <div className="profile-content" style={{
+          display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center', 
+          alignItems: 'center',
           justifyContent: 'center',
           minHeight: '60vh',
           textAlign: 'center'
         }}>
-          <UserOutlined style={{ fontSize: 80, color: '#d9d9d9', marginBottom: 24 }} />
-          <h2 style={{ fontSize: 24, color: '#262626', marginBottom: 16 }}>
-            请先登录
-          </h2>
-          <p style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 32 }}>
-            登录后可以查看和管理您的个人信息
-          </p>
-          <Button 
-            type="primary" 
-            size="large"
-            onClick={handleOpenLogin}
-          >
-            立即登录
-          </Button>
+          <div style={{
+            background: '#FFD93D',
+            padding: '60px',
+            borderRadius: '30px 25px 35px 20px',
+            border: '4px solid #000',
+            boxShadow: '8px 8px 0px #000',
+            transform: 'rotate(-1deg)'
+          }}>
+            <UserOutlined style={{ fontSize: 80, color: '#1A535C', marginBottom: 24 }} />
+            <h2 style={{ fontSize: 28, color: '#1A535C', marginBottom: 16, fontWeight: 900, textShadow: '2px 2px 0px #FFF' }}>
+              请先登录
+            </h2>
+            <p style={{ fontSize: 16, color: '#1A535C', marginBottom: 32, fontWeight: 700 }}>
+              登录后可以查看和管理您的个人信息
+            </p>
+            <Button
+              type="primary"
+              size="large"
+              onClick={handleOpenLogin}
+              style={{
+                background: '#FF6B6B',
+                border: '3px solid #000',
+                borderRadius: '25px 20px 30px 15px',
+                boxShadow: '4px 4px 0px #000',
+                fontWeight: 700,
+                color: 'white',
+                height: 'auto',
+                padding: '0.8rem 2.5rem'
+              }}
+            >
+              立即登录
+            </Button>
+          </div>
         </div>
 
         {/* 登录弹框 */}
@@ -310,7 +329,7 @@ const UserProfile: React.FC = () => {
           <Avatar
             size={80}
             icon={<UserOutlined />}
-            style={{ backgroundColor: '#1890ff' }}
+            style={{ backgroundColor: '#FFD93D', color: '#1A535C' }}
           />
           <h2 className="user-name" title={user?.name || user?.email?.split('@')[0]}>
             {truncateMiddle(user?.name || user?.email?.split('@')[0], 20, 8, 6)}
@@ -337,7 +356,7 @@ const UserProfile: React.FC = () => {
             <Spin spinning={walletLoading}>
               <div style={{ textAlign: 'center' }}>
                 <WalletOutlined
-                  style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }}
+                  style={{ fontSize: 32, color: '#FF6B6B', marginBottom: 8 }}
                 />
                 <div style={{ marginBottom: 8 }}>
                   <Statistic
@@ -345,14 +364,15 @@ const UserProfile: React.FC = () => {
                     value={balance?.balance || 0}
                     suffix="金币"
                     valueStyle={{
-                      color: '#faad14',
+                      color: '#FF6B6B',
                       fontSize: 28,
-                      fontWeight: 'bold',
+                      fontWeight: 900,
+                      textShadow: '2px 2px 0px #000',
                     }}
                   />
                 </div>
                 {balance && !balance.exists && (
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: '#1A535C', marginTop: 8, fontWeight: 700 }}>
                     钱包未创建，请先充值
                   </div>
                 )}
@@ -372,46 +392,55 @@ const UserProfile: React.FC = () => {
                   <Spin spinning={subscriptionLoading}>
                     <div style={{ textAlign: 'center' }}>
                       <CrownOutlined
-                        style={{ 
-                          fontSize: 32, 
-                          color: '#faad14', 
-                          marginBottom: 8 
+                        style={{
+                          fontSize: 32,
+                          color: '#FF6B6B',
+                          marginBottom: 8
                         }}
                       />
-                      
+
                       {/* 订阅信息 */}
                       <div style={{ marginBottom: 8 }}>
-                        <div style={{ 
-                          fontSize: 16, 
-                          fontWeight: 'bold', 
-                          color: '#faad14',
+                        <div style={{
+                          fontSize: 16,
+                          fontWeight: 900,
+                          color: '#1A535C',
                           marginBottom: 4
                         }}>
                           VIP会员
                         </div>
-                        <Tag color="gold" style={{ fontSize: 14, padding: '4px 12px' }}>
+                        <Tag style={{
+                          fontSize: 14,
+                          padding: '4px 12px',
+                          background: '#FFD93D',
+                          border: '2px solid #000',
+                          borderRadius: '8px 12px 6px 10px',
+                          fontWeight: 'bold',
+                          boxShadow: '2px 2px 0px #000',
+                          color: '#1A535C'
+                        }}>
                           {subscription.exam_level} 级别
                         </Tag>
                       </div>
-                      
+
                       {subscription.status === 'ACTIVE' ? (
                         <>
-                          <div style={{ fontSize: 14, color: '#52c41a', marginTop: 8 }}>
+                          <div style={{ fontSize: 14, color: '#52c41a', marginTop: 8, fontWeight: 700 }}>
                             ✓ 订阅生效中
                           </div>
-                          <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                          <div style={{ fontSize: 12, color: '#1A535C', marginTop: 4, fontWeight: 600 }}>
                             剩余 {subscription.remaining_days} 天
                           </div>
-                          <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                          <div style={{ fontSize: 12, color: '#1A535C', marginTop: 4, fontWeight: 600 }}>
                             到期时间：{new Date(subscription.end_time).toLocaleDateString()}
                           </div>
                         </>
                       ) : subscription.status === 'EXPIRED' ? (
-                        <div style={{ fontSize: 14, color: '#ff4d4f', marginTop: 8 }}>
+                        <div style={{ fontSize: 14, color: '#FF6B6B', marginTop: 8, fontWeight: 700 }}>
                           已过期
                         </div>
                       ) : (
-                        <div style={{ fontSize: 14, color: '#999', marginTop: 8 }}>
+                        <div style={{ fontSize: 14, color: '#999', marginTop: 8, fontWeight: 700 }}>
                           已取消
                         </div>
                       )}
@@ -423,12 +452,12 @@ const UserProfile: React.FC = () => {
                 {subscription.renewal_options && subscription.renewal_options.length > 0 && (
                   <Card
                     title={
-                      <span style={{ fontSize: 14, fontWeight: 'bold' }}>
-                        <CrownOutlined style={{ marginRight: 6, color: '#faad14' }} />
+                      <span style={{ fontSize: 16, fontWeight: 900, color: '#1A535C' }}>
+                        <CrownOutlined style={{ marginRight: 6, color: '#FF6B6B' }} />
                         续费套餐选择
                       </span>
                     }
-                    style={{ marginTop: 12, width: '100%' }}
+                    style={{ marginTop: 12, width: '100%', background: '#FFF9E6' }}
                     bodyStyle={{ padding: '12px' }}
                   >
                     <List
@@ -437,54 +466,74 @@ const UserProfile: React.FC = () => {
                       renderItem={(option) => (
                         <List.Item
                           key={option.plan_id}
-                          style={{ 
+                          style={{
                             padding: '12px',
                             marginBottom: '8px',
-                            border: option.is_recommended ? '2px solid #faad14' : '1px solid #f0f0f0',
-                            borderRadius: '6px',
-                            backgroundColor: option.is_recommended ? '#fffbf0' : '#fff',
+                            border: option.is_recommended ? '3px solid #FFD93D' : '2px solid #000',
+                            borderRadius: '12px 15px 10px 18px',
+                            backgroundColor: option.is_recommended ? '#FFD93D' : '#FFF',
                             cursor: 'pointer',
-                            transition: 'all 0.3s'
+                            transition: 'all 0.2s',
+                            boxShadow: '3px 3px 0px rgba(0, 0, 0, 0.1)'
                           }}
                           onClick={() => {
                             message.info(`选择 ${option.plan_name}，请前往充值页面购买`);
                             history.push('/orders/recharge');
                           }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.02)';
+                            e.currentTarget.style.boxShadow = '5px 5px 0px #000';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = '3px 3px 0px rgba(0, 0, 0, 0.1)';
+                          }}
                         >
                           <div style={{ width: '100%' }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
                               alignItems: 'center',
                               marginBottom: 6
                             }}>
                               <div>
-                                <span style={{ 
-                                  fontSize: 15, 
-                                  fontWeight: 'bold',
-                                  color: option.is_recommended ? '#faad14' : '#262626'
+                                <span style={{
+                                  fontSize: 15,
+                                  fontWeight: 900,
+                                  color: option.is_recommended ? '#FF6B6B' : '#1A535C'
                                 }}>
                                   {option.plan_name}
                                 </span>
                                 {option.is_recommended === 1 && (
-                                  <Tag color="gold" style={{ marginLeft: 8, fontSize: 11 }}>
+                                  <Tag style={{
+                                    marginLeft: 8,
+                                    fontSize: 11,
+                                    background: '#FF6B6B',
+                                    color: 'white',
+                                    border: '2px solid #000',
+                                    borderRadius: '6px 8px 4px 7px',
+                                    fontWeight: 'bold',
+                                    boxShadow: '2px 2px 0px #000'
+                                  }}>
                                     推荐
                                   </Tag>
                                 )}
                               </div>
-                              <span style={{ 
-                                fontSize: 16, 
-                                fontWeight: 'bold',
-                                color: '#faad14'
+                              <span style={{
+                                fontSize: 16,
+                                fontWeight: 900,
+                                color: '#FF6B6B',
+                                textShadow: '1px 1px 0px #000'
                               }}>
                                 ¥{(option.price / 100).toFixed(2)}
                               </span>
                             </div>
-                            <div style={{ 
-                              display: 'flex', 
+                            <div style={{
+                              display: 'flex',
                               justifyContent: 'space-between',
                               fontSize: 12,
-                              color: '#999'
+                              color: '#1A535C',
+                              fontWeight: 600
                             }}>
                               <span>{option.duration_days} 天</span>
                               <span>
@@ -509,23 +558,23 @@ const UserProfile: React.FC = () => {
               <Spin spinning={subscriptionLoading}>
                 <div style={{ textAlign: 'center' }}>
                   <CrownOutlined
-                    style={{ 
-                      fontSize: 32, 
-                      color: '#d9d9d9', 
-                      marginBottom: 8 
+                    style={{
+                      fontSize: 32,
+                      color: '#999',
+                      marginBottom: 8
                     }}
                   />
                   <div style={{ marginBottom: 8 }}>
-                    <div style={{ 
-                      fontSize: 16, 
-                      fontWeight: 'bold', 
-                      color: '#999',
+                    <div style={{
+                      fontSize: 16,
+                      fontWeight: 900,
+                      color: '#1A535C',
                       marginBottom: 4
                     }}>
                       暂无VIP订阅
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: '#1A535C', marginTop: 8, fontWeight: 600 }}>
                     订阅VIP享受无限次练习
                   </div>
                 </div>
@@ -538,7 +587,18 @@ const UserProfile: React.FC = () => {
             type="primary"
             icon={<CreditCardOutlined />}
             onClick={handleRecharge}
-            style={{ marginTop: 16, width: '100%' }}
+            style={{
+              marginTop: 16,
+              width: '100%',
+              background: '#4ECDC4',
+              border: '3px solid #000',
+              borderRadius: '20px 15px 25px 18px',
+              boxShadow: '4px 4px 0px #000',
+              fontWeight: 700,
+              color: '#1A535C',
+              height: 'auto',
+              padding: '0.6rem 1.5rem'
+            }}
             size="large"
           >
             账户充值
@@ -548,7 +608,18 @@ const UserProfile: React.FC = () => {
           <Button
             icon={<HistoryOutlined />}
             onClick={handleViewLog}
-            style={{ marginTop: 12, width: '100%' }}
+            style={{
+              marginTop: 12,
+              width: '100%',
+              background: '#FFD93D',
+              border: '3px solid #000',
+              borderRadius: '18px 22px 16px 20px',
+              boxShadow: '4px 4px 0px #000',
+              fontWeight: 700,
+              color: '#1A535C',
+              height: 'auto',
+              padding: '0.6rem 1.5rem'
+            }}
             size="large"
           >
             流水记录
@@ -559,7 +630,18 @@ const UserProfile: React.FC = () => {
             danger
             icon={<LogoutOutlined />}
             onClick={handleLogout}
-            style={{ marginTop: 12, width: '100%' }}
+            style={{
+              marginTop: 12,
+              width: '100%',
+              background: '#FF6B6B',
+              border: '3px solid #000',
+              borderRadius: '22px 18px 20px 16px',
+              boxShadow: '4px 4px 0px #000',
+              fontWeight: 700,
+              color: 'white',
+              height: 'auto',
+              padding: '0.6rem 1.5rem'
+            }}
             size="large"
           >
             退出登录

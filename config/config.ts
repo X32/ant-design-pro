@@ -150,6 +150,18 @@ export default defineConfig({
   headScripts: [
     // 解决首次加载时白屏的问题
     { src: join(PUBLIC_PATH, 'scripts/loading.js'), async: true },
+    // 百度统计
+    {
+      content: `
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?0f6a90d8b20cdff8faf569c1fe1127ed";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+      `,
+    },
   ],
   //================ pro 插件配置 =================
   presets: ['umi-presets-pro'],

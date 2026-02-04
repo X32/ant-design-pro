@@ -1,0 +1,54 @@
+# robots.txt for SpeakCube
+# 用于指导搜索引擎爬虫如何抓取网站内容
+
+# 允许所有搜索引擎爬虫访问
+User-agent: *
+
+# 允许访问的路径
+Allow: /
+Allow: /exam-catalog
+Allow: /home/
+Allow: /orders/vip-plans
+Allow: /orders/coin-packages
+
+# 禁止访问的路径
+# 后台管理页面
+Disallow: /admin/
+Disallow: /back/
+Disallow: /dashboard/
+
+# API 接口
+Disallow: /api/
+
+# 用户私密信息
+Disallow: /user/profile
+Disallow: /orders/
+
+# 测试页面
+Disallow: /test
+Disallow: /*test*
+
+# 特定文件类型
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+# 百度爬虫特殊规则
+User-agent: Baiduspider
+Allow: /
+Disallow: /admin/
+Disallow: /back/
+Disallow: /api/
+
+# Google 爬虫特殊规则
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /back/
+Disallow: /api/
+
+# Sitemap 位置
+Sitemap: https://www.qtoplay.com/sitemap.xml
+
+# 爬取延迟（秒）- 避免对服务器造成过大压力
+Crawl-delay: 1
