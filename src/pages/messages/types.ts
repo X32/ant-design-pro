@@ -72,6 +72,15 @@ export interface SpokenMessage {
   suggestions?: string;
   improved_answer?: string;
   raw_text?: string;
+  // 🆕 Grammar 相关字段
+  origin_message_id?: string;              // 原始消息ID（关联用户消息，客户端生成的ID）
+  grammar_origin_message_id?: string;      // 🆕 Grammar消息关联的原始消息ID（与origin_message_id值相同）
+  exam_level?: string | null;              // 考试等级："FCE"/"PET"/"KET"
+  error_count?: number | null;             // 语法错误数量
+  grammar_improved_version?: string | null; // 语法改进后的版本
+  overall_quality?: string | null;         // 整体质量："excellent"/"good"/"fair"/"poor"
+  relevance_level?: string | null;         // 相关性等级："on_topic"/"partially_on_topic"/"off_topic"
+  relevance_score?: number | null;         // 相关性分数(0-1)
 }
 
 // 兼容旧版本的会话结构（保留）

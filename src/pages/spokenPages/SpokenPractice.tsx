@@ -125,7 +125,7 @@ interface GrammarFeedbackContent {
  * 消息数据接口定义
  */
 interface Message {
-  id: number;           // 消息ID
+  id: string;           // 🔢 消息ID（字符串类型，单调递增）
   content: string | ScoreContent | GrammarFeedbackContent; // 消息内容（文本、评分或语法反馈对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
@@ -209,19 +209,19 @@ const SpokenPractice: React.FC = () => {
   const [recordedFile, setRecordedFile] = useState<string | null>(null);
   
   // 音频播放状态管理
-  const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null); // 🔧 修改为 string 类型
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   
   // AI音频自动播放开关（默认开启）
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   // AI音频缓存 Map<messageId, HTMLAudioElement>
-  const aiAudioCacheRef = useRef<Map<number, HTMLAudioElement>>(new Map());
+  const aiAudioCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map()); // 🔧 修改为 string 类型
   
   // 调试模式：控制文本框和发送按钮的显示（默认隐藏，调试时改为true）
   const [showTextInput, setShowTextInput] = useState(false);
   
   // 图片放大状态管理：记录哪些图片消息处于放大状态
-  const [expandedImages, setExpandedImages] = useState<Set<number>>(new Set());
+  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set()); // 🔧 修改为 string 类型
   
   // 🆕 语法反馈弹窗状态管理
   const [grammarFeedbackModalVisible, setGrammarFeedbackModalVisible] = useState(false);
@@ -916,13 +916,10 @@ const SpokenPractice: React.FC = () => {
         sender: m.sender
       })));
       
-      // ⭐ 并发保存所有消息，使用封装的 saveSingleMessage 函数
-      const savePromises = messages.map((msg, index) => 
-        saveSingleMessage(conversationId, msg, index, messages.length)
-      );
-      
-      // 并发保存所有消息
-      await Promise.all(savePromises);
+      // 🔢 顺序保存，确保时间顺序一致
+      for (let i = 0; i < messages.length; i++) {
+        await saveSingleMessage(conversationId, messages[i], i, messages.length);
+      }
       
       console.log('✅ 所有消息保存完成');
     };
@@ -1096,8 +1093,8 @@ const SpokenPractice: React.FC = () => {
          * @param messageId 消息 ID
          */
         const handleGrammarFeedbackMessage = (
-          data: { content: any; round_num?: number; origin_message_id?: number },
-          messageId: number,
+          data: { content: any; round_num?: number; origin_message_id?: string }, // 🔧 修改为 string
+          messageId: string, // 🔧 修改为 string
         ) => {
           try {
             // 解析 JSON 内容
@@ -1109,9 +1106,9 @@ const SpokenPractice: React.FC = () => {
             }
         
             // 🔥 仅使用 origin_message_id 精确匹配，如果没有则丢弃
-            const originMessageId = data.origin_message_id;
+            const originMessageId = String(data.origin_message_id); // 🔧 确保为字符串类型
                 
-            if (!originMessageId) {
+            if (!originMessageId || originMessageId === 'undefined') {
               console.warn('⚠️ 语法反馈消息缺少 origin_message_id，丢弃该消息');
               return;
             }
@@ -1475,7 +1472,7 @@ const SpokenPractice: React.FC = () => {
           // 将后端数据转换为前端 Message 格式
           const historyMessages: Message[] = response.data.map((msg) => {
             const baseMessage: Message = {
-              id: msg.id,
+              id: String(msg.id), // 🔧 转换为字符串
               content: msg.content,
               sender: msg.sender,
               timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
@@ -1572,10 +1569,19 @@ const SpokenPractice: React.FC = () => {
     // 用于生成唯一消息ID的计数器
     const [messageIdCounter, setMessageIdCounter] = useState(0);
     
-    // 生成唯一消息ID的函数
-    const generateMessageId = () => {
+    /**
+     * 🔢 生成唯一且单调递增的消息ID
+     * 格式：时间戳(13位) + 计数器(4位)
+     * 确保批量消息时序一致性
+     */
+    const generateMessageId = (): string => {
+      const counter = messageIdCounter;
       setMessageIdCounter(prev => prev + 1);
-      return Date.now() + Math.floor(Math.random() * 1000);
+      
+      // 时间戳（毫秒）+ 4位计数器，保证单调递增
+      const id = `${Date.now()}${counter.toString().padStart(4, '0')}`;
+      console.log(`🆔 生成消息ID: ${id} (counter: ${counter})`);
+      return id;
     };
     
     /**
@@ -1583,7 +1589,7 @@ const SpokenPractice: React.FC = () => {
      * @param messageId 消息ID
      * @param audioUrl 音频URL
      */
-    const preloadAndPlayAiAudio = (messageId: number, audioUrl: string) => {
+    const preloadAndPlayAiAudio = (messageId: string, audioUrl: string) => { // 🔧 修改为 string 类型
       // 停止当前正在播放的音频
       if (audioElement) {
         audioElement.pause();
@@ -2174,7 +2180,7 @@ const SpokenPractice: React.FC = () => {
     console.log('录音文件路径:', filePath);
     
     // 创建语音消息（本地播放用）
-    const newMessageId = Date.now() + Math.floor(Math.random() * 1000);
+    const newMessageId = generateMessageId(); // 🔧 使用统一的ID生成函数
     const now = new Date();
     const newMessage: Message = {
       id: newMessageId,

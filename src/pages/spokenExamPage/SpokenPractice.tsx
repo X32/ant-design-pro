@@ -136,7 +136,7 @@ interface FinalScoreSummaryContent {
  * 消息数据接口定义
  */
 interface Message {
-  id: number;           // 消息ID
+  id: string;           // 🔢 消息ID（字符串类型，单调递增）
   content: string | ScoreContent | GrammarFeedbackContent | FinalScoreSummaryContent; // 消息内容（文本、评分、语法反馈或总分汇总对象）
   sender: 'user' | 'ai'; // 发送者角色
   timestamp: string;    // 发送时间戳（显示用，格式：HH:mm）
@@ -159,7 +159,7 @@ interface Message {
   // 语法反馈关联字段
   grammarFeedback?: GrammarFeedbackContent;  // 关联的语法反馈内容
   grammarFeedbackStatus?: 'pending' | 'received'; // 语法反馈接收状态
-  originMessageId?: number; // 🆕 原始消息ID（语法反馈消息关联到音频消息）
+  originMessageId?: string; // 🆕 原始消息ID（语法反馈消息关联到音频消息，字符串类型）
 }
 
 // AI音频基础URL
@@ -222,19 +222,19 @@ const SpokenPractice: React.FC = () => {
   const [recordedFile, setRecordedFile] = useState<string | null>(null);
   
   // 音频播放状态管理
-  const [playingMessageId, setPlayingMessageId] = useState<number | null>(null);
+  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null); // 🔧 修改为 string 类型
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   
   // AI音频自动播放开关（默认开启）
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   // AI音频缓存 Map<messageId, HTMLAudioElement>
-  const aiAudioCacheRef = useRef<Map<number, HTMLAudioElement>>(new Map());
+  const aiAudioCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map()); // 🔧 修改为 string 类型
   
   // 调试模式：控制文本框和发送按钮的显示（默认隐藏，调试时改为true）
   const [showTextInput, setShowTextInput] = useState(false);
   
   // 图片放大状态管理：记录哪些图片消息处于放大状态
-  const [expandedImages, setExpandedImages] = useState<Set<number>>(new Set());
+  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set()); // 🔧 修改为 string 类型
   
   // 🆕 语法反馈弹窗状态管理
   const [grammarFeedbackModalVisible, setGrammarFeedbackModalVisible] = useState(false);
@@ -819,6 +819,7 @@ const SpokenPractice: React.FC = () => {
               sender: msg.sender,
               content: typeof msg.content === 'string' ? msg.content : '',
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
 
@@ -833,6 +834,7 @@ const SpokenPractice: React.FC = () => {
               audio_file_path: audioPath,
               round_num: msg.roundNum,
               transcription_text: msg.transcriptionText || '',
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
           }
@@ -842,6 +844,7 @@ const SpokenPractice: React.FC = () => {
             return await createSpokenImageMessage(conversationId, {
               image_url: msg.imageUrl!,
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               created_at: createdAt,
             });
 
@@ -851,6 +854,7 @@ const SpokenPractice: React.FC = () => {
             return await createSpokenScoreMessage(conversationId, {
               raw_text: content.rawText,
               round_num: msg.roundNum,
+              origin_message_id: msg.id.toString(), // 🆕 客户端消息ID（转为字符串）
               total_score: msg.score,
               dimension_scores: content.dimensionScores,
               advantages: content.advantages,
@@ -963,13 +967,10 @@ const SpokenPractice: React.FC = () => {
         sender: m.sender
       })));
       
-      // ⭐ 并发保存所有消息，使用封装的 saveSingleMessage 函数
-      const savePromises = messages.map((msg, index) => 
-        saveSingleMessage(conversationId, msg, index, messages.length)
-      );
-      
-      // 并发保存所有消息
-      await Promise.all(savePromises);
+      // 🔢 顺序保存，确保时间顺序一致
+      for (let i = 0; i < messages.length; i++) {
+        await saveSingleMessage(conversationId, messages[i], i, messages.length);
+      }
       
       console.log('✅ 所有消息保存完成');
     };
@@ -980,13 +981,13 @@ const SpokenPractice: React.FC = () => {
      * @param realConversationId 真实会话 ID
      */
     /**
-     * 处理语法反馈消息（关联到对应的音频消息）
+     * 🆕 处理语法反馈消息（关联到对应的用户消息）
      * @param data WebSocket 接收的语法反馈消息数据
      * @param messageId 消息唯一标识
      */
     const handleGrammarFeedbackMessage = (
-      data: { content: any; round_num?: number; origin_message_id?: number },
-      messageId: number,
+      data: { content: any; round_num?: number; origin_message_id?: string }, // 🔧 修改为 string
+      messageId: string, // 🔧 修改为 string
     ) => {
       try {
         // 解析 JSON 内容
@@ -996,10 +997,25 @@ const SpokenPractice: React.FC = () => {
         } else {
           grammarFeedback = data.content;
         }
-    
+            
+        // 🔥 仅使用 origin_message_id 精确匹配，如果没有则丢弃
+        const originMessageId = String(data.origin_message_id); // 🔧 确保为字符串类型
+                    
+        if (!originMessageId || originMessageId === 'undefined') {
+          console.warn('⚠️ 语法反馈消息缺少 origin_message_id，丢弃该消息');
+          return;
+        }
+            
+        console.log(`🔗 关联语法反馈到用户消息, origin_message_id: ${originMessageId}`);
+        
+        // 🆕 为 Grammar 消息生成新的唯一 ID（避免与用户消息 ID 冲突）
+        const grammarMessageId = generateMessageId();
+        console.log(`🆔 生成 Grammar 消息 ID: ${grammarMessageId}`);
+            
+        // 🆕 创建独立的 grammar 消息对象（用于数据库保存）
         const now = new Date();
         const grammarMessage: Message = {
-          id: messageId,
+          id: grammarMessageId, // ✅ 使用新生成的唯一 ID
           content: grammarFeedback,
           sender: 'ai',
           timestamp: now.toLocaleTimeString([], {
@@ -1008,94 +1024,57 @@ const SpokenPractice: React.FC = () => {
           }),
           fullTimestamp: now,
           roundNum: data.round_num,
-          messageType: 'grammar_feedback',
-          originMessageId: data.origin_message_id, // 🆕 保存原始消息ID用于数据库保存
+          messageType: 'grammar_feedback', // ✅ 关键！设置为 grammar_feedback 类型
+          originMessageId: originMessageId, // ✅ 关联到用户消息
         };
-    
-        // ⚭ 仍然添加到缓存（用于数据库保存）
+        
+        // 💾 添加到缓存（用于批量保存到数据库）
         messageCacheRef.current.push(grammarMessage);
-            
-        // 🆕 根据 origin_message_id 关联到原始音频消息
-        const originMessageId = data.origin_message_id;
-            
-        if (originMessageId) {
-          console.log(`🔗 关联语法反馈到音频消息, origin_message_id: ${originMessageId}`);
-              
-          // 更新对应的音频消息，添加语法反馈
-          setMessages(prevMessages => 
-            prevMessages.map(msg => {
-              if (msg.id === originMessageId) {
-                console.log(`✅ 找到匹配的音频消息, id: ${msg.id}, 错误数: ${grammarFeedback.errors?.length || 0}`);
-                return {
-                  ...msg,
-                  grammarFeedback: grammarFeedback,
-                  grammarFeedbackStatus: 'received' as const
-                };
-              }
-              return msg;
-            })
-          );
-              
-          // 同步更新缓存
-          messageCacheRef.current = messageCacheRef.current.map(msg =>
-            msg.id === originMessageId
-              ? {
-                  ...msg,
-                  grammarFeedback: grammarFeedback,
-                  grammarFeedbackStatus: 'received' as const
-                }
-              : msg
-          );
-              
-          console.log('📝 收到语法反馈消息并已关联:', {
-            origin_message_id: originMessageId,
-            round_num: data.round_num,
-            overall_quality: grammarFeedback.overall_quality,
-            errors_count: grammarFeedback.errors?.length || 0,
-            relevance_level: grammarFeedback.relevance_level,
+        console.log(`💾 Grammar 消息已添加到缓存, grammarMessageId: ${grammarMessageId}, originMessageId: ${originMessageId}`);
+                  
+        // 🔄 同时更新用户消息的 grammarFeedback 字段（用于前端显示）
+        setMessages(prevMessages => {
+          const updated = prevMessages.map(msg => {
+            if (msg.id === originMessageId) {
+              console.log(`✅ 找到匹配的用户消息, id: ${msg.id}, type: ${msg.messageType}, 错误数: ${grammarFeedback.errors?.length || 0}`);
+              return {
+                ...msg,
+                grammarFeedback: grammarFeedback,
+                grammarFeedbackStatus: 'received' as const
+              };
+            }
+            return msg;
           });
-        } else {
-          // 降级方案：如果没有 origin_message_id，使用 round_num 匹配
-          console.warn('⚠️ 未收到 origin_message_id，尝试使用 round_num 匹配');
-              
-          const targetRoundNum = data.round_num;
-          if (targetRoundNum) {
-            setMessages(prevMessages => 
-              prevMessages.map(msg => {
-                // 找到对应轮次的用户语音消息
-                if (msg.sender === 'user' && 
-                    msg.messageType === 'voice' && 
-                    msg.roundNum === targetRoundNum &&
-                    !msg.grammarFeedback) {  // 避免重复关联
-                  console.log(`✅ 通过 round_num 匹配到音频消息, roundNum: ${targetRoundNum}`);
-                  return {
-                    ...msg,
-                    grammarFeedback: grammarFeedback,
-                    grammarFeedbackStatus: 'received' as const
-                  };
-                }
-                return msg;
-              })
-            );
-                
-            messageCacheRef.current = messageCacheRef.current.map(msg =>
-              msg.sender === 'user' && 
-              msg.messageType === 'voice' && 
-              msg.roundNum === targetRoundNum &&
-              !msg.grammarFeedback
-                ? {
-                    ...msg,
-                    grammarFeedback: grammarFeedback,
-                    grammarFeedbackStatus: 'received' as const
-                  }
-                : msg
-            );
-          } else {
-            console.error('❌ 无法关联语法反馈消息：缺少 origin_message_id 和 round_num');
+                  
+          // 检查是否找到匹配
+          const found = updated.some(msg => msg.id === originMessageId);
+          if (!found) {
+            console.warn(`⚠️ 未找到 id=${originMessageId} 的消息，但 grammar 消息已缓存`);
           }
-        }
+                  
+          return updated;
+        });
+                  
+        // 🔄 同步更新缓存中的用户消息
+        messageCacheRef.current = messageCacheRef.current.map(msg =>
+          msg.id === originMessageId
+            ? {
+                ...msg,
+                grammarFeedback: grammarFeedback,
+                grammarFeedbackStatus: 'received' as const
+              }
+            : msg
+        );
+                  
+        console.log('📝 收到语法反馈消息并已关联:', {
+          origin_message_id: originMessageId,
+          round_num: data.round_num,
+          overall_quality: grammarFeedback.overall_quality,
+          errors_count: grammarFeedback.errors?.length || 0,
+          relevance_level: grammarFeedback.relevance_level,
+        });
       } catch (error) {
-        console.error('❌ 解析语法反馈消息失败:', error, data);
+        console.error('❌ 处理语法反馈消息失败:', error);
       }
     };
 
@@ -1106,7 +1085,7 @@ const SpokenPractice: React.FC = () => {
      */
     const handleTextMessage = (
       data: { content: any; round_num?: number },
-      messageId: number,
+      messageId: string, // 🔧 修改为 string
     ) => {
       const now = new Date();
       const textMessage: Message = {
@@ -1134,7 +1113,7 @@ const SpokenPractice: React.FC = () => {
      */
     const handleAudioMessage = (
       data: { content: any; audio_url?: string; round_num?: number },
-      messageId: number,
+      messageId: string, // 🔧 修改为 string
     ) => {
       // 构建完整音频URL
       const fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
@@ -1171,7 +1150,7 @@ const SpokenPractice: React.FC = () => {
      */
     const handleImageMessage = (
       data: { content: any; round_num?: number },
-      messageId: number,
+      messageId: string, // 🔧 修改为 string
     ) => {
       const now = new Date();
       const imageMessage: Message = {
@@ -1278,7 +1257,7 @@ const SpokenPractice: React.FC = () => {
         part_no?: number;      // 🆕 新增：评分阶段号
         total_parts?: number;  // 🆕 新增：总阶段数
       },
-      messageId: number,
+      messageId: string, // 🔧 修改为 string
     ) => {
       console.log('📝 收到评分消息:', {
         score: data.score,
@@ -1357,7 +1336,7 @@ const SpokenPractice: React.FC = () => {
      */
     const handleFinalScoreSummaryMessage = (
       data: any,
-      messageId: number,
+      messageId: string, // 🔧 修改为 string
     ) => {
       console.log('🏆 收到总分汇总消息:', data);
       
@@ -1752,7 +1731,7 @@ const SpokenPractice: React.FC = () => {
           // 将后端数据转换为前端 Message 格式
           const historyMessages: Message[] = response.data.map((msg) => {
             const baseMessage: Message = {
-              id: msg.id,
+              id: String(msg.id), // 🔧 转换为字符串
               content: msg.content,
               sender: msg.sender,
               timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
@@ -1849,10 +1828,19 @@ const SpokenPractice: React.FC = () => {
     // 用于生成唯一消息ID的计数器
     const [messageIdCounter, setMessageIdCounter] = useState(0);
     
-    // 生成唯一消息ID的函数
-    const generateMessageId = () => {
+    /**
+     * 🔢 生成唯一且单调递增的消息ID
+     * 格式：时间戳(13位) + 计数器(4位)
+     * 确保批量消息时序一致性
+     */
+    const generateMessageId = (): string => {
+      const counter = messageIdCounter;
       setMessageIdCounter(prev => prev + 1);
-      return Date.now() + Math.floor(Math.random() * 1000);
+      
+      // 时间戳（毫秒）+ 4位计数器，保证单调递增
+      const id = `${Date.now()}${counter.toString().padStart(4, '0')}`;
+      console.log(`🆔 生成消息ID: ${id} (counter: ${counter})`);
+      return id;
     };
     
     /**
@@ -1860,7 +1848,7 @@ const SpokenPractice: React.FC = () => {
      * @param messageId 消息ID
      * @param audioUrl 音频URL
      */
-    const preloadAndPlayAiAudio = (messageId: number, audioUrl: string) => {
+    const preloadAndPlayAiAudio = (messageId: string, audioUrl: string) => { // 🔧 修改为 string 类型
       // 停止当前正在播放的音频
       if (audioElement) {
         audioElement.pause();
@@ -2494,7 +2482,7 @@ const SpokenPractice: React.FC = () => {
     console.log('录音文件路径:', filePath);
     
     // 创建语音消息（本地播放用）
-    const newMessageId = Date.now() + Math.floor(Math.random() * 1000);
+    const newMessageId = generateMessageId(); // 🔧 使用统一的ID生成函数
     const now = new Date();
     const newMessage: Message = {
       id: newMessageId,

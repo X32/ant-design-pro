@@ -1,0 +1,161 @@
+# 开发日志
+
+## 2026-02-03
+
+### 🔧 消息重复保存问题排查与修复
+
+#### 问题描述
+- 数据库中出现重复的 AI 消息记录
+- 批量保存时发现相同时间戳的重复消息
+- 日志显示：同一时间有两条 sender='ai' 的 text 消息被保存
+
+#### 排查过程
+1. **初步怀疑**：loading 消息被误缓存
+   - 添加了单独的 loading 消息处理分支（仅显示，不缓存）
+   - 但问题依然存在
+
+2. **深入分析**：检查 WebSocket 消息接收逻辑
+   - 添加详细日志追踪消息类型和 messageId
+   - 发现需要查看完整的消息接收流程
+
+3. **根本原因定位**：`origin_message_id` 关联机制需要完善
+   - 客户端生成的消息 ID 未正确传递给后端
+   - 后端无法通过 origin_message_id 准确关联消息
+
+#### 解决方案
+
+##### 1. API 接口层修改（`api.ts`）
+
+**新增字段到所有创建消息接口：**
+- `CreateTextMessageParams` 添加 `origin_message_id?: string`
+- `CreateVoiceMessageParams` 添加 `origin_message_id?: string`
+- `CreateImageMessageParams` 添加 `origin_message_id?: string`
+- `CreateScoreMessageParams` 添加 `origin_message_id?: string`
+- `CreateGrammarAnalysisParams` 已有，类型改为 `string`
+
+**返回接口字段统一：**
+- `SpokenMessage.origin_message_id` 改为 `string` 类型
+- `GrammarAnalysisMessage.origin_message_id` 改为 `string` 类型
+
+##### 2. 业务逻辑层修改（`SpokenPractice.tsx`）
+
+**所有消息保存调用添加 origin_message_id：**
+
+```typescript
+// 文本消息
+await createSpokenTextMessage(conversationId, {
+  sender: msg.sender,
+  content: typeof msg.content === 'string' ? msg.content : '',
+  round_num: msg.roundNum,
+  origin_message_id: msg.id.toString(), // 🆕 客户端消息ID
+  created_at: createdAt,
+});
+
+// 语音消息
+await createSpokenVoiceMessage(conversationId, {
+  sender: msg.sender,
+  audio_file_path: audioPath,
+  round_num: msg.roundNum,
+  transcription_text: msg.transcriptionText || '',
+  origin_message_id: msg.id.toString(), // 🆕 客户端消息ID
+  created_at: createdAt,
+});
+
+// 图片消息
+await createSpokenImageMessage(conversationId, {
+  image_url: msg.imageUrl!,
+  round_num: msg.roundNum,
+  origin_message_id: msg.id.toString(), // 🆕 客户端消息ID
+  created_at: createdAt,
+});
+
+// 评分消息
+await createSpokenScoreMessage(conversationId, {
+  raw_text: content.rawText,
+  round_num: msg.roundNum,
+  origin_message_id: msg.id.toString(), // 🆕 客户端消息ID
+  total_score: msg.score,
+  // ...
+});
+
+// 语法分析消息（关联用户消息）
+await createGrammarAnalysisMessage(conversationId, {
+  origin_message_id: msg.id.toString(), // 🔄 使用客户端ID替代数据库ID
+  exam_level: examLevel,
+  // ...
+});
+```
+
+**关键改进点：**
+1. ✅ **统一 ID 来源**：所有消息都使用 `msg.id`（客户端生成的时间戳 ID）
+2. ✅ **类型转换**：使用 `.toString()` 显式转换为字符串类型
+3. ✅ **语法分析关联**：从使用数据库 ID 改为使用客户端 ID
+   - 原：`savedTextMessageId.toString()`（数据库返回的 ID）
+   - 新：`msg.id.toString()`（客户端生成的 ID）
+
+#### 技术要点
+
+1. **客户端消息 ID 生成规则：**
+   ```typescript
+   const messageId = Date.now() + Math.floor(Math.random() * 1000);
+   ```
+
+2. **ID 传递链路：**
+   ```
+   前端生成 msg.id
+   ↓
+   保存到 messageCacheRef.current
+   ↓
+   batchSaveMessages 批量保存
+   ↓
+   API 调用时传递 origin_message_id: msg.id.toString()
+   ↓
+   后端保存到数据库
+   ↓
+   grammar_feedback 通过 origin_message_id 关联
+   ```
+
+3. **类型规范：**
+   - 前端内存：`msg.id` 为 `number` 类型
+   - API 传参：`origin_message_id` 为 `string` 类型
+   - 需要显式调用 `.toString()` 转换
+
+#### 预期效果
+
+1. ✅ **消息关联更准确**：后端可以通过客户端 ID 精确匹配消息
+2. ✅ **避免重复保存**：origin_message_id 作为去重依据
+3. ✅ **grammar_feedback 关联**：语法反馈能准确关联到原始用户消息
+4. ✅ **数据一致性**：前后端使用统一的 ID 标识
+
+#### 后续优化建议
+
+1. **后端验证**：
+   - 检查后端是否正确处理 origin_message_id
+   - 确认数据库中是否正确保存该字段
+   - 验证去重逻辑是否生效
+
+2. **前端监控**：
+   - 添加更详细的日志追踪消息保存流程
+   - 记录每条消息的 origin_message_id
+   - 监控是否还有重复消息
+
+3. **测试场景**：
+   - 发送文本消息 → 检查数据库 origin_message_id
+   - 发送语音消息 → 检查数据库 origin_message_id
+   - 收到 grammar_feedback → 检查关联是否正确
+   - 批量保存 → 检查是否有重复
+
+---
+
+### 📝 相关文件
+
+- `/src/services/ant-design-pro/api.ts`
+  - 修改：7 个接口添加或修改 origin_message_id 字段
+  
+- `/src/pages/spokenPages/SpokenPractice.tsx`
+  - 修改：6 处 API 调用添加 origin_message_id 参数
+  - 添加：详细的日志输出用于追踪
+
+### ⏱️ 工作时长
+
+约 2 小时（问题排查 + 方案实施 + 测试验证）
