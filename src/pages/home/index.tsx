@@ -29,7 +29,12 @@ const HomePage: React.FC = () => {
 
 
  const handleLogin = () => {
-    setLoginModalVisible(true);
+    // ✅ 如果已登录，跳转到考试目录；否则打开登录弹窗
+    if (isLoggedIn) {
+      history.push('/exam-catalog');
+    } else {
+      setLoginModalVisible(true);
+    }
   };
 
   const handleLoginSuccess = () => {
@@ -357,9 +362,13 @@ const HomePage: React.FC = () => {
         <h2>准备好了吗？开始你的英语冒险！</h2>
         <p>现在就加入，免费体验超好玩的口语练习</p>
         <div className="hero-buttons">
-          <Button className="primary-button" size="large" onClick={handleLogin}>
+          <Button 
+            className="primary-button" 
+            size="large" 
+            onClick={isLoggedIn ? handleStart : handleLogin}
+          >
             <RocketButtonIcon size={28} />
-            立即出发
+            {isLoggedIn ? '开始练习' : '立即出发'}
           </Button>
         </div>
       </section>

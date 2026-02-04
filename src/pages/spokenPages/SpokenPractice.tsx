@@ -151,8 +151,8 @@ interface Message {
 
 // AI音频基础URL
 // const AI_AUDIO_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
-const AI_AUDIO_BASE_URL = 'http://localhost:9002';
-// const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
+// const AI_AUDIO_BASE_URL = 'http://localhost:9002';
+const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 
 /**
  * AI口语练习组件

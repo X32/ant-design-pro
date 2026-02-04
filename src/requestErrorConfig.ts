@@ -101,7 +101,7 @@ export const errorConfig: RequestConfig = {
       if (config.url && typeof config.url === 'string') {
         config.url = config.url
           .replace('https://api.qtoplay.com', '')
-          .replace('http://localhost:9002', '');
+          // .replace('http://localhost:9002', '');
       }
       return config;
     },
