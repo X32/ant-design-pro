@@ -54,16 +54,27 @@ const HomePage: React.FC = () => {
     history.push('/user/profile');
   };
 
-  // 结构化数据 - 教育机构
+  // 结构化数据 - 教育机构（SEO优化）
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
     "name": "SpeakCube",
-    "alternateName": "SpeakCube AI口语练习",
-    "description": "专为5-12岁少儿设计的AI英语口语练习平台,通过游戏化学习让孩子爱上说英语",
+    "alternateName": "SpeakCube AI剑桥英语口语练习平台",
+    "description": "专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈",
     "url": "https://www.qtoplay.com",
     "logo": "https://www.qtoplay.com/logo.png",
     "image": "https://www.qtoplay.com/og-image.jpg",
+    "sameAs": [
+      "https://www.zhihu.com/org/speakcube"
+    ],
+    "knowsAbout": [
+      "KET口语考试",
+      "PET口语考试",
+      "FCE口语考试",
+      "剑桥英语",
+      "英语口语练习",
+      "AI口语评分"
+    ],
     "aggregateRating": {
       "@type": "AggregateRating",
       "ratingValue": "4.8",
@@ -73,10 +84,64 @@ const HomePage: React.FC = () => {
     },
     "offers": {
       "@type": "Offer",
-      "category": "教育服务",
+      "category": "KET/PET/FCE口语模拟考试",
       "priceCurrency": "CNY",
       "availability": "https://schema.org/InStock"
     }
+  };
+
+  // 结构化数据 - 课程（SEO优化）
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "KET/PET/FCE口语真题模拟考试",
+    "description": "AI驱动的剑桥英语口语模拟考试平台，提供KET、PET、FCE口语真题练习，即时AI评分反馈",
+    "provider": {
+      "@type": "Organization",
+      "name": "SpeakCube",
+      "url": "https://www.qtoplay.com"
+    },
+    "educationalLevel": "KET/PET/FCE",
+    "teaches": "英语口语",
+    "assesses": "口语表达能力",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CNY",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
+  // 结构化数据 - FAQ（SEO优化）
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "KET口语考试难吗？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "KET口语考试难度适中，主要考察基础交流能力。通过SpeakCube AI模拟练习，每天10分钟，大多数学生2-4周即可明显提升。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "AI口语练习和外教课有什么区别？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "AI口语练习可以24小时随时练习，无需预约，即时评分反馈。价格比外教课便宜90%以上，而且AI永远不会批评孩子，让孩子更敢开口说英语。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "SpeakCube支持哪些剑桥英语考试？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SpeakCube支持KET（A2 Key）、PET（B1 Preliminary）、FCE（B2 First）三个级别的口语真题模拟考试，覆盖所有官方考试话题。"
+        }
+      }
+    ]
   };
 
   // 面包屑导航数据
@@ -97,35 +162,35 @@ const HomePage: React.FC = () => {
     <div className="home-page">
       {/* SEO Meta 标签 */}
       <Helmet>
-        {/* 基础 Meta 标签 */}
-        <title>SpeakCube - AI少儿英语口语练习平台 | 让孩子像玩游戏一样学英语</title>
+        {/* 基础 Meta 标签 - SEO优化 */}
+        <title>SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE口语真题模拟考试</title>
         <meta 
           name="description" 
-          content="SpeakCube是专为5-12岁少儿设计的AI英语口语练习平台。通过游戏化学习方式，让孩子每天10分钟轻松练口语。AI智能陪练，实时反馈发音和语法，95%家长好评，已有10000+小朋友在用。免费体验，随时随地练习英语口语。" 
+          content="专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。每天10分钟，轻松提分！已有10000+学员在用，95%家长好评。免费试用→" 
         />
         <meta 
           name="keywords" 
-          content="少儿英语口语,AI英语口语练习,儿童英语学习,英语口语APP,在线英语学习,英语口语训练,少儿英语启蒙,英语口语陪练,游戏化学习英语,小学生英语口语" 
+          content="KET口语,PET口语,FCE口语,剑桥英语口语,AI口语练习,口语模拟考试,少儿英语口语,AI英语口语练习,儿童英语学习,英语口语APP,KET口语真题,PET口语练习,FCE口语模拟" 
         />
         <meta name="author" content="SpeakCube" />
         <link rel="canonical" href="https://www.qtoplay.com/" />
 
-        {/* Open Graph / Facebook */}
+        {/* Open Graph / Facebook - SEO优化 */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.qtoplay.com/" />
-        <meta property="og:title" content="SpeakCube - AI少儿英语口语练习平台" />
-        <meta property="og:description" content="让孩子像玩游戏一样学英语,AI陪练,每天10分钟提升口语能力。95%家长好评,10000+小朋友都在用!" />
+        <meta property="og:title" content="SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE真题模拟" />
+        <meta property="og:description" content="专业KET/PET/FCE口语真题模拟考试，AI智能评分，实时反馈。每天10分钟轻松提分！" />
         <meta property="og:image" content="https://www.qtoplay.com/og-image.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="SpeakCube" />
         <meta property="og:locale" content="zh_CN" />
 
-        {/* Twitter Card */}
+        {/* Twitter Card - SEO优化 */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://www.qtoplay.com/" />
-        <meta name="twitter:title" content="SpeakCube - AI少儿英语口语练习平台" />
-        <meta name="twitter:description" content="让孩子像玩游戏一样学英语,AI陪练,每天10分钟提升口语能力" />
+        <meta name="twitter:title" content="SpeakCube - AI剑桥英语口语练习平台" />
+        <meta name="twitter:description" content="KET/PET/FCE口语真题模拟，AI陪练，每天10分钟提升口语能力" />
         <meta name="twitter:image" content="https://www.qtoplay.com/twitter-image.jpg" />
 
         {/* 移动端优化 */}
@@ -138,9 +203,15 @@ const HomePage: React.FC = () => {
         {/* <meta name="baidu-site-verification" content="YOUR_BAIDU_CODE" /> */}
         {/* <meta name="google-site-verification" content="YOUR_GOOGLE_CODE" /> */}
 
-        {/* 结构化数据 */}
+        {/* 结构化数据 - SEO优化 */}
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(courseSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
         </script>
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbData)}
@@ -152,7 +223,8 @@ const HomePage: React.FC = () => {
           <div className="logo">
             <img 
               src={logoIcon} 
-              alt="SpeakCube Logo - AI少儿英语口语练习平台" 
+              alt="SpeakCube - AI剑桥英语口语练习平台 | KET PET FCE口语模拟" 
+              title="KET/PET/FCE口语真题模拟考试平台"
               className="logo-icon"
               width="48"
               height="48"
@@ -193,16 +265,16 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="hero-content">
-          <div className="hero-badge">✨ 少儿口语练习好伙伴</div>
+          <div className="hero-badge">✨ KET/PET/FCE口语真题模拟</div>
           <h1 className="hero-main-title">
-            <span className="line">开口说英语</span>
-            <span className="line">像玩游戏一样</span>
-            <span className="highlight">有趣！</span>
+            <span className="line">AI剑桥英语</span>
+            <span className="line">口语练习平台</span>
+            <span className="highlight">真题模拟！</span>
           </h1>
-          <p className="hero-subtitle">Speak English, Play & Learn!</p>
+          <p className="hero-subtitle">KET · PET · FCE 口语真题模拟考试</p>
           <p className="hero-description">
-            每天10分钟，AI陪你练口语<br/>
-            说错也没关系，大胆开口！
+            AI智能评分，即时反馈<br/>
+            每天10分钟，轻松提升口语成绩！
           </p>
           <div className="hero-buttons">
             <Button
@@ -211,7 +283,7 @@ const HomePage: React.FC = () => {
               onClick={handleStart}
             >
               <GamepadButtonIcon size={28} />
-              开始游戏
+              开始练习
             </Button>
             <Button
               className="secondary-button"
@@ -229,7 +301,7 @@ const HomePage: React.FC = () => {
       <section id="features" className="features" aria-labelledby="features-title">
         <h2 id="features-title" className="section-title">为什么小朋友都喜欢？</h2>
         <p className="section-subtitle">
-          超级好玩的 AI 老师，让学英语像玩游戏一样上瘾！
+          对标KET/PET/FCE考试标准，AI考官陪你练口语！
         </p>
         <div className="features-grid">
           <div className="feature-card">

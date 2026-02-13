@@ -1,7 +1,7 @@
 import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { App, Button, Card, Spin, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { history, useModel } from '@umijs/max';
+import { history, useModel, Helmet } from '@umijs/max';
 import UserAvatar from '@/components/UserAvatar';
 import LoginModal from '@/components/LoginModal';
 import {
@@ -532,6 +532,26 @@ const ExamCatalog: React.FC = () => {
 
   return (
     <div className="exam-catalog-container">
+      {/* SEO优化 - Meta标签 */}
+      <Helmet>
+        <title>KET/PET/FCE口语真题库 - AI模拟考试 | SpeakCube</title>
+        <meta 
+          name="description" 
+          content="剑桥英语KET、PET、FCE口语真题模拟考试，覆盖所有官方考试话题。AI智能评分，即时反馈，帮助孩子快速提升口语成绩。选择适合的考试级别，开始练习！" 
+        />
+        <meta 
+          name="keywords" 
+          content="KET口语真题,PET口语真题,FCE口语真题,剑桥英语口语考试,口语模拟考试,AI口语评分,KET口语练习,PET口语模拟,FCE口语练习" 
+        />
+        <link rel="canonical" href="https://www.qtoplay.com/exam-catalog" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="KET/PET/FCE口语真题库 - AI模拟考试" />
+        <meta property="og:description" content="剑桥英语口语真题模拟考试，AI智能评分，即时反馈" />
+        <meta property="og:url" content="https://www.qtoplay.com/exam-catalog" />
+        <meta property="og:type" content="website" />
+      </Helmet>
+
       {/* 顶部导航栏 */}
       <div className="exam-catalog-nav">
         <div className="nav-left">
@@ -566,9 +586,9 @@ const ExamCatalog: React.FC = () => {
       </div>
 
       <div className="exam-catalog-header">
-        <h1 className="exam-catalog-title">🎓 口语练习</h1>
+        <h1 className="exam-catalog-title">🎓 KET/PET/FCE口语真题练习</h1>
         <p className="exam-catalog-description">
-          浏览所有考试分类、试卷和题目。点击分类可展开查看试卷列表，点击试卷可查看题目详情。
+          剑桥英语口语真题库，覆盖KET（A2）、PET（B1）、FCE（B2）三个级别。点击分类可展开查看试卷列表，点击试卷可查看题目详情，AI智能评分即时反馈。
         </p>
       </div>
 
@@ -613,9 +633,9 @@ const ExamCatalog: React.FC = () => {
 
       {/* 口语考试部分 */}
       <div className="exam-catalog-header" style={{ marginTop: '40px' }}>
-        <h1 className="exam-catalog-title">🎯 口语考试</h1>
+        <h2 className="exam-catalog-title">🎯 剑桥英语口语模拟考试</h2>
         <p className="exam-catalog-description">
-          点击分类可展开查看试卷列表，点击"开始考试"按钮进行整套试卷考试。
+          完整模拟KET/PET/FCE口语考试流程，点击分类可展开查看试卷列表，点击"开始考试"按钮进行整套试卷考试，AI考官实时评分。
         </p>
       </div>
 

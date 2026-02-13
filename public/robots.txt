@@ -1,54 +1,51 @@
-# robots.txt for SpeakCube
-# 用于指导搜索引擎爬虫如何抓取网站内容
+# SpeakCube AI剑桥英语口语练习平台
+# https://www.qtoplay.com
+# robots.txt - SEO优化版本
 
 # 允许所有搜索引擎爬虫访问
 User-agent: *
-
-# 允许访问的路径
 Allow: /
+Allow: /home
+Allow: /home/intro
 Allow: /exam-catalog
-Allow: /home/
+Allow: /home/proto/user-agreement
+Allow: /home/proto/privacy-policy
 Allow: /orders/vip-plans
 Allow: /orders/coin-packages
 
-# 禁止访问的路径
-# 后台管理页面
+# 禁止爬取的路径
 Disallow: /admin/
 Disallow: /back/
 Disallow: /dashboard/
-
-# API 接口
 Disallow: /api/
-
-# 用户私密信息
-Disallow: /user/profile
-Disallow: /orders/
-
-# 测试页面
-Disallow: /test
-Disallow: /*test*
-
-# 特定文件类型
+Disallow: /user/
 Disallow: /*.json$
-Disallow: /*.js$
-Disallow: /*.css$
+Disallow: /*?*
 
 # 百度爬虫特殊规则
 User-agent: Baiduspider
 Allow: /
+Allow: /home
+Allow: /exam-catalog
+Allow: /home/intro
+Allow: /home/proto/
 Disallow: /admin/
-Disallow: /back/
 Disallow: /api/
+Disallow: /user/
 
 # Google 爬虫特殊规则
 User-agent: Googlebot
 Allow: /
+Allow: /home
+Allow: /exam-catalog
+Allow: /home/intro
+Allow: /home/proto/
 Disallow: /admin/
-Disallow: /back/
 Disallow: /api/
+Disallow: /user/
 
-# Sitemap 位置
+# 站点地图
 Sitemap: https://www.qtoplay.com/sitemap.xml
 
-# 爬取延迟（秒）- 避免对服务器造成过大压力
+# 爬虫访问频率（建议）
 Crawl-delay: 1
