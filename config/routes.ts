@@ -33,6 +33,11 @@ export default [
         component: './user/profile',
       },
       {
+        name: 'feedback',
+        path: '/user/feedback',
+        component: './feedback',
+      },
+      {
         name: 'forgetpsw',
         path: '/user/forgetpsw',
         component: './user/forgetpsw',
@@ -66,7 +71,49 @@ export default [
     component: './home',
     layout: false,
   },
-  
+
+  // ========== 品牌介绍页面（公开访问，无需登录）==========
+  {
+    path: '/about',
+    name: 'about',
+    component: './about',
+    layout: false,
+  },
+
+  // ========== 资料下载页面（公开访问，无需登录）==========
+  {
+    path: '/downloads',
+    name: 'downloads',
+    component: './downloads',
+    layout: false,
+  },
+
+  // ========== 文章系统页面（公开访问，无需登录）==========
+  {
+    path: '/articles',
+    name: 'articles',
+    component: './articles',
+    layout: false,
+  },
+  {
+    path: '/articles/:id',
+    name: 'article-detail',
+    component: './articles/detail',
+    layout: false,
+  },
+  {
+    path: '/articles/edit',
+    name: 'article-create',
+    component: './articles/edit',
+    layout: false,
+  },
+  {
+    path: '/articles/edit/:id',
+    name: 'article-edit',
+    component: './articles/edit',
+    layout: false,
+  },
+
   // ========== 考试介绍页面（公开访问，无需登录）==========
   {
     path: '/home/intro',
@@ -97,6 +144,80 @@ export default [
     name: 'exam-catalog',
     component: './exam-catalog',
     layout: false,  // 不显示左侧菜单和顶部导航
+  },
+
+  // ========== KET/PET/FCE口语考试专区（公开访问，无需登录）==========
+  {
+    path: '/ket-speaking',
+    name: 'ket-speaking',
+    component: './exam-areas/ket-speaking',
+    layout: false,
+  },
+  {
+    path: '/ket-speaking/intro',
+    name: 'ket-intro',
+    component: './exam-areas/ket-speaking/intro',
+    layout: false,
+  },
+  {
+    path: '/ket-speaking/scoring',
+    name: 'ket-scoring',
+    component: './exam-areas/ket-speaking/scoring',
+    layout: false,
+  },
+  {
+    path: '/ket-speaking/tips',
+    name: 'ket-tips',
+    component: './exam-areas/ket-speaking/tips',
+    layout: false,
+  },
+  {
+    path: '/pet-speaking',
+    name: 'pet-speaking',
+    component: './exam-areas/pet-speaking',
+    layout: false,
+  },
+  {
+    path: '/pet-speaking/intro',
+    name: 'pet-intro',
+    component: './exam-areas/pet-speaking/intro',
+    layout: false,
+  },
+  {
+    path: '/pet-speaking/scoring',
+    name: 'pet-scoring',
+    component: './exam-areas/pet-speaking/scoring',
+    layout: false,
+  },
+  {
+    path: '/pet-speaking/tips',
+    name: 'pet-tips',
+    component: './exam-areas/pet-speaking/tips',
+    layout: false,
+  },
+  {
+    path: '/fce-speaking',
+    name: 'fce-speaking',
+    component: './exam-areas/fce-speaking',
+    layout: false,
+  },
+  {
+    path: '/fce-speaking/intro',
+    name: 'fce-intro',
+    component: './exam-areas/fce-speaking/intro',
+    layout: false,
+  },
+  {
+    path: '/fce-speaking/scoring',
+    name: 'fce-scoring',
+    component: './exam-areas/fce-speaking/scoring',
+    layout: false,
+  },
+  {
+    path: '/fce-speaking/tips',
+    name: 'fce-tips',
+    component: './exam-areas/fce-speaking/tips',
+    layout: false,
   },
 
   // ========== 后台管理路由（需要管理员权限）==========
@@ -192,6 +313,18 @@ export default [
             name: 'cat-exam-list',
             path: '/back/exam/catexamList',
             component: './exam/catexamList',
+          },
+        ],
+      },
+      {
+        name: 'articles',
+        icon: 'fileText',
+        path: '/back/articles',
+        routes: [
+          {
+            name: 'article-review',
+            path: '/back/articles/review',
+            component: './back/articles/review',
           },
         ],
       },

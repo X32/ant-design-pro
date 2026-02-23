@@ -2,6 +2,7 @@ import { history, useModel, Helmet } from '@umijs/max';
 import { Button } from 'antd';
 import React, { useState, useEffect } from 'react';
 import LoginModal from '@/components/LoginModal';
+import BreadcrumbNav from '@/components/BreadcrumbNav';
 import {
   RobotIcon,
   TargetIcon,
@@ -58,9 +59,9 @@ const HomePage: React.FC = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "SpeakCube",
-    "alternateName": "SpeakCube AI剑桥英语口语练习平台",
-    "description": "专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈",
+    "name": "口语魔方SpeakCube",
+    "alternateName": "口语魔方SpeakCube AI剑桥英语口语练习平台",
+    "description": "专业AI剑桥英语口语练习平台 - 口语魔方SpeakCube，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈",
     "url": "https://www.qtoplay.com",
     "logo": "https://www.qtoplay.com/logo.png",
     "image": "https://www.qtoplay.com/og-image.jpg",
@@ -98,7 +99,7 @@ const HomePage: React.FC = () => {
     "description": "AI驱动的剑桥英语口语模拟考试平台，提供KET、PET、FCE口语真题练习，即时AI评分反馈",
     "provider": {
       "@type": "Organization",
-      "name": "SpeakCube",
+      "name": "口语魔方SpeakCube",
       "url": "https://www.qtoplay.com"
     },
     "educationalLevel": "KET/PET/FCE",
@@ -163,35 +164,36 @@ const HomePage: React.FC = () => {
       {/* SEO Meta 标签 */}
       <Helmet>
         {/* 基础 Meta 标签 - SEO优化 */}
-        <title>SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE口语真题模拟考试</title>
+        <title>口语魔方SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE口语真题模拟考试</title>
         <meta 
           name="description" 
-          content="专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。每天10分钟，轻松提分！已有10000+学员在用，95%家长好评。免费试用→" 
+          content="专业AI剑桥英语口语练习平台 - 口语魔方SpeakCube，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。每天10分钟，轻松提分！已有10000+学员在用，95%家长好评。免费试用→" 
         />
         <meta 
           name="keywords" 
-          content="KET口语,PET口语,FCE口语,剑桥英语口语,AI口语练习,口语模拟考试,少儿英语口语,AI英语口语练习,儿童英语学习,英语口语APP,KET口语真题,PET口语练习,FCE口语模拟" 
+          content="口语魔方,SpeakCube,口语魔方SpeakCube,KET口语,PET口语,FCE口语,剑桥英语口语,AI口语练习,口语模拟考试,少儿英语口语,AI英语口语练习,儿童英语学习,英语口语APP,KET口语真题,PET口语练习,FCE口语模拟" 
         />
         <meta name="author" content="SpeakCube" />
         <link rel="canonical" href="https://www.qtoplay.com/" />
 
         {/* Open Graph / Facebook - SEO优化 */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.qtoplay.com/" />
-        <meta property="og:title" content="SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE真题模拟" />
-        <meta property="og:description" content="专业KET/PET/FCE口语真题模拟考试，AI智能评分，实时反馈。每天10分钟轻松提分！" />
-        <meta property="og:image" content="https://www.qtoplay.com/og-image.jpg" />
+        <meta property="og:site_name" content="SpeakCube" />
+        <meta property="og:title" content="口语魔方SpeakCube - AI剑桥英语口语练习平台 | KET/PET/FCE真题模拟" />
+        <meta property="og:description" content="专业KET/PET/FCE口语真题模拟考试 - 口语魔方SpeakCube，AI智能评分，实时反馈。每天10分钟轻松提分！" />
+        <meta property="og:url" content="https://www.qtoplay.com" />
+        <meta property="og:image" content="https://www.qtoplay.com/og-image-1200x630.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="SpeakCube" />
+        <meta property="og:image:alt" content="SpeakCube AI剑桥英语口语练习平台" />
         <meta property="og:locale" content="zh_CN" />
 
         {/* Twitter Card - SEO优化 */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://www.qtoplay.com/" />
-        <meta name="twitter:title" content="SpeakCube - AI剑桥英语口语练习平台" />
-        <meta name="twitter:description" content="KET/PET/FCE口语真题模拟，AI陪练，每天10分钟提升口语能力" />
-        <meta name="twitter:image" content="https://www.qtoplay.com/twitter-image.jpg" />
+        <meta name="twitter:title" content="口语魔方SpeakCube - AI剑桥英语口语练习平台" />
+        <meta name="twitter:description" content="KET/PET/FCE口语真题模拟 - 口语魔方SpeakCube，AI陪练，每天10分钟提升口语能力" />
+        <meta name="twitter:image" content="https://www.qtoplay.com/twitter-card-1200x628.jpg" />
+        <meta name="twitter:image:alt" content="SpeakCube AI口语练习" />
 
         {/* 移动端优化 */}
         <meta name="theme-color" content="#1890ff" />
@@ -202,6 +204,17 @@ const HomePage: React.FC = () => {
         {/* 搜索引擎验证 (需要替换为实际的验证码) */}
         {/* <meta name="baidu-site-verification" content="YOUR_BAIDU_CODE" /> */}
         {/* <meta name="google-site-verification" content="YOUR_GOOGLE_CODE" /> */}
+
+        {/* 百度统计代码 (需要替换为实际的统计代码) */}
+        {/* <script>
+          var _hmt = _hmt || [];
+          (function() {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?YOUR_BAIDU_ANALYTICS_ID";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+          })();
+        </script> */}
 
         {/* 结构化数据 - SEO优化 */}
         <script type="application/ld+json">
@@ -217,22 +230,45 @@ const HomePage: React.FC = () => {
           {JSON.stringify(breadcrumbData)}
         </script>
       </Helmet>
+
+      {/* 面包屑导航 */}
+      <BreadcrumbNav items={[]} />
+
       {/* 导航栏 */}
       <nav className="navbar">
         <div className="nav-container">
           <div className="logo">
-            <img 
-              src={logoIcon} 
-              alt="SpeakCube - AI剑桥英语口语练习平台 | KET PET FCE口语模拟" 
+            <img
+              src={logoIcon}
+              alt="口语魔方SpeakCube - AI剑桥英语口语练习平台 | KET PET FCE口语模拟"
               title="KET/PET/FCE口语真题模拟考试平台"
               className="logo-icon"
               width="48"
               height="48"
               loading="eager"
+              decoding="async"
             />
-            <span className="logo-text">SpeakCube AI 口语练习</span>
+            <span className="logo-text">口语魔方SpeakCube AI 口语练习</span>
           </div>
           <ul className="nav-links">
+            <li>
+              <a href="/about">品牌</a>
+            </li>
+            <li>
+              <a href="/downloads">资料</a>
+            </li>
+            <li>
+              <a href="/articles">文章</a>
+            </li>
+            <li>
+              <a href="/ket-speaking">KET专区</a>
+            </li>
+            <li>
+              <a href="/pet-speaking">PET专区</a>
+            </li>
+            <li>
+              <a href="/fce-speaking">FCE专区</a>
+            </li>
             <li>
               <a href="#features">特性</a>
             </li>
@@ -267,8 +303,8 @@ const HomePage: React.FC = () => {
         <div className="hero-content">
           <div className="hero-badge">✨ KET/PET/FCE口语真题模拟</div>
           <h1 className="hero-main-title">
-            <span className="line">AI剑桥英语</span>
-            <span className="line">口语练习平台</span>
+            <span className="line">口语魔方</span>
+            <span className="line">AI剑桥英语口语练习平台</span>
             <span className="highlight">真题模拟！</span>
           </h1>
           <p className="hero-subtitle">KET · PET · FCE 口语真题模拟考试</p>

@@ -317,6 +317,76 @@ export const RocketButtonIcon: React.FC<IconProps> = ({ size = 40, className = '
   </svg>
 );
 
+// 下载图标
+export const DownloadIcon: React.FC<IconProps> = ({ size = 80, className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    className={className}
+    style={{ filter: 'drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2))' }}
+  >
+    {/* 下载箭头 */}
+    <path d="M 50 15 L 50 65" stroke="#FF6B6B" strokeWidth="6" strokeLinecap="round"/>
+    <path d="M 30 45 L 50 65 L 70 45" fill="none" stroke="#FF6B6B" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+    {/* 底部箭头 */}
+    <path d="M 10 75 Q 50 65 90 75" fill="none" stroke="#000" strokeWidth="4" strokeLinecap="round"/>
+    <path d="M 10 75 L 10 90" stroke="#000" strokeWidth="4" strokeLinecap="round"/>
+    <path d="M 90 75 L 90 90" stroke="#000" strokeWidth="4" strokeLinecap="round"/>
+    {/* 底部横线 */}
+    <line x1="10" y1="90" x2="90" y2="90" stroke="#000" strokeWidth="4" strokeLinecap="round"/>
+    {/* 装饰点 */}
+    <circle cx="20" cy="82" r="4" fill="#FFD93D" stroke="#000" strokeWidth="2"/>
+    <circle cx="80" cy="82" r="4" fill="#4ECDC4" stroke="#000" strokeWidth="2"/>
+  </svg>
+);
+
+// 文件图标
+export const FileIcon: React.FC<IconProps> = ({ size = 80, className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    className={className}
+    style={{ filter: 'drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2))' }}
+  >
+    {/* 文件主体 */}
+    <path d="M 25 10 L 75 10 L 85 20 L 85 90 L 25 90 Z" fill="#FFD93D" stroke="#000" strokeWidth="3"/>
+    {/* 文件折角 */}
+    <path d="M 75 10 L 75 20 L 85 20" fill="#FFF" stroke="#000" strokeWidth="3"/>
+    {/* 文件内容线 */}
+    <line x1="35" y1="35" x2="75" y2="35" stroke="#000" strokeWidth="3" strokeLinecap="round"/>
+    <line x1="35" y1="50" x2="75" y2="50" stroke="#000" strokeWidth="3" strokeLinecap="round"/>
+    <line x1="35" y1="65" x2="60" y2="65" stroke="#000" strokeWidth="3" strokeLinecap="round"/>
+    {/* 装饰星星 */}
+    <circle cx="65" cy="78" r="4" fill="#FF6B6B" stroke="#000" strokeWidth="2"/>
+  </svg>
+);
+
+// 文本图标
+export const FileTextIcon: React.FC<IconProps> = ({ size = 80, className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    className={className}
+    style={{ filter: 'drop-shadow(3px 3px 0px rgba(0, 0, 0, 0.2))' }}
+  >
+    {/* 文件主体 */}
+    <path d="M 20 15 L 80 15 L 90 25 L 90 85 L 20 85 Z" fill="#4ECDC4" stroke="#000" strokeWidth="3"/>
+    {/* 文件折角 */}
+    <path d="M 80 15 L 80 25 L 90 25" fill="#FFF" stroke="#000" strokeWidth="3"/>
+    {/* 标题栏 */}
+    <rect x="25" y="30" width="60" height="15" fill="#FFD93D" stroke="#000" strokeWidth="2"/>
+    {/* 文本内容 */}
+    <line x1="30" y1="55" x2="80" y2="55" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="30" y1="65" x2="70" y2="65" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="30" y1="75" x2="75" y2="75" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+    {/* 装饰圆点 */}
+    <circle cx="78" cy="78" r="4" fill="#FF6B6B" stroke="#000" strokeWidth="2"/>
+  </svg>
+);
+
 // 默认导出所有图标
 export default {
   RobotIcon,
@@ -332,4 +402,7 @@ export default {
   GamepadButtonIcon,
   BookButtonIcon,
   RocketButtonIcon,
+  DownloadIcon,
+  FileIcon,
+  FileTextIcon,
 };

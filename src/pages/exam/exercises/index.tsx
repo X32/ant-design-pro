@@ -931,10 +931,12 @@ const ExercisesManagement: React.FC = () => {
         open={modalVisible}
         onOk={handleSave}
         onCancel={() => setModalVisible(false)}
-        width={600}
+        width={800}
         className="exercise-modal"
         okText="保存"
         cancelText="取消"
+        maskClosable={false}
+        keyboard={false}
       >
         <Form
           form={form}

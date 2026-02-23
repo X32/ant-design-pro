@@ -230,4 +230,126 @@ declare namespace API {
     message?: string;
     data: WorkflowTypeOption;
   };
+
+  /** 用户反馈项 */
+  type FeedbackItem = {
+    id: number;
+    user_id: number;
+    username?: string;
+    feedback_type: 'bug' | 'suggestion' | 'question' | 'other';
+    title: string;
+    content: string;
+    contact_info: string | null;
+    status: 'pending' | 'processing' | 'resolved' | 'closed';
+    admin_reply?: string;
+    created_at: string;
+    updated_at?: string;
+  };
+
+  /** 提交反馈参数 */
+  type SubmitFeedbackParams = {
+    feedback_type: 'bug' | 'suggestion' | 'question' | 'other';
+    title: string;
+    content: string;
+    contact_info?: string;
+  };
+
+  // ==================== 文章系统相关类型 ====================
+
+  /** 文章状态 */
+  type ArticleStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published' | 'archived';
+
+  /** 文章类型 */
+  type ArticleType = 'study_guide' | 'exam_tips' | 'resource';
+
+  /** 内容块类型 */
+  type BlockType = 'text' | 'image' | 'video' | 'code' | 'quote' | 'divider' | 'list';
+
+  /** 列表类型 */
+  type ListType = 'ordered' | 'unordered';
+
+  /** 内容块 */
+  type ContentBlock = {
+    id?: number;
+    block_type: BlockType;
+    sort_order: number;
+    content?: string | null;
+    media_url?: string | null;
+    media_alt?: string | null;
+    caption?: string | null;
+    code_language?: string | null;
+    list_type?: ListType;
+  };
+
+  /** 文章分类 */
+  type ArticleCategory = {
+    id: number;
+    name: string;
+    slug: string;
+    parent_id: number | null;
+    sort_order: number;
+    description?: string;
+    icon?: string | null;
+    article_count: number;
+    children?: ArticleCategory[];
+  };
+
+  /** 文章标签 */
+  type ArticleTag = {
+    id: number;
+    name: string;
+    slug: string;
+    color?: string;
+    article_count: number;
+  };
+
+  /** 文章作者 */
+  type ArticleAuthor = {
+    id: number;
+    username: string;
+    avatar?: string;
+  };
+
+  /** 文章列表项 */
+  type ArticleListItem = {
+    id: number;
+    title: string;
+    summary: string;
+    cover_image?: string;
+    status: ArticleStatus;
+    article_type: ArticleType;
+    view_count: number;
+    like_count: number;
+    comment_count: number;
+    published_at?: string;
+    keywords?: string;
+    meta_description?: string;
+    created_at: string;
+    updated_at: string;
+    author: ArticleAuthor;
+    categories: ArticleCategory[];
+    tags: ArticleTag[];
+    is_liked?: boolean;
+  };
+
+  /** 文章详情 */
+  type ArticleDetail = ArticleListItem & {
+    blocks: ContentBlock[];
+  };
+
+  /** 创建文章数据 */
+  type ArticleCreateData = {
+    title: string;
+    summary?: string;
+    cover_image?: string;
+    article_type?: ArticleType;
+    category_ids?: number[];
+    tag_ids?: number[];
+    blocks?: ContentBlock[];
+    keywords?: string;
+    meta_description?: string;
+  };
+
+  /** 更新文章数据 */
+  type ArticleUpdateData = Partial<ArticleCreateData>;
 }

@@ -1,0 +1,458 @@
+.exam-area-container {
+  min-height: 100vh;
+  background: #FFF9E6;
+  font-family: 'Fredoka One', 'Comic Sans MS', 'YouYuan', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  overflow-x: hidden;
+}
+
+// 顶部导航栏 - 与首页风格一致
+.exam-area-navbar {
+  background: #FFD93D;
+  border-bottom: 4px solid #000;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 1rem 0;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
+
+  .nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .nav-left, .nav-right {
+    flex: 1;
+  }
+
+  .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .nav-logo {
+      border-radius: 12px 8px 15px 10px;
+      border: 3px solid #000;
+      box-shadow: 3px 3px 0px #000;
+    }
+
+    .nav-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #1A535C;
+      text-shadow: 2px 2px 0px #FF6B6B;
+      transform: rotate(-1deg);
+    }
+  }
+
+  .nav-right {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .back-button {
+    color: #1A535C;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border: 3px solid #000;
+    border-radius: 15px 10px 20px 12px;
+    background: #FFF;
+    box-shadow: 3px 3px 0px #000;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #FF6B6B;
+      background: #4ECDC4;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px #000;
+    }
+  }
+
+  .ant-btn-primary {
+    background: #FF6B6B;
+    border: 3px solid #000;
+    border-radius: 20px 15px 25px 18px;
+    font-weight: 700;
+    box-shadow: 4px 4px 0px #000;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #FF5252;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000;
+    }
+  }
+}
+
+// Banner区域 - 卡通风格
+.exam-area-banner {
+  padding: 5rem 2rem;
+  text-align: center;
+  position: relative;
+  border-bottom: 5px solid #000;
+  background: #4ECDC4;
+
+  // 波点背景图案
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(#FFD93D 15%, transparent 16%), radial-gradient(#FF6B6B 15%, transparent 16%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    opacity: 0.15;
+  }
+
+  .banner-content {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .banner-badge {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px 30px 40px 25px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1A535C;
+    margin-bottom: 2rem;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0px #000;
+    transform: rotate(-3deg);
+  }
+
+  .banner-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #1A535C;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+    text-shadow: 3px 3px 0px #FFF;
+    transform: rotate(-1deg);
+  }
+
+  .banner-description {
+    font-size: 1.4rem;
+    color: #1A535C;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    font-weight: 600;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .banner-tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 3rem;
+
+    .tag {
+      background: #FFF;
+      padding: 0.8rem 1.5rem;
+      border-radius: 20px 15px 25px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1A535C;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0px #000;
+      transition: all 0.2s;
+
+      &:hover {
+        transform: scale(1.05) rotate(2deg);
+        box-shadow: 6px 6px 0px #000;
+      }
+    }
+  }
+
+  .start-button {
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    font-weight: 900;
+    border-radius: 30px 20px 25px 35px;
+    border: 3px solid #000;
+    box-shadow: 5px 5px 0px #000;
+    height: auto;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #FF6B6B !important;
+    color: white !important;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translate(-3px, -3px) rotate(-1deg);
+      box-shadow: 8px 8px 0px #000;
+      background: #FF5252 !important;
+      color: white !important;
+    }
+
+    &:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000;
+    }
+  }
+}
+
+// 主要内容区域
+.exam-area-main {
+  max-width: 1200px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+// Tabs 容器 - 卡通风格
+.tabs-container {
+  padding: 1.5rem;
+  background: #FFF;
+  border-radius: 30px 20px 25px 35px;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0px #000;
+  transform: rotate(-1deg);
+}
+
+// 信息按钮容器
+.info-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  .ant-btn {
+    background: #FFD93D;
+    border: 3px solid #000;
+    border-radius: 15px 10px 20px 12px;
+    font-weight: 700;
+    color: #1A535C;
+    box-shadow: 3px 3px 0px #000;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #4ECDC4;
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px #000;
+      color: #1A535C;
+    }
+  }
+}
+
+// Tabs 组件 - 卡通风格
+.ant-tabs {
+  .ant-tabs-nav {
+    margin-bottom: 1.5rem;
+
+    &::before {
+      border-bottom-color: #000;
+    }
+  }
+
+  .ant-tabs-tab {
+    padding: 1rem 2rem;
+    margin-right: 0.75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-radius: 15px 10px 12px 18px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #FF6B6B;
+      background: #FFF9E6;
+    }
+
+    &.ant-tabs-tab-active {
+      background: #FF6B6B;
+      border-color: #000;
+      color: white;
+      box-shadow: 3px 3px 0px #000;
+
+      .ant-tabs-tab-btn {
+        color: white;
+      }
+    }
+  }
+
+  .ant-tabs-ink-bar {
+    display: none;
+  }
+
+  // 大号 tab 标签样式
+  .large-tab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.15rem;
+
+    .anticon {
+      font-size: 1.2rem;
+    }
+  }
+
+  // 重要 tab 突出样式 - 卡通风格
+  .important-tab {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #FF6B6B;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px 8px 14px 10px;
+    border: 3px solid #000;
+    background: linear-gradient(135deg, #FFE66D 0%, #FFD93D 100%);
+    box-shadow: 5px 5px 0px #000;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transition: all 0.2s;
+    display: inline-block;
+
+    // 卡通风格的装饰边框
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+      border: 2px dashed rgba(0, 0, 0, 0.2);
+      border-radius: 8px 6px 10px 8px;
+      pointer-events: none;
+    }
+
+    // 图标样式
+    .anticon {
+      font-size: 1.5rem;
+      color: #1A535C;
+      filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.2));
+    }
+
+    // 悬停效果
+    &:hover {
+      background: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);
+      transform: translate(-2px, -2px) rotate(-2deg);
+      box-shadow: 7px 7px 0px #000;
+
+      &::after {
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .exam-area-navbar {
+    .nav-container {
+      padding: 0 1rem;
+    }
+
+    .nav-center {
+      gap: 0.5rem;
+
+      .nav-title {
+        font-size: 1.2rem;
+      }
+    }
+
+    .back-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+
+      span {
+        display: none;
+      }
+    }
+  }
+
+  .exam-area-banner {
+    padding: 3rem 1rem;
+
+    .banner-title {
+      font-size: 2rem;
+    }
+
+    .banner-description {
+      font-size: 1.1rem;
+    }
+
+    .banner-tags {
+      gap: 0.8rem;
+
+      .tag {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    .start-button {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+    }
+  }
+
+  .exam-area-main {
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .tabs-container {
+    padding: 1rem;
+  }
+
+  .info-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .ant-btn {
+      width: 100%;
+    }
+  }
+
+  .ant-tabs {
+    .ant-tabs-tab {
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+
+      .large-tab-label {
+        font-size: 1.05rem;
+        gap: 0.4rem;
+
+        .anticon {
+          font-size: 1.1rem;
+        }
+      }
+
+      .important-tab {
+        font-size: 1.2rem;
+        padding: 0.35rem 0.7rem;
+        border-width: 2.5px;
+
+        &::after {
+          top: 2px;
+          left: 2px;
+          right: 2px;
+          bottom: 2px;
+        }
+
+        .anticon {
+          font-size: 1.3rem;
+        }
+
+        &:hover {
+          transform: translate(-1px, -1px) rotate(-2deg);
+          box-shadow: 4px 4px 0px #000;
+        }
+      }
+    }
+  }
+}

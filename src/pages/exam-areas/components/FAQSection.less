@@ -1,0 +1,133 @@
+.faq-section-card {
+  margin: 24px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+
+  .faq-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .faq-icon {
+      font-size: 24px;
+      color: #1890ff;
+      margin-right: 12px;
+    }
+
+    .faq-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #262626;
+    }
+  }
+
+  .faq-collapse {
+    .faq-panel {
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0 !important;
+      background: #fafafa;
+      overflow: hidden;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .ant-collapse-header {
+        padding: 16px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        color: #262626;
+        transition: all 0.3s;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+      }
+
+      .ant-collapse-content {
+        border-top: 1px solid #e8e8e8;
+        background: #fff;
+      }
+
+      .ant-collapse-content-box {
+        padding: 16px 20px;
+      }
+
+      .faq-question {
+        display: flex;
+        align-items: center;
+
+        &::before {
+          content: 'Q';
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #1890ff;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          margin-right: 12px;
+          flex-shrink: 0;
+        }
+      }
+
+      .faq-answer {
+        margin: 0;
+        color: #595959;
+        line-height: 1.8;
+        font-size: 14px;
+
+        &::before {
+          content: 'A';
+          display: inline-block;
+          width: 28px;
+          height: 28px;
+          border-radius: 4px;
+          background: #52c41a;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 600;
+          text-align: center;
+          line-height: 28px;
+          margin-right: 12px;
+          float: left;
+        }
+      }
+    }
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .faq-section-card {
+    margin: 16px 0;
+
+    .faq-header {
+      .faq-icon {
+        font-size: 20px;
+        margin-right: 10px;
+      }
+
+      .faq-title {
+        font-size: 18px;
+      }
+    }
+
+    .faq-collapse .faq-panel {
+      .ant-collapse-header {
+        padding: 14px 16px;
+        font-size: 14px;
+      }
+
+      .ant-collapse-content-box {
+        padding: 14px 16px;
+      }
+    }
+  }
+}

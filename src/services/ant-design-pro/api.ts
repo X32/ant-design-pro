@@ -3724,3 +3724,481 @@ export async function deleteWorkflowType(
     ...(options || {}),
   });
 }
+
+// ==================== 用户反馈相关 ====================
+
+/**
+ * 提交用户反馈
+ * POST /api/auth/feedback
+ */
+export async function submitFeedback(
+  data: {
+    feedback_type: 'bug' | 'suggestion' | 'question' | 'other';
+    title: string;
+    content: string;
+    contact_info?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message: string;
+    data?: {
+      id: number;
+      user_id: number;
+      feedback_type: string;
+      title: string;
+      content: string;
+      contact_info: string | null;
+      status: string;
+      created_at: string;
+    };
+  }>(API_ENDPOINTS.FEEDBACK_SUBMIT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取我的反馈列表
+ * GET /api/auth/feedback/my
+ */
+export async function getMyFeedbackList(options?: { [key: string]: any }) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: API.FeedbackItem[];
+  }>(API_ENDPOINTS.FEEDBACK_MY_LIST, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取反馈详情
+ * GET /api/auth/feedback/{feedback_id}
+ */
+export async function getFeedbackDetail(
+  feedbackId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: API.FeedbackItem;
+  }>(`${API_ENDPOINTS.FEEDBACK_DETAIL}/${feedbackId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+// ==================== 文章系统相关 ====================
+
+/**
+ * 获取文章列表
+ * GET /api/articles
+ */
+export async function getArticles(
+  params?: {
+    page?: number;
+    page_size?: number;
+    category_id?: number;
+    tag_id?: number;
+    keyword?: string;
+    article_type?: string;
+    status?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      total: number;
+      page: number;
+      page_size: number;
+      articles: API.ArticleListItem[];
+    };
+  }>('/api/articles', {
+    method: 'GET',
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取文章详情
+ * GET /api/articles/{article_id}
+ */
+export async function getArticleDetail(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: API.ArticleDetail;
+  }>(`/api/articles/${articleId}`, {
+    method: 'GET',
+    headers: token ? {
+      'Authorization': `Bearer ${token}`,
+    } : {},
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建文章草稿
+ * POST /api/articles
+ */
+export async function createArticle(
+  data: API.ArticleCreateData,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      article: API.ArticleDetail;
+    };
+  }>('/api/articles', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新文章
+ * PUT /api/articles/{article_id}
+ */
+export async function updateArticle(
+  articleId: number,
+  data: API.ArticleUpdateData,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data?: {
+      article: API.ArticleDetail;
+    };
+  }>(`/api/articles/${articleId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除文章
+ * DELETE /api/articles/{article_id}
+ */
+export async function deleteArticle(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 提交审核
+ * POST /api/articles/{article_id}/submit
+ */
+export async function submitArticleForReview(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/submit`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 发布文章
+ * POST /api/articles/{article_id}/publish
+ */
+export async function publishArticle(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/publish`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 点赞文章
+ * POST /api/articles/{article_id}/like
+ */
+export async function likeArticle(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/like`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 取消点赞文章
+ * DELETE /api/articles/{article_id}/like
+ */
+export async function unlikeArticle(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/like`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取分类树
+ * GET /api/articles/categories
+ */
+export async function getArticleCategories(
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: API.ArticleCategory[];
+  }>('/api/articles/categories', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取标签列表
+ * GET /api/articles/tags
+ */
+export async function getArticleTags(
+  options?: { [key: string]: any },
+) {
+  return request<{
+    success: boolean;
+    data: API.ArticleTag[];
+  }>('/api/articles/tags', {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
+// ==================== 后台管理员文章审核相关 ====================
+
+/**
+ * 获取待审核文章列表
+ * GET /api/admin/articles/pending-review
+ */
+export async function getPendingReviewArticles(
+  params?: {
+    page?: number;
+    page_size?: number;
+    keyword?: string;
+    category_id?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      total: number;
+      page: number;
+      page_size: number;
+      articles: API.ArticleListItem[];
+    };
+  }>('/api/admin/articles/pending-review', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 审核通过文章
+ * POST /api/admin/articles/{article_id}/approve
+ */
+export async function approveArticle(
+  articleId: number,
+  data: {
+    comment?: string;
+    publish_immediately?: boolean;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/${articleId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 审核驳回文章
+ * POST /api/admin/articles/{article_id}/reject
+ */
+export async function rejectArticle(
+  articleId: number,
+  data: {
+    comment: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/${articleId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 请求修改文章
+ * POST /api/admin/articles/{article_id}/request-revision
+ */
+export async function requestArticleRevision(
+  articleId: number,
+  data: {
+    comment: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/${articleId}/request-revision`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 归档文章
+ * POST /api/admin/articles/{article_id}/archive
+ */
+export async function archiveArticle(
+  articleId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/${articleId}/archive`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}

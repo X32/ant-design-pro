@@ -7,11 +7,13 @@
 #### 1. 评分消息解析逻辑更新
 
 **背景**：
+
 - 后端返回的 score 消息格式发生变更
 - 旧格式使用英文冒号和逗号分隔
 - 新格式使用中文冒号和竖线分隔
 
 **旧格式示例**：
+
 ```
 语法与词汇: 4/5, 话语组织: 3/5, 发音: 4/5
 总分: 40/60
@@ -21,6 +23,7 @@
 ```
 
 **新格式示例**：
+
 ```
 语法与词汇：4分 | 话语管理：4分 | 发音：4分 | 互动交流：4分
 总分：4.0分（A2水平达标：是）
@@ -108,6 +111,7 @@ console.log('📝 收到评分消息:', {
 ```
 
 **技术要点**：
+
 1. 正则表达式兼容中英文标点符号
 2. 保持原始文本的换行和格式
 3. 健壮的解析逻辑，避免因格式变化导致解析失败
@@ -117,6 +121,7 @@ console.log('📝 收到评分消息:', {
 #### 2. 首页登录态优化
 
 **问题**：
+
 - 已登录用户点击「立即开始」按钮仍会弹出登录框
 - 用户体验不佳，需要多次点击才能进入考试
 
@@ -149,12 +154,14 @@ const handleLogin = () => {
 ```
 
 **改进点**：
+
 1. ✅ 登录态检查前置：点击前先判断登录状态
 2. ✅ 按钮文案动态：已登录显示「开始练习」，未登录显示「立即出发」
 3. ✅ 交互流程优化：已登录用户直接进入功能页面
 4. ✅ 统一体验：所有入口按钮都支持登录态判断
 
 **影响范围**：
+
 - 首页导航栏「立即开始」按钮 ✅（已有判断）
 - 英雄区域「开始游戏」按钮 ✅（使用 handleStart）
 - CTA 区域「立即出发」按钮 ✅（新增判断）
@@ -164,11 +171,13 @@ const handleLogin = () => {
 #### 3. 代码质量提升
 
 **音频 URL 配置切换**：
+
 ```typescript
 // SpokenPractice.tsx
 // const AI_AUDIO_BASE_URL = 'http://localhost:9002';
 const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 ```
+
 - 从本地开发环境切换到生产环境
 - 确保音频资源正确加载
 
@@ -177,12 +186,13 @@ const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 ### 📝 修改文件清单
 
 1. **`/src/pages/spokenExamPage/SpokenPractice.tsx`**
+
    - parseScoreContent 函数：适配新格式（+30行，-16行）
    - WebSocket 消息类型定义：添加 part_no 和 total_parts（+2行）
    - 调试日志增强：添加详细解析日志（+11行）
    - 音频 URL 配置：切换到生产环境（2行修改）
-
 2. **`/src/pages/home/index.tsx`**
+
    - handleLogin 函数：添加登录态判断（+5行，-1行）
    - CTA 按钮：动态文案和点击逻辑（+6行，-3行）
 
@@ -196,6 +206,7 @@ const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 ### 🔍 调试技巧
 
 **如何验证评分解析是否正确**：
+
 1. 打开浏览器控制台（F12）
 2. 进行口语练习
 3. 查看日志输出：
@@ -217,20 +228,23 @@ const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 ### 🔧 消息重复保存问题排查与修复
 
 #### 问题描述
+
 - 数据库中出现重复的 AI 消息记录
 - 批量保存时发现相同时间戳的重复消息
 - 日志显示：同一时间有两条 sender='ai' 的 text 消息被保存
 
 #### 排查过程
+
 1. **初步怀疑**：loading 消息被误缓存
+
    - 添加了单独的 loading 消息处理分支（仅显示，不缓存）
    - 但问题依然存在
-
 2. **深入分析**：检查 WebSocket 消息接收逻辑
+
    - 添加详细日志追踪消息类型和 messageId
    - 发现需要查看完整的消息接收流程
-
 3. **根本原因定位**：`origin_message_id` 关联机制需要完善
+
    - 客户端生成的消息 ID 未正确传递给后端
    - 后端无法通过 origin_message_id 准确关联消息
 
@@ -239,6 +253,7 @@ const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 ##### 1. API 接口层修改（`api.ts`）
 
 **新增字段到所有创建消息接口：**
+
 - `CreateTextMessageParams` 添加 `origin_message_id?: string`
 - `CreateVoiceMessageParams` 添加 `origin_message_id?: string`
 - `CreateImageMessageParams` 添加 `origin_message_id?: string`
@@ -246,6 +261,7 @@ const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 - `CreateGrammarAnalysisParams` 已有，类型改为 `string`
 
 **返回接口字段统一：**
+
 - `SpokenMessage.origin_message_id` 改为 `string` 类型
 - `GrammarAnalysisMessage.origin_message_id` 改为 `string` 类型
 
@@ -299,6 +315,7 @@ await createGrammarAnalysisMessage(conversationId, {
 ```
 
 **关键改进点：**
+
 1. ✅ **统一 ID 来源**：所有消息都使用 `msg.id`（客户端生成的时间戳 ID）
 2. ✅ **类型转换**：使用 `.toString()` 显式转换为字符串类型
 3. ✅ **语法分析关联**：从使用数据库 ID 改为使用客户端 ID
@@ -308,11 +325,12 @@ await createGrammarAnalysisMessage(conversationId, {
 #### 技术要点
 
 1. **客户端消息 ID 生成规则：**
+
    ```typescript
    const messageId = Date.now() + Math.floor(Math.random() * 1000);
    ```
-
 2. **ID 传递链路：**
+
    ```
    前端生成 msg.id
    ↓
@@ -326,8 +344,8 @@ await createGrammarAnalysisMessage(conversationId, {
    ↓
    grammar_feedback 通过 origin_message_id 关联
    ```
-
 3. **类型规范：**
+
    - 前端内存：`msg.id` 为 `number` 类型
    - API 传参：`origin_message_id` 为 `string` 类型
    - 需要显式调用 `.toString()` 转换
@@ -342,16 +360,17 @@ await createGrammarAnalysisMessage(conversationId, {
 #### 后续优化建议
 
 1. **后端验证**：
+
    - 检查后端是否正确处理 origin_message_id
    - 确认数据库中是否正确保存该字段
    - 验证去重逻辑是否生效
-
 2. **前端监控**：
+
    - 添加更详细的日志追踪消息保存流程
    - 记录每条消息的 origin_message_id
    - 监控是否还有重复消息
-
 3. **测试场景**：
+
    - 发送文本消息 → 检查数据库 origin_message_id
    - 发送语音消息 → 检查数据库 origin_message_id
    - 收到 grammar_feedback → 检查关联是否正确
@@ -362,9 +381,10 @@ await createGrammarAnalysisMessage(conversationId, {
 ### 📝 相关文件
 
 - `/src/services/ant-design-pro/api.ts`
+
   - 修改：7 个接口添加或修改 origin_message_id 字段
-  
 - `/src/pages/spokenPages/SpokenPractice.tsx`
+
   - 修改：6 处 API 调用添加 origin_message_id 参数
   - 添加：详细的日志输出用于追踪
 

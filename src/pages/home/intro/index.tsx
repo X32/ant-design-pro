@@ -7,7 +7,7 @@ import {
   CheckCircleOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
-import { history } from '@umijs/max';
+import { history, Helmet } from '@umijs/max';
 import './index.less';
 
 const { Title, Paragraph, Text } = Typography;
@@ -19,6 +19,27 @@ const { Title, Paragraph, Text } = Typography;
 const ExamIntro: React.FC = () => {
   return (
     <div className="exam-intro-container">
+      <Helmet>
+        {/* SEO Meta标签 */}
+        <title>KET/PET/FCE口语考试介绍 - 考试流程与评分标准 | SpeakCube</title>
+        <meta 
+          name="description" 
+          content="详细介绍KET、PET、FCE口语考试流程、评分标准、题型结构。了解剑桥英语口语考试评分维度，掌握考试要点，助你顺利通关！" 
+        />
+        <meta 
+          name="keywords" 
+          content="KET口语考试流程,PET口语评分标准,FCE口语考试介绍,剑桥英语口语考试,口语考试评分,KET PET FCE考试" 
+        />
+        <link rel="canonical" href="https://www.qtoplay.com/home/intro" />
+        
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="KET/PET/FCE口语考试介绍 - SpeakCube" />
+        <meta property="og:description" content="详细介绍KET、PET、FCE口语考试流程、评分标准、题型结构" />
+        <meta property="og:url" content="https://www.qtoplay.com/home/intro" />
+        <meta property="og:image" content="https://www.qtoplay.com/og-image-exam-intro.jpg" />
+      </Helmet>
+
       {/* 顶部导航栏 */}
       <div className="exam-intro-header">
         <Button 
@@ -29,7 +50,9 @@ const ExamIntro: React.FC = () => {
         >
           返回
         </Button>
-        <Title level={2} style={{ margin: 0 }}>口语考试介绍</Title>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, margin: 0 }}>
+          KET/PET/FCE口语考试介绍
+        </h1>
         <div style={{ width: 80 }} /> {/* 占位，保持标题居中 */}
       </div>
 
@@ -39,7 +62,7 @@ const ExamIntro: React.FC = () => {
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div className="card-header">
               <TrophyOutlined className="header-icon" />
-              <Title level={3}>考试基本信息</Title>
+              <Title level={3}>KET/PET/FCE考试基本信息</Title>
             </div>
             
             <Row gutter={[24, 24]}>
@@ -98,7 +121,7 @@ const ExamIntro: React.FC = () => {
         <Card className="flow-card" bordered={false}>
           <div className="card-header">
             <ClockCircleOutlined className="header-icon" />
-            <Title level={3}>口语考试流程</Title>
+            <Title level={3}>口语考试流程与步骤</Title>
           </div>
           
           <Paragraph className="flow-description">
@@ -194,7 +217,7 @@ const ExamIntro: React.FC = () => {
         <Card className="scoring-card" bordered={false}>
           <div className="card-header">
             <TrophyOutlined className="header-icon" />
-            <Title level={3}>评分维度</Title>
+            <Title level={3}>剑桥英语口语评分标准</Title>
           </div>
 
           <Paragraph className="scoring-description">

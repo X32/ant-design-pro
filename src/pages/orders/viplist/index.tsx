@@ -26,6 +26,7 @@ import {
   CloseCircleOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
+import { Helmet } from '@umijs/max';
 import type { ColumnsType } from 'antd/es/table';
 import {
   adminGetVipPlans,
@@ -360,12 +361,26 @@ const VipPlanManagement: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      header={{
-        title: 'VIP套餐管理',
-        breadcrumb: {},
-      }}
-    >
+    <>
+      <Helmet>
+        <title>VIP会员套餐 - 剑桥英语口语练习会员 | SpeakCube</title>
+        <meta 
+          name="description" 
+          content="SpeakCube VIP会员套餐，无限次KET/PET/FCE口语模拟考试，享受专属AI评分服务。月卡、季卡、年卡多种选择，助力孩子口语提升！" 
+        />
+        <meta 
+          name="keywords" 
+          content="KET口语VIP,PET口语会员,FCE口语套餐,剑桥英语会员,口语练习套餐,AI口语VIP" 
+        />
+        <link rel="canonical" href="https://www.qtoplay.com/back/orders/vip-plans" />
+      </Helmet>
+
+      <PageContainer
+        header={{
+          title: 'VIP套餐管理',
+          breadcrumb: {},
+        }}
+      >
       <Card>
         {/* 筛选和操作栏 */}
         <Space style={{ marginBottom: 16 }}>
@@ -569,6 +584,7 @@ const VipPlanManagement: React.FC = () => {
         </Form>
       </Modal>
     </PageContainer>
+    </>
   );
 };
 

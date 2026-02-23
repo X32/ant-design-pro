@@ -2,10 +2,8 @@
 import {
   AudioOutlined,  // 音频图标
   SendOutlined,   // 发送图标
-  SettingOutlined,// 设置图标
   PlayCircleOutlined,
   PauseOutlined,
-  CloseOutlined,      // 关闭图标
   ArrowLeftOutlined,  // 返回箭头图标
   FileTextOutlined,   // 🆕 文件文本图标（语法反馈）
 } from '@ant-design/icons';
@@ -2953,13 +2951,6 @@ const SpokenPractice: React.FC = () => {
         </div>
         <div className="header-right">
           <Space size="middle">
-            <Button
-              icon={<SettingOutlined />}
-              ghost
-              className="header-button"
-              onClick={() => setShowTextInput(!showTextInput)}
-              title={showTextInput ? "隐藏文本输入" : "显示文本输入"}
-            />
             <UserAvatar showName={false} size={40} />
           </Space>
         </div>

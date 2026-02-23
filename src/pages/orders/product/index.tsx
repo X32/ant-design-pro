@@ -28,6 +28,7 @@ import {
   ReloadOutlined,
   GiftOutlined,
 } from '@ant-design/icons';
+import { Helmet } from '@umijs/max';
 import dayjs from 'dayjs';
 import {
   getAdminItems,
@@ -340,7 +341,21 @@ const ProductList: React.FC = () => {
   ];
 
   return (
-    <div className="product-list-page">
+    <div className="product-list-container">
+      <Helmet>
+        <title>学习金币充值套餐 - SpeakCube口语练习</title>
+        <meta 
+          name="description" 
+          content="SpeakCube学习金币充值，用于解锁口语练习题目。多种充值套餐可选，充值越多越优惠，助力孩子英语口语学习！" 
+        />
+        <meta 
+          name="keywords" 
+          content="学习金币,口语练习充值,英语学习充值,金币套餐,口语练习费用" 
+        />
+        <link rel="canonical" href="https://www.qtoplay.com/back/orders/product" />
+      </Helmet>
+
+      <div className="product-list-page">
       <Card className="page-card">
         {/* 操作栏 */}
         <div className="toolbar">
@@ -475,6 +490,7 @@ const ProductList: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+    </div>
     </div>
   );
 };

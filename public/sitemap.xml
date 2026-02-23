@@ -6,62 +6,166 @@
   <!-- 首页 - 最高优先级 -->
   <url>
     <loc>https://www.qtoplay.com/</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  
+
   <!-- 首页（/home路径） -->
   <url>
     <loc>https://www.qtoplay.com/home</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- 考试目录 - 核心页面 -->
+
+  <!-- 品牌介绍页面 -->
   <url>
-    <loc>https://www.qtoplay.com/exam-catalog</loc>
-    <lastmod>2026-02-04</lastmod>
+    <loc>https://www.qtoplay.com/about</loc>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  
-  <!-- 产品介绍页 -->
+
+  <!-- 考试目录 - 核心页面 -->
   <url>
-    <loc>https://www.qtoplay.com/home/intro</loc>
-    <lastmod>2026-02-04</lastmod>
+    <loc>https://www.qtoplay.com/exam-catalog</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- KET口语考试专区 -->
+  <url>
+    <loc>https://www.qtoplay.com/ket-speaking</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- KET考试介绍 -->
+  <url>
+    <loc>https://www.qtoplay.com/ket-speaking/intro</loc>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
+  <!-- KET评分标准 -->
+  <url>
+    <loc>https://www.qtoplay.com/ket-speaking/scoring</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- KET备考攻略 -->
+  <url>
+    <loc>https://www.qtoplay.com/ket-speaking/tips</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- PET口语考试专区 -->
+  <url>
+    <loc>https://www.qtoplay.com/pet-speaking</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- PET考试介绍 -->
+  <url>
+    <loc>https://www.qtoplay.com/pet-speaking/intro</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- PET评分标准 -->
+  <url>
+    <loc>https://www.qtoplay.com/pet-speaking/scoring</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- PET备考攻略 -->
+  <url>
+    <loc>https://www.qtoplay.com/pet-speaking/tips</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- FCE口语考试专区 -->
+  <url>
+    <loc>https://www.qtoplay.com/fce-speaking</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- FCE考试介绍 -->
+  <url>
+    <loc>https://www.qtoplay.com/fce-speaking/intro</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- FCE评分标准 -->
+  <url>
+    <loc>https://www.qtoplay.com/fce-speaking/scoring</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- FCE备考攻略 -->
+  <url>
+    <loc>https://www.qtoplay.com/fce-speaking/tips</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 产品介绍页 -->
+  <url>
+    <loc>https://www.qtoplay.com/home/intro</loc>
+    <lastmod>2026-02-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- VIP和订单页面 -->
   <url>
     <loc>https://www.qtoplay.com/orders/vip-plans</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <url>
     <loc>https://www.qtoplay.com/orders/coin-packages</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <!-- 用户协议 -->
   <url>
     <loc>https://www.qtoplay.com/home/proto/user-agreement</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
-  
+
   <!-- 隐私政策 -->
   <url>
     <loc>https://www.qtoplay.com/home/proto/privacy-policy</loc>
-    <lastmod>2026-02-04</lastmod>
+    <lastmod>2026-02-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

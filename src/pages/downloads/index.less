@@ -1,0 +1,455 @@
+@import (reference) '../home/index.less';
+
+/* 下载页面特定样式 */
+.downloads-page {
+  padding-top: 80px;
+
+  /* 导航栏 - 固定在顶部 */
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #FFD93D;
+    border-bottom: 4px solid #000;
+    padding: 1rem 0;
+    z-index: 1000;
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.1);
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+    }
+  }
+
+  /* Logo 样式 */
+  .logo {
+    font-size: 1.8rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transform: rotate(-2deg);
+  }
+
+  .logo .logo-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 12px 8px 15px 10px;
+    object-fit: cover;
+    border: 3px solid #000;
+    box-shadow: 3px 3px 0px #000;
+  }
+
+  .logo .logo-text {
+    color: #1A535C;
+    text-shadow: 2px 2px 0px #FF6B6B;
+  }
+
+  /* 导航链接样式 */
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    flex-wrap: wrap;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: #1A535C;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px 12px 6px 10px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .nav-links a:hover {
+    color: #FF6B6B;
+    background: #FFF;
+    border-color: #000;
+    transform: rotate(-2deg) scale(1.05);
+    box-shadow: 3px 3px 0px #000;
+  }
+
+  /* 导航栏激活状态 */
+  .nav-links a.active {
+    background: #FFF;
+    border-color: #000;
+    color: #FF6B6B;
+    transform: rotate(-2deg) scale(1.05);
+    box-shadow: 3px 3px 0px #000;
+  }
+
+  /* CTA 按钮样式 */
+  .cta-button {
+    padding: 0.75rem 1.8rem;
+    background: #FF6B6B;
+    color: white;
+    border: 3px solid #000;
+    border-radius: 25px 15px 20px 30px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-shadow: 4px 4px 0px #000;
+    height: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .cta-button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #000;
+    background: #FF5252;
+    color: white;
+  }
+
+  .cta-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  /* 页面标题区域 */
+  .downloads-header {
+    background: linear-gradient(135deg, #4ECDC4 0%, #95E1D3 100%);
+    padding: 5rem 2rem;
+    text-align: center;
+    border-bottom: 5px solid #000;
+    position: relative;
+    overflow: hidden;
+
+    /* 波点背景 */
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: radial-gradient(#FFD93D 20%, transparent 20%);
+      background-size: 40px 40px;
+      opacity: 0.1;
+      pointer-events: none;
+    }
+  }
+
+  .header-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: #FFD93D;
+    color: #1A535C;
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px 20px 25px 35px;
+    font-weight: 800;
+    font-size: 1rem;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0px #000;
+    margin-bottom: 2rem;
+    animation: wiggle 2s ease-in-out infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  .header-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 1.5rem;
+    text-shadow: 3px 3px 0px #000;
+
+    .title-line {
+      display: block;
+    }
+  }
+
+  .header-description {
+    font-size: 1.3rem;
+    color: white;
+    font-weight: 600;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* 下载内容区域 */
+  .downloads-content {
+    padding: 5rem 2rem;
+    background: #FFF9E6;
+  }
+
+  .downloads-grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .download-card {
+    background: white;
+    border-radius: 30px 15px 35px 20px;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0px #000;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-8px) rotate(0deg) !important;
+      box-shadow: 12px 12px 0px #000;
+    }
+
+    /* 每个卡片不同的旋转 */
+    &:nth-child(1) { transform: rotate(-1deg); }
+    &:nth-child(2) { transform: rotate(1deg); }
+    &:nth-child(3) { transform: rotate(-2deg); }
+    &:nth-child(4) { transform: rotate(1deg); }
+  }
+
+  .card-icon {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .card-category {
+    display: inline-block;
+    background: var(--card-color, #FFD93D);
+    color: #1A535C;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    border: 2px solid #000;
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1A535C;
+    margin-bottom: 0.8rem;
+  }
+
+  .card-description {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    min-height: 3.2em;
+  }
+
+  .card-meta {
+    margin-bottom: 1.5rem;
+  }
+
+  .card-size {
+    display: inline-block;
+    background: #f0f0f0;
+    padding: 0.4rem 1rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #666;
+    border: 2px solid #000;
+  }
+
+  .download-button {
+    background: #FF6B6B;
+    color: white;
+    border: 3px solid #000;
+    border-radius: 25px 15px 20px 30px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
+    box-shadow: 4px 4px 0px #000;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &:hover {
+      background: #FF5252;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000;
+      color: white;
+    }
+
+    &:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000;
+    }
+  }
+
+  /* 温馨提示区域 */
+  .downloads-notice {
+    padding: 4rem 2rem;
+    background: #FFD93D;
+    border-top: 5px solid #000;
+    border-bottom: 5px solid #000;
+  }
+
+  .notice-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .notice-content h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #1A535C;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 0px white;
+  }
+
+  .notice-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .notice-list li {
+    background: white;
+    padding: 1.2rem 1.5rem;
+    border-radius: 15px 20px 12px 18px;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0px #000;
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+    color: #333;
+    font-weight: 600;
+    line-height: 1.6;
+    transition: all 0.2s;
+
+    &:nth-child(odd) {
+      transform: rotate(-1deg);
+    }
+
+    &:nth-child(even) {
+      transform: rotate(1deg);
+    }
+
+    &:hover {
+      transform: translateX(10px) rotate(0deg) !important;
+      box-shadow: 6px 6px 0px #000;
+    }
+
+    &:before {
+      content: "✓";
+      color: #4ECDC4;
+      font-weight: 900;
+      margin-right: 0.8rem;
+      font-size: 1.2rem;
+    }
+  }
+
+  /* 返回按钮区域 */
+  .downloads-footer {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #4ECDC4;
+  }
+
+  .back-button {
+    background: white;
+    color: #1A535C;
+    border: 3px solid #000;
+    border-radius: 25px 35px 30px 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1rem 3rem;
+    box-shadow: 4px 4px 0px #000;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #FFD93D;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #000;
+      color: #1A535C;
+    }
+  }
+}
+
+/* 响应式设计 - 平板 */
+@media (max-width: 1024px) {
+  .downloads-page {
+    .downloads-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header-title {
+      font-size: 2.5rem;
+    }
+  }
+}
+
+/* 响应式设计 - 手机 */
+@media (max-width: 768px) {
+  .downloads-page {
+    padding-top: 70px;
+
+    .downloads-header {
+      padding: 3rem 1rem;
+    }
+
+    .header-badge {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .header-title {
+      font-size: 2rem;
+    }
+
+    .header-description {
+      font-size: 1.1rem;
+    }
+
+    .downloads-content,
+    .downloads-notice,
+    .downloads-footer {
+      padding: 3rem 1rem;
+    }
+
+    .downloads-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .download-card {
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+    }
+
+    .notice-content h2 {
+      font-size: 1.5rem;
+    }
+
+    .notice-list li {
+      padding: 1rem 1.2rem;
+      font-size: 1rem;
+    }
+  }
+}

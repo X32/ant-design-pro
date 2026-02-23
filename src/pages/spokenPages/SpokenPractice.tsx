@@ -2,11 +2,8 @@
 import {
   AudioOutlined,  // 音频图标
   SendOutlined,   // 发送图标
-  SettingOutlined,// 设置图标
   PlayCircleOutlined,
   PauseOutlined,
-  ExperimentOutlined, // 测试图标
-  CloseOutlined,      // 关闭图标
   ArrowLeftOutlined,  // 返回箭头图标
   FileTextOutlined,   // 🆕 文件文本图标（语法反馈）
 } from '@ant-design/icons';
@@ -166,8 +163,7 @@ const SpokenPractice: React.FC = () => {
   const [workflowPriceMap, setWorkflowPriceMap] = useState<Map<string, number>>(new Map());
   // 💡 新增：使用 Ref 存储价格映射的副本，确保实时可用（解决状态更新异步问题）
   const workflowPriceMapRef = useRef<Map<string, number>>(new Map());
-  const [priceLoading, setPriceLoading] = useState(false);
-  
+
   /**
    * 将前端 timestamp 转换为 ISO 8601 格式
    * @param timestamp 显示时间戳（HH:mm）或完整时间戳
@@ -247,9 +243,6 @@ const SpokenPractice: React.FC = () => {
   const [hasVipSubscription, setHasVipSubscription] = useState(false);
   const [vipRemainingDays, setVipRemainingDays] = useState(0);
   const [vipLoading, setVipLoading] = useState(false);
-  
-  // 💡 新增：测试面板显示状态
-  const [showTestPanel, setShowTestPanel] = useState(false);
 
   // 🎆 烟花动画状态
   const [showFirework, setShowFirework] = useState(false);
@@ -295,9 +288,8 @@ const SpokenPractice: React.FC = () => {
      */
     const fetchWorkflowPrices = async (): Promise<void> => {
       try {
-        setPriceLoading(true);
         const response = await getWorkflowTypes({ only_active: true });
-        
+
         if (response && response.success && Array.isArray(response.data)) {
           // 构建 value -> price 的映射表
           const priceMap = new Map<string, number>();
@@ -306,7 +298,7 @@ const SpokenPractice: React.FC = () => {
             const price = typeof item.price === 'number' ? item.price : parseFloat(String(item.price));
             priceMap.set(item.value, price);
           });
-          
+
           setWorkflowPriceMap(priceMap);
           workflowPriceMapRef.current = priceMap; // 🔥 同步更新 Ref
           console.log('✅ 工作流价格映射加载成功:', Object.fromEntries(priceMap));
@@ -315,8 +307,6 @@ const SpokenPractice: React.FC = () => {
         }
       } catch (error) {
         console.error('❌ 加载工作流价格异常:', error);
-      } finally {
-        setPriceLoading(false);
       }
     };
     
@@ -2573,21 +2563,6 @@ const SpokenPractice: React.FC = () => {
         </div>
         <div className="header-right">
           <Space size="middle">
-            <Button
-              icon={<SettingOutlined />}
-              ghost
-              className="header-button"
-              onClick={() => setShowTextInput(!showTextInput)}
-              title={showTextInput ? "隐藏文本输入" : "显示文本输入"}
-            />
-            <Button
-              icon={<ExperimentOutlined />}
-              ghost
-              className="header-button"
-              onClick={() => setShowTestPanel(!showTestPanel)}
-              title={showTestPanel ? "隐藏测试面板" : "显示测试面板"}
-              style={{ color: showTestPanel ? '#52c41a' : undefined }}
-            />
             <UserAvatar showName={false} size={40} />
           </Space>
         </div>
@@ -2595,325 +2570,6 @@ const SpokenPractice: React.FC = () => {
       
       {/* 主内容区域 */}
       <Content className="spoken-practice-content">
-        {/* 测试面板 */}
-        {showTestPanel && (
-          <Card
-            title={
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>🧪 测试面板</span>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => setShowTestPanel(false)}
-                />
-              </div>
-            }
-            style={{
-              position: 'fixed',
-              top: '80px',
-              right: '20px',
-              width: '320px',
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              zIndex: 1000,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              borderRadius: '8px'
-            }}
-            bodyStyle={{ padding: '12px' }}
-          >
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
-              {/* 余额相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1890ff', marginTop: '4px' }}>
-                💰 余额测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：查询余额');
-                  try {
-                    const result = await checkBalance(false);
-                    Modal.info({
-                      title: '余额查询结果',
-                      content: (
-                        <div>
-                          <p>当前余额：{result.balance} 金币</p>
-                          <p>需要金币：{result.price} 金币</p>
-                          <p>是否充足：{result.sufficient ? '✅ 是' : '❌ 否'}</p>
-                        </div>
-                      ),
-                    });
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                    Modal.error({ title: '测试失败', content: String(error) });
-                  }
-                }}
-              >
-                查询余额
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：检查余额（带弹框）');
-                  try {
-                    await checkBalance(true);
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                  }
-                }}
-              >
-                检查余额（带提示）
-              </Button>
-              
-              {/* 价格相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#722ed1', marginTop: '8px' }}>
-                💎 价格测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：获取当前工作流信息');
-                  const info = getCurrentWorkflowInfo();
-                  Modal.info({
-                    title: '工作流信息',
-                    content: (
-                      <div>
-                        <p>工作流类型：{info.workflowType}</p>
-                        <p>价格：{info.price} 金币</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                获取工作流信息
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={async () => {
-                  console.log('🧪 测试：重新加载价格映射');
-                  try {
-                    await fetchWorkflowPrices();
-                    Modal.success({ title: '成功', content: '价格映射已重新加载' });
-                  } catch (error) {
-                    console.error('测试失败:', error);
-                    Modal.error({ title: '测试失败', content: String(error) });
-                  }
-                }}
-              >
-                重新加载价格
-              </Button>
-              
-              {/* 扣款相关测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fa8c16', marginTop: '8px' }}>
-                💳 扣款测试
-              </div>
-              <Button
-                size="small"
-                block
-                danger
-                onClick={async () => {
-                  console.log('🧪 测试：执行扣款');
-                  Modal.confirm({
-                    title: '确认测试扣款',
-                    content: '这将执行真实的扣款操作，确定继续吗？',
-                    okText: '确定',
-                    cancelText: '取消',
-                    onOk: async () => {
-                      try {
-                        const result = await handleConsumeCoins();
-                        if (result) {
-                          console.log('✅ 扣款成功');
-                        } else {
-                          console.log('❌ 扣款失败');
-                        }
-                      } catch (error) {
-                        console.error('测试失败:', error);
-                      }
-                    },
-                  });
-                }}
-              >
-                执行扣款（危险）
-              </Button>
-              
-              {/* WebSocket 测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#52c41a', marginTop: '8px' }}>
-                🔌 WebSocket 测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：WebSocket 连接状态');
-                  Modal.info({
-                    title: 'WebSocket 状态',
-                    content: (
-                      <div>
-                        <p>连接状态：{isConnected ? '✅ 已连接' : '❌ 未连接'}</p>
-                        <p>认证状态：{isAuthenticated ? '✅ 已认证' : '❌ 未认证'}</p>
-                        <p>会话ID：{conversationId}</p>
-                        <p>用户ID：{userId}</p>
-                        <p>是否结束：{conversationFinished ? '✅ 是' : '❌ 否'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看连接状态
-              </Button>
-              
-              {/* 状态测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#eb2f96', marginTop: '8px' }}>
-                🎯 状态测试
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看当前状态');
-                  const priceMapSize = workflowPriceMapRef.current.size || workflowPriceMap.size;
-                  Modal.info({
-                    title: '当前状态',
-                    content: (
-                      <div>
-                        <p>消息数量：{messages.length}</p>
-                        <p>缓存消息：{messageCacheRef.current.length}</p>
-                        <p>余额已检查：{balanceCheckedRef.current ? '✅ 是' : '❌ 否'}</p>
-                        <p>对话结束：{conversationFinished ? '✅ 是' : '❌ 否'}</p>
-                        <p>价格加载：{priceLoading ? '⏳ 加载中' : '✅ 完成'}</p>
-                        <p>价格映射数量：{priceMapSize} 条</p>
-                        <p>历史加载：{historyLoaded ? '✅ 是' : '❌ 否'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看当前状态
-              </Button>
-              
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看缓存消息');
-                  const cachedMessages = messageCacheRef.current;
-                  console.group('📦 缓存消息详情');
-                  console.log('缓存消息数量:', cachedMessages.length);
-                  cachedMessages.forEach((msg, index) => {
-                    console.group(`消息 [${index + 1}/${cachedMessages.length}]`);
-                    console.log('ID:', msg.id);
-                    console.log('类型:', msg.messageType);
-                    console.log('发送者:', msg.sender);
-                    console.log('时间:', msg.timestamp);
-                    if (msg.messageType === 'voice') {
-                      console.log('🎤 本地路径:', msg.audioFilePath);
-                      console.log('🔥 服务器路径:', msg.serverAudioPath || '未设置');
-                      console.log('转写文本:', msg.transcriptionText);
-                      console.log('转写状态:', msg.transcriptionStatus);
-                    }
-                    console.groupEnd();
-                  });
-                  console.groupEnd();
-                  Modal.info({
-                    title: '缓存消息',
-                    content: (
-                      <div>
-                        <p>缓存消息数量：{cachedMessages.length}</p>
-                        <p>语音消息数量：{cachedMessages.filter(m => m.messageType === 'voice').length}</p>
-                        <p style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
-                          详细信息已输出到控制台
-                        </p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看缓存消息
-              </Button>
-              
-              {/* URL 参数测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#13c2c2', marginTop: '8px' }}>
-                🔗 URL 参数
-              </div>
-              <Button
-                size="small"
-                block
-                onClick={() => {
-                  console.log('🧪 测试：查看URL参数');
-                  const exerciseId = getPaperIdFromUrl();
-                  const workflowType = searchParams.get('workflow_type');
-                  Modal.info({
-                    title: 'URL 参数',
-                    content: (
-                      <div>
-                        <p>exercise_id: {exerciseId || '未设置'}</p>
-                        <p>workflow_type: {workflowType || '未设置'}</p>
-                        <p>conversationId: {searchParams.get('conversationId') || '未设置'}</p>
-                      </div>
-                    ),
-                  });
-                }}
-              >
-                查看URL参数
-              </Button>
-              
-              {/* 工具按钮 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#595959', marginTop: '8px' }}>
-                🛠️ 工具
-              </div>
-              <Button
-                size="small"
-                block
-                type="dashed"
-                onClick={() => {
-                  console.log('🧪 测试：打印所有状态到控制台');
-                  console.group('📊 完整状态信息');
-                  console.log('消息列表:', messages);
-                  console.log('缓存消息:', messageCacheRef.current);
-                  console.log('余额已检查:', balanceCheckedRef.current);
-                  console.log('对话结束:', conversationFinished);
-                  console.log('WebSocket连接:', isConnected);
-                  console.log('WebSocket认证:', isAuthenticated);
-                  console.log('会话 ID:', conversationId);
-                  console.log('用户ID:', userId);
-                  console.log('价格映射(State):', Object.fromEntries(workflowPriceMap));
-                  console.log('价格映射(Ref)⭐:', Object.fromEntries(workflowPriceMapRef.current));
-                  console.groupEnd();
-                  Modal.success({ title: '完成', content: '状态已打印到控制台' });
-                }}
-              >
-                打印完整状态
-              </Button>
-                            
-              {/* 动画测试 */}
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fa8c16', marginTop: '8px' }}>
-                🎆 动画测试
-              </div>
-              <Button
-                size="small"
-                block
-                type="primary"
-                onClick={() => {
-                  console.log('🎆 测试：触发烟花动画');
-                  setShowFirework(true);
-                  Modal.success({ 
-                    title: '烟花动画已触发', 
-                    content: '烟花动画将持续5秒，发射15朵烟花' 
-                  });
-                }}
-              >
-                🎆 触发烟花动画
-              </Button>
-            </Space>
-          </Card>
-        )}
-        
         {/* 对话消息显示区域 */}
       <div className="conversation-area">
         {messages.map((message) => (

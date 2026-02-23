@@ -81,7 +81,7 @@ export async function getInitialState(): Promise<{
 
   // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
   // 注意：使用 startsWith 匹配，支持带斜杠和不带斜杠的路径
-  const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
+  const publicRoutes = ['/home', '/about', '/downloads', '/articles', '/exam-catalog', '/ket-speaking', '/pet-speaking', '/fce-speaking', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
   
   // 检查是否为公开路由（支持末尾斜杠）
   const isPublicRoute = (pathname: string) => {
@@ -212,7 +212,7 @@ export const layout: RunTimeLayoutConfig = ({
       ];
       
       // 公开页面：允许匿名访问（必须与 getInitialState 中的 publicRoutes 保持一致）
-      const publicRoutes = ['/home', '/exam-catalog', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
+      const publicRoutes = ['/home', '/about', '/downloads', '/articles', '/exam-catalog', '/ket-speaking', '/pet-speaking', '/fce-speaking', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
       
       // 检查是否为公开路由（支持末尾斜杠）
       const isPublicRoute = (pathname: string) => {
