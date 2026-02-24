@@ -52,6 +52,7 @@ type UserWithPermissions = {
   permissions?: string[];  // 权限类型字符串数组
   user_id?: number;
   is_active?: boolean;
+  _key?: string;  // 唯一标识符，用于表格 key
 };
 
 const ArticlePermissionsPage: React.FC = () => {
@@ -80,8 +81,8 @@ const ArticlePermissionsPage: React.FC = () => {
       console.log('API Response:', response);
 
       if (response && Array.isArray(response.users)) {
-        // 将响应数据转换为需要的格式
-        const usersWithPermissions = response.users.map((user) => ({
+        // 将响应数据转换为需要的格式，为每个用户添加唯一标识符
+        const usersWithPermissions = response.users.map((user, index) => ({
           id: user.id,
           username: user.username,
           email: user.email || '',
@@ -90,7 +91,10 @@ const ArticlePermissionsPage: React.FC = () => {
           // permission_type 是单个字符串，需要转换为数组格式
           permissions: user.permission_type ? [user.permission_type] : [],
           is_active: true,
+          // 添加唯一标识符用于表格 key
+          _key: `user_${user.id}_${index}`,
         }));
+
         console.log('Users with permissions:', usersWithPermissions);
         setUsers(usersWithPermissions);
         setTotal(usersWithPermissions.length);
@@ -223,11 +227,11 @@ const ArticlePermissionsPage: React.FC = () => {
   const renderPermissionTags = (permissions: string[] = []) => {
     return (
       <Space size="small" wrap>
-        {permissions.map((perm) => {
+        {permissions.map((perm, index) => {
           const config = PERMISSION_CONFIG[perm as keyof typeof PERMISSION_CONFIG];
           return (
             <Tag
-              key={perm}
+              key={`${perm}-${index}`}
               color={config?.color}
               style={{
                 borderRadius: '12px',
@@ -257,7 +261,7 @@ const ArticlePermissionsPage: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Avatar
-            src={record.avatar}
+            src={record.avatar || undefined}
             icon={!record.avatar && <CheckOutlined />}
             size={40}
             style={{
@@ -417,7 +421,7 @@ const ArticlePermissionsPage: React.FC = () => {
         columns={columns}
         dataSource={users}
         loading={loading}
-        rowKey="id"
+        rowKey="_key"
         search={false}
         pagination={{
           current: pagination.current,

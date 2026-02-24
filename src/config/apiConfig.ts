@@ -14,8 +14,8 @@ console.log('isDev:', isDev);
 // 生产环境：直接使用远程 API 地址
 // export const API_BASE_URL = isDev ? '' : 'https://api.qtoplay.com';
 // const API_BASE_URL = 'https://api.qtoplay.com';
-// export const API_BASE_URL = 'https://api.qtoplay.com';
-export const API_BASE_URL = 'http://localhost:9002';
+export const API_BASE_URL = 'https://api.qtoplay.com';
+// export const API_BASE_URL = 'http://localhost:9002';
 
 
 // 临时强制使用空字符串进行调试
