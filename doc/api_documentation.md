@@ -1,3 +1,4 @@
+
 # 备考文章发布系统 API 文档
 
 > 文档版本：v1.0
@@ -12,6 +13,7 @@
 - [通用响应格式](#通用响应格式)
 - [后台管理员接口（🔐 后台管理）](#后台管理员接口)
 - [普通用户接口（👥 普通用户）](#普通用户接口)
+- [权限管理接口（🔑 权限管理）](#权限管理接口)
 - [分类标签接口（🏷️ 分类标签）](#分类标签接口)
 - [数据模型](#数据模型)
 
@@ -27,13 +29,13 @@
 
 #### 文章状态与访问权限对照表
 
-| 文章状态 | 是否需要登录 | 谁可以查看 |
-|---------|------------|----------|
-| `published` (已发布) | ❌ 不需要 | 所有人 |
-| `draft` (草稿) | ✅ 需要 | 仅作者本人、超级管理员 |
-| `pending_review` (待审核) | ✅ 需要 | 作者本人、审核员、超级管理员 |
-| `approved` (审核通过) | ✅ 需要 | 作者本人、审核员、超级管理员 |
-| `rejected` (已驳回) | ✅ 需要 | 作者本人、审核员、超级管理员 |
+| 文章状态                    | 是否需要登录 | 谁可以查看                   |
+| --------------------------- | ------------ | ---------------------------- |
+| `published` (已发布)      | ❌ 不需要    | 所有人                       |
+| `draft` (草稿)            | ✅ 需要      | 仅作者本人、超级管理员       |
+| `pending_review` (待审核) | ✅ 需要      | 作者本人、审核员、超级管理员 |
+| `approved` (审核通过)     | ✅ 需要      | 作者本人、审核员、超级管理员 |
+| `rejected` (已驳回)       | ✅ 需要      | 作者本人、审核员、超级管理员 |
 
 #### 权限说明
 
@@ -89,14 +91,14 @@ Authorization: Bearer {token}
 
 ### HTTP 状态码
 
-| 状态码 | 说明 |
-|--------|------|
-| 200 | 请求成功 |
-| 400 | 请求参数错误 |
-| 401 | 未认证或 Token 无效 |
-| 403 | 无权限 |
-| 404 | 资源不存在 |
-| 500 | 服务器内部错误 |
+| 状态码 | 说明                |
+| ------ | ------------------- |
+| 200    | 请求成功            |
+| 400    | 请求参数错误        |
+| 401    | 未认证或 Token 无效 |
+| 403    | 无权限              |
+| 404    | 资源不存在          |
+| 500    | 服务器内部错误      |
 
 ---
 
@@ -114,12 +116,12 @@ Authorization: Bearer {token}
 
 **请求参数：**
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| page | int | 否 | 1 | 页码 |
-| page_size | int | 否 | 20 | 每页数量 |
-| keyword | string | 否 | - | 搜索关键词 |
-| category_id | int | 否 | - | 分类ID |
+| 参数        | 类型   | 必填 | 默认值 | 说明       |
+| ----------- | ------ | ---- | ------ | ---------- |
+| page        | int    | 否   | 1      | 页码       |
+| page_size   | int    | 否   | 20     | 每页数量   |
+| keyword     | string | 否   | -      | 搜索关键词 |
+| category_id | int    | 否   | -      | 分类ID     |
 
 **请求示例：**
 
@@ -161,16 +163,16 @@ GET /api/admin/articles/pending-review?page=1&page_size=20
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| comment | string | 否 | null | 审核意见 |
-| publish_immediately | boolean | 否 | false | 是否立即发布 |
+| 字段                | 类型    | 必填 | 默认值 | 说明         |
+| ------------------- | ------- | ---- | ------ | ------------ |
+| comment             | string  | 否   | null   | 审核意见     |
+| publish_immediately | boolean | 否   | false  | 是否立即发布 |
 
 **请求示例：**
 
@@ -193,6 +195,7 @@ POST /api/admin/articles/1/approve
 ```
 
 **权限要求：**
+
 - 需要超级管理员或内容管理员权限
 - 文章状态必须为 `pending_review`
 
@@ -209,15 +212,15 @@ POST /api/admin/articles/1/approve
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| comment | string | 是 | 驳回原因 |
+| 字段    | 类型   | 必填 | 说明     |
+| ------- | ------ | ---- | -------- |
+| comment | string | 是   | 驳回原因 |
 
 **请求示例：**
 
@@ -239,6 +242,7 @@ POST /api/admin/articles/1/reject
 ```
 
 **权限要求：**
+
 - 需要超级管理员或内容管理员权限
 - 文章状态必须为 `pending_review`
 
@@ -255,15 +259,15 @@ POST /api/admin/articles/1/reject
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| comment | string | 是 | 修改意见 |
+| 字段    | 类型   | 必填 | 说明     |
+| ------- | ------ | ---- | -------- |
+| comment | string | 是   | 修改意见 |
 
 **请求示例：**
 
@@ -285,6 +289,7 @@ POST /api/admin/articles/1/request-revision
 ```
 
 **权限要求：**
+
 - 需要超级管理员或内容管理员权限
 - 文章状态必须为 `pending_review`
 
@@ -301,9 +306,9 @@ POST /api/admin/articles/1/request-revision
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -321,6 +326,7 @@ POST /api/admin/articles/1/archive
 ```
 
 **权限要求：**
+
 - 需要超级管理员或内容管理员权限
 
 ---
@@ -336,16 +342,16 @@ POST /api/admin/articles/1/archive
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求参数：**
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| page | int | 否 | 1 | 页码 |
-| page_size | int | 否 | 20 | 每页数量 |
+| 参数      | 类型 | 必填 | 默认值 | 说明     |
+| --------- | ---- | ---- | ------ | -------- |
+| page      | int  | 否   | 1      | 页码     |
+| page_size | int  | 否   | 20     | 每页数量 |
 
 **请求示例：**
 
@@ -391,6 +397,7 @@ GET /api/admin/articles/1/audit-logs?page=1&page_size=20
 ```
 
 **action 类型：**
+
 - `submit` - 提交审核
 - `approve` - 审核通过
 - `reject` - 审核驳回
@@ -400,6 +407,7 @@ GET /api/admin/articles/1/audit-logs?page=1&page_size=20
 - `delete` - 删除
 
 **operator_role 类型：**
+
 - `author` - 作者
 - `reviewer` - 审核员
 - `admin` - 管理员
@@ -417,11 +425,11 @@ GET /api/admin/articles/1/audit-logs?page=1&page_size=20
 
 **请求参数：**
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| page | int | 否 | 1 | 页码 |
-| page_size | int | 否 | 20 | 每页数量 |
-| article_id | int | 否 | - | 文章ID（筛选特定文章） |
+| 参数       | 类型 | 必填 | 默认值 | 说明                   |
+| ---------- | ---- | ---- | ------ | ---------------------- |
+| page       | int  | 否   | 1      | 页码                   |
+| page_size  | int  | 否   | 20     | 每页数量               |
+| article_id | int  | 否   | -      | 文章ID（筛选特定文章） |
 
 **请求示例：**
 
@@ -464,15 +472,15 @@ GET /api/admin/articles/pending-comments?page=1&page_size=20
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| comment_id | int | 是 | 评论ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| comment_id | int  | 是   | 评论ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| comment | string | 否 | null | 审核意见 |
+| 字段    | 类型   | 必填 | 默认值 | 说明     |
+| ------- | ------ | ---- | ------ | -------- |
+| comment | string | 否   | null   | 审核意见 |
 
 **请求示例：**
 
@@ -506,11 +514,11 @@ POST /api/admin/articles/comments/1/approve
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| comment_id | int | 是 | 评论ID |
-| article_id | int | 是 | 文章ID |
-| comment | string | 是 | 驳回原因 |
+| 参数       | 类型   | 必填 | 说明     |
+| ---------- | ------ | ---- | -------- |
+| comment_id | int    | 是   | 评论ID   |
+| article_id | int    | 是   | 文章ID   |
+| comment    | string | 是   | 驳回原因 |
 
 **请求示例：**
 
@@ -532,63 +540,69 @@ POST /api/admin/articles/comments/1/reject
 }
 ```
 
----
+获取有文章发布权限的用户列表。
 
-### 10. 删除评论（管理员）
+**接口地址：** `GET /api/admin/articles/users-with-permissions`
 
-管理员删除评论。
-
-**接口地址：** `DELETE /api/admin/articles/comments/{comment_id}`
-
-**接口说明：** 后台管理员使用该接口删除评论。
+**接口说明：** 后台管理员使用该接口获取有权限的用户列表。
 **认证要求：** 必需（管理员权限）
 
-**路径参数：**
+**请求参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| comment_id | int | 是 | 评论ID |
+| 参数              | 类型   | 必填 | 默认值 | 说明                             |
+| ----------------- | ------ | ---- | ------ | -------------------------------- |
+| permission_type   | string | 否   | -      | 权限类型（create/create_review） |
+| permission_status | string | 否   | -      | 权限状态（active/revoked）       |
 
 **请求示例：**
 
 ```http
-DELETE /api/admin/articles/comments/1
+GET /api/admin/articles/users-with-permissions
+GET /api/admin/articles/users-with-permissions?permission_type=create
+GET /api/admin/articles/users-with-permissions?permission_status=active
+GET /api/admin/articles/users-with-permissions?permission_type=create&permission_status=active
 ```
 
 **响应示例：**
 
 ```json
 {
-  "success": true,
-  "message": "删除成功"
+  "users": [
+    {
+      "id": 1,
+      "username": "test_user",
+      "permission_type": "create"
+    },
+    {
+      "id": 72,
+      "username": "author",
+      "permission_type": "create"
+    }
+  ]
 }
 ```
 
+**permission_type 类型说明：**
+
+- `create` - 文章创建权限
+- `create_review` - 文章创建 + 审核权限
+
+**permission_status 类型说明：**
+
+- `active` - 权限激活中
+- `revoked` - 权限已撤销
+
 ---
 
-## 普通用户接口（👥 普通用户）
-
-### 11. 获取文章列表
-
-获取文章列表，支持筛选和分页。
-
-**接口地址：** `GET /api/articles`
-
-**接口说明：** 获取文章列表，已发布的文章可公开访问，未发布文章需要相应权限。
-
-**认证要求：** 可选（未登录只能查看已发布文章，登录用户可查看自己有权限的文章）
-
-**请求参数：**
-
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| page | int | 否 | 1 | 页码 |
-| page_size | int | 否 | 10 | 每页数量 |
-| category_id | int | 否 | - | 分类ID |
-| tag_id | int | 否 | - | 标签ID |
-| keyword | string | 否 | - | 搜索关键词 |
-| article_type | string | 否 | - | 文章类型（study_guide/exam_tips/resource） |
-| status | string | 否 | published | 文章状态 |
+| 参数         | 类型   | 必填 | 默认值    | 说明                                       |
+| ------------ | ------ | ---- | --------- | ------------------------------------------ |
+| page         | int    | 否   | 1         | 页码                                       |
+| page_size    | int    | 否   | 10        | 每页数量                                   |
+| category_id  | int    | 否   | -         | 分类ID                                     |
+| tag_id       | int    | 否   | -         | 标签ID                                     |
+| keyword      | string | 否   | -         | 搜索关键词                                 |
+| article_type | string | 否   | -         | 文章类型（study_guide/exam_tips/resource） |
+| status       | string | 否   | published | 文章状态                                   |
 
 **请求示例：**
 
@@ -661,9 +675,9 @@ GET /api/articles?page=1&page_size=10&status=published
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -766,7 +780,7 @@ GET /api/articles/1
 
 ---
 
-### 13. 创建文章
+### 14. 创建文章
 
 创建新的文章草稿。
 
@@ -778,17 +792,17 @@ GET /api/articles/1
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| title | string | 是 | 文章标题（1-200字符） |
-| summary | string | 否 | 文章摘要 |
-| cover_image | string | 否 | 封面图片URL |
-| article_type | string | 否 | 文章类型（默认 study_guide） |
-| category_ids | array | 否 | 分类ID列表 |
-| tag_ids | array | 否 | 标签ID列表 |
-| blocks | array | 否 | 内容块列表 |
-| keywords | string | 否 | SEO关键词 |
-| meta_description | string | 否 | SEO描述 |
+| 字段             | 类型   | 必填 | 说明                         |
+| ---------------- | ------ | ---- | ---------------------------- |
+| title            | string | 是   | 文章标题（1-200字符）        |
+| summary          | string | 否   | 文章摘要                     |
+| cover_image      | string | 否   | 封面图片URL                  |
+| article_type     | string | 否   | 文章类型（默认 study_guide） |
+| category_ids     | array  | 否   | 分类ID列表                   |
+| tag_ids          | array  | 否   | 标签ID列表                   |
+| blocks           | array  | 否   | 内容块列表                   |
+| keywords         | string | 否   | SEO关键词                    |
+| meta_description | string | 否   | SEO描述                      |
 
 **请求示例：**
 
@@ -839,7 +853,7 @@ POST /api/articles
 
 ---
 
-### 14. 更新文章
+### 15. 更新文章
 
 更新已有文章。
 
@@ -851,23 +865,23 @@ POST /api/articles
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| title | string | 否 | 文章标题 |
-| summary | string | 否 | 文章摘要 |
-| cover_image | string | 否 | 封面图片URL |
-| article_type | string | 否 | 文章类型 |
-| category_ids | array | 否 | 分类ID列表 |
-| tag_ids | array | 否 | 标签ID列表 |
-| blocks | array | 否 | 内容块列表 |
-| keywords | string | 否 | SEO关键词 |
-| meta_description | string | 否 | SEO描述 |
+| 字段             | 类型   | 必填 | 说明        |
+| ---------------- | ------ | ---- | ----------- |
+| title            | string | 否   | 文章标题    |
+| summary          | string | 否   | 文章摘要    |
+| cover_image      | string | 否   | 封面图片URL |
+| article_type     | string | 否   | 文章类型    |
+| category_ids     | array  | 否   | 分类ID列表  |
+| tag_ids          | array  | 否   | 标签ID列表  |
+| blocks           | array  | 否   | 内容块列表  |
+| keywords         | string | 否   | SEO关键词   |
+| meta_description | string | 否   | SEO描述     |
 
 **请求示例：**
 
@@ -882,7 +896,7 @@ PUT /api/articles/2
 
 ---
 
-### 15. 删除文章
+### 16. 删除文章
 
 删除文章。
 
@@ -894,9 +908,9 @@ PUT /api/articles/2
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -915,7 +929,7 @@ DELETE /api/articles/2
 
 ---
 
-### 16. 提交审核
+### 17. 提交审核
 
 将草稿文章提交审核。
 
@@ -927,9 +941,9 @@ DELETE /api/articles/2
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -947,12 +961,13 @@ POST /api/articles/2/submit
 ```
 
 **权限要求：**
+
 - 需要文章创建权限
 - 文章状态必须为 `draft`
 
 ---
 
-### 17. 发布文章
+### 18. 发布文章
 
 发布已审核通过的文章。
 
@@ -964,9 +979,9 @@ POST /api/articles/2/submit
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -984,12 +999,13 @@ POST /api/articles/2/publish
 ```
 
 **权限要求：**
+
 - 文章状态必须为 `approved`
 - 作者或超级管理员可以发布
 
 ---
 
-### 18. 点赞文章
+### 19. 点赞文章
 
 点赞文章。
 
@@ -1001,9 +1017,9 @@ POST /api/articles/2/publish
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -1022,7 +1038,7 @@ POST /api/articles/1/like
 
 ---
 
-### 19. 取消点赞文章
+### 20. 取消点赞文章
 
 取消点赞文章。
 
@@ -1034,9 +1050,9 @@ POST /api/articles/1/like
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求示例：**
 
@@ -1055,7 +1071,7 @@ DELETE /api/articles/1/like
 
 ---
 
-### 20. 获取文章评论列表
+### 21. 获取文章评论列表
 
 获取指定文章的评论列表。
 
@@ -1067,18 +1083,18 @@ DELETE /api/articles/1/like
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求参数：**
 
-| 参数 | 类型 | 必填 | 默认值 | 说明 |
-|------|------|--------|---------|------|
-| page | int | 否 | 1 | 页码 |
-| page_size | int | 否 | 20 | 每页数量 |
-| parent_id | int | 否 | null | 父评论ID（获取回复） |
-| sort | string | 否 | latest | 排序方式（latest/hottest） |
+| 参数      | 类型   | 必填 | 默认值 | 说明                       |
+| --------- | ------ | ---- | ------ | -------------------------- |
+| page      | int    | 否   | 1      | 页码                       |
+| page_size | int    | 否   | 20     | 每页数量                   |
+| parent_id | int    | 否   | null   | 父评论ID（获取回复）       |
+| sort      | string | 否   | latest | 排序方式（latest/hottest） |
 
 **请求示例：**
 
@@ -1146,7 +1162,7 @@ GET /api/articles/1/comments?page=1&page_size=20&sort=latest
 
 ---
 
-### 21. 创建评论
+### 22. 创建评论
 
 创建新评论。
 
@@ -1158,16 +1174,16 @@ GET /api/articles/1/comments?page=1&page_size=20&sort=latest
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| content | string | 是 | 评论内容（1-1000字符） |
-| parent_id | int | 否 | 父评论ID（回复评论时需要） |
+| 字段      | 类型   | 必填 | 说明                       |
+| --------- | ------ | ---- | -------------------------- |
+| content   | string | 是   | 评论内容（1-1000字符）     |
+| parent_id | int    | 否   | 父评论ID（回复评论时需要） |
 
 **请求示例：**
 
@@ -1211,7 +1227,7 @@ POST /api/articles/1/comments
 
 ---
 
-### 22. 更新评论
+### 23. 更新评论
 
 更新评论内容。
 
@@ -1223,16 +1239,16 @@ POST /api/articles/1/comments
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
-| comment_id | int | 是 | 评论ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
+| comment_id | int  | 是   | 评论ID |
 
 **请求体：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| content | string | 是 | 评论内容（1-1000字符） |
+| 字段    | 类型   | 必填 | 说明                   |
+| ------- | ------ | ---- | ---------------------- |
+| content | string | 是   | 评论内容（1-1000字符） |
 
 **请求示例：**
 
@@ -1246,7 +1262,7 @@ PUT /api/articles/1/comments/1
 
 ---
 
-### 23. 删除评论
+### 24. 删除评论
 
 删除评论。
 
@@ -1258,10 +1274,10 @@ PUT /api/articles/1/comments/1
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
-| comment_id | int | 是 | 评论ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
+| comment_id | int  | 是   | 评论ID |
 
 **请求示例：**
 
@@ -1280,7 +1296,7 @@ DELETE /api/articles/1/comments/1
 
 ---
 
-### 24. 点赞评论
+### 25. 点赞评论
 
 点赞评论。
 
@@ -1292,10 +1308,10 @@ DELETE /api/articles/1/comments/1
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
-| comment_id | int | 是 | 评论ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
+| comment_id | int  | 是   | 评论ID |
 
 **请求示例：**
 
@@ -1314,7 +1330,7 @@ POST /api/articles/1/comments/1/like
 
 ---
 
-### 25. 取消点赞评论
+### 26. 取消点赞评论
 
 取消点赞评论。
 
@@ -1326,10 +1342,10 @@ POST /api/articles/1/comments/1/like
 
 **路径参数：**
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|--------|------|
-| article_id | int | 是 | 文章ID |
-| comment_id | int | 是 | 评论ID |
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
+| comment_id | int  | 是   | 评论ID |
 
 **请求示例：**
 
@@ -1348,9 +1364,267 @@ DELETE /api/articles/1/comments/1/like
 
 ---
 
+### 27. 获取我的文章权限
+
+获取当前用户在文章系统中的权限信息。
+
+**接口地址：** `GET /api/articles/my-permissions`
+
+**接口说明：** 用户使用该接口获取自己的文章发布权限。
+
+**认证要求：** 必需
+
+**请求参数：** 无
+
+**请求示例：**
+
+```http
+GET /api/articles/my-permissions
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 1,
+    "page": 1,
+    "page_size": 1,
+    "permissions": [
+      {
+        "id": 1,
+        "user_id": 72,
+        "permission_type": "create",
+        "status": "active",
+        "expires_at": "2027-02-21T17:01:11",
+        "articles_created": 0,
+        "articles_published": 0,
+        "created_at": "2026-02-21T17:01:11"
+      }
+    ]
+  }
+}
+```
+
+**权限状态说明：**
+
+| status      | 说明                           |
+| ----------- | ------------------------------ |
+| `active`  | 权限激活中，可以创建和发布文章 |
+| `expired` | 权限已过期，无法创建和发布文章 |
+| `revoked` | 权限已被撤销                   |
+
+**权限类型说明：**
+
+| permission_type | 说明         |
+| --------------- | ------------ |
+| `create`      | 文章创建权限 |
+
+---
+
+## 权限管理接口（🔑 权限管理）
+
+### 28. 获取有权限的用户列表
+
+获取拥有文章发布权限的用户列表。
+
+**接口地址：** `GET /api/admin/articles/users-with-permissions`
+
+**接口说明：** 超级管理员使用该接口获取拥有文章发布权限的用户列表，支持按权限类型和状态筛选。
+
+**认证要求：** 必需（超级管理员）
+
+**查询参数：**
+
+| 参数            | 类型   | 必填 | 说明                                                                       |
+| --------------- | ------ | ---- | -------------------------------------------------------------------------- |
+| permission_type | string | 否   | 权限类型：`create`（创建）、`create_review`（创建+审核）               |
+| status          | string | 否   | 权限状态：`active`（有效）、`revoked`（已撤销）、`expired`（已过期） |
+
+**请求示例：**
+
+```http
+# 获取所有有权限的用户
+GET /api/admin/articles/users-with-permissions
+
+# 按权限类型筛选（获取创建权限的用户）
+GET /api/admin/articles/users-with-permissions?permission_type=create
+
+# 按状态筛选（获取有效权限的用户）
+GET /api/admin/articles/users-with-permissions?status=active
+
+# 组合筛选（获取有效创建权限的用户）
+GET /api/admin/articles/users-with-permissions?permission_type=create&status=active
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "id": 72,
+      "username": "张老师",
+      "permission_type": "create"
+    },
+    {
+      "id": 75,
+      "username": "李老师",
+      "permission_type": "create_review"
+    },
+    {
+      "id": 80,
+      "username": "王老师",
+      "permission_type": "create"
+    }
+  ]
+}
+```
+
+**权限类型说明：**
+
+| permission_type   | 说明                    |
+| ----------------- | ----------------------- |
+| `create`        | 文章创建权限            |
+| `create_review` | 文章创建 + 审核文章权限 |
+
+---
+
+### 29. 分配文章权限
+
+为指定用户分配文章发布权限。
+
+**接口地址：** `POST /api/admin/articles/permissions/grant`
+
+**接口说明：** 超级管理员使用该接口为用户分配文章发布权限，支持设置权限过期时间。
+
+**认证要求：** 必需（超级管理员）
+
+**请求体：**
+
+| 字段            | 类型   | 必填 | 说明                                                         |
+| --------------- | ------ | ---- | ------------------------------------------------------------ |
+| user_id         | int    | 是   | 用户ID                                                       |
+| permission_type | string | 是   | 权限类型：`create`（创建）、`create_review`（创建+审核） |
+| expires_at      | string | 否   | 权限过期时间（ISO 8601 格式），不填则永久有效                |
+
+**请求示例：**
+
+```http
+# 分配永久创建权限
+POST /api/admin/articles/permissions/grant
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "user_id": 72,
+  "permission_type": "create"
+}
+
+# 分配带过期时间的审核权限
+POST /api/admin/articles/permissions/grant
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "user_id": 75,
+  "permission_type": "create_review",
+  "expires_at": "2027-12-31T23:59:59"
+}
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "message": "权限分配成功"
+}
+```
+
+**失败响应：**
+
+```json
+{
+  "detail": "权限类型必须是: create, create_review"
+}
+```
+
+```json
+{
+  "detail": "该用户已拥有此类型权限"
+}
+```
+
+**权限类型说明：**
+
+| permission_type   | 说明                    |
+| ----------------- | ----------------------- |
+| `create`        | 文章创建权限            |
+| `create_review` | 文章创建 + 审核文章权限 |
+
+---
+
+### 30. 撤销文章权限
+
+撤销指定用户的文章发布权限。
+
+**接口地址：** `POST /api/admin/articles/permissions/revoke`
+
+**接口说明：** 超级管理员使用该接口撤销用户的文章发布权限。
+
+**认证要求：** 必需（超级管理员）
+
+**请求体：**
+
+| 字段            | 类型   | 必填 | 说明                                                         |
+| --------------- | ------ | ---- | ------------------------------------------------------------ |
+| user_id         | int    | 是   | 用户ID                                                       |
+| permission_type | string | 是   | 权限类型：`create`（创建）、`create_review`（创建+审核） |
+
+**请求示例：**
+
+```http
+POST /api/admin/articles/permissions/revoke
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "user_id": 72,
+  "permission_type": "create"
+}
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "message": "权限撤销成功"
+}
+```
+
+**失败响应：**
+
+```json
+{
+  "detail": "未找到该用户的权限记录"
+}
+```
+
+```json
+{
+  "detail": "该权限已被撤销"
+}
+```
+
+---
+
 ## 分类标签接口（🏷️ 分类标签）
 
-### 26. 获取分类树
+### 31. 获取分类树
 
 获取所有分类的树形结构。
 
@@ -1412,7 +1686,7 @@ GET /api/articles/categories
 
 ---
 
-### 30. 获取标签列表
+### 32. 获取标签列表
 
 获取所有标签列表。
 
@@ -1500,84 +1774,84 @@ GET /api/articles/tags
 
 ### 文章状态 (ArticleStatus)
 
-| 值 | 说明 |
-|----|------|
-| draft | 草稿 |
+| 值             | 说明   |
+| -------------- | ------ |
+| draft          | 草稿   |
 | pending_review | 待审核 |
-| approved | 已通过 |
-| rejected | 已驳回 |
-| published | 已发布 |
-| archived | 已归档 |
+| approved       | 已通过 |
+| rejected       | 已驳回 |
+| published      | 已发布 |
+| archived       | 已归档 |
 
 ### 文章类型 (ArticleType)
 
-| 值 | 说明 |
-|----|------|
+| 值          | 说明     |
+| ----------- | -------- |
 | study_guide | 学习指南 |
-| exam_tips | 考试技巧 |
-| resource | 学习资源 |
+| exam_tips   | 考试技巧 |
+| resource    | 学习资源 |
 
 ### 内容块类型 (BlockType)
 
-| 值 | 说明 |
-|----|------|
-| text | 文本段落 |
-| image | 图片 |
-| video | 视频 |
-| code | 代码块 |
-| quote | 引用 |
-| divider | 分隔线 |
-| list | 列表 |
+| 值      | 说明     |
+| ------- | -------- |
+| text    | 文本段落 |
+| image   | 图片     |
+| video   | 视频     |
+| code    | 代码块   |
+| quote   | 引用     |
+| divider | 分隔线   |
+| list    | 列表     |
 
 ### 列表类型 (ListType)
 
-| 值 | 说明 |
-|----|------|
+| 值        | 说明     |
+| --------- | -------- |
 | unordered | 无序列表 |
-| ordered | 有序列表 |
+| ordered   | 有序列表 |
 
 ### 评论状态 (CommentStatus)
 
-| 值 | 说明 |
-|----|------|
-| pending | 待审核 |
+| 值       | 说明   |
+| -------- | ------ |
+| pending  | 待审核 |
 | approved | 已通过 |
 | rejected | 已驳回 |
-| deleted | 已删除 |
+| deleted  | 已删除 |
 
 ### 权限类型 (PermissionType)
 
-| 值 | 说明 |
-|----|------|
-| create | 创建文章 |
+| 值            | 说明                |
+| ------------- | ------------------- |
+| create        | 创建文章            |
 | create_review | 创建文章 + 审核文章 |
 
 ### 权限状态 (PermissionStatus)
 
-| 值 | 说明 |
-|----|------|
-| active | 有效 |
+| 值      | 说明   |
+| ------- | ------ |
+| active  | 有效   |
 | revoked | 已撤销 |
 
 ### 审核操作类型 (AuditAction)
 
-| 值 | 说明 |
-|----|------|
-| submit | 提交审核 |
-| approve | 审核通过 |
-| reject | 审核驳回 |
+| 值               | 说明     |
+| ---------------- | -------- |
+| submit           | 提交审核 |
+| approve          | 审核通过 |
+| reject           | 审核驳回 |
 | request_revision | 请求修改 |
-| archive | 归档 |
-| restore | 恢复 |
-| delete | 删除 |
+| archive          | 归档     |
+| restore          | 恢复     |
+| delete           | 删除     |
 
 ### 操作人角色 (OperatorRole)
 
-| 值 | 说明 |
-|----|------|
-| author | 作者 |
+| 值       | 说明   |
+| -------- | ------ |
+| author   | 作者   |
 | reviewer | 审核员 |
-| admin | 管理员 |
+| admin    | 管理员 |
 
 ---
 
@@ -1587,55 +1861,57 @@ GET /api/articles/tags
 
 #### 文章相关接口
 
-| 序号 | 端点 | 方法 | 说明 | 认证要求 |
-|------|--------|------|----------|----------|
-| 1 | `/api/articles` | GET | 获取文章列表 | 可选 |
-| 2 | `/api/articles/{article_id}` | GET | 获取文章详情 | 可选 |
-| 3 | `/api/articles` | POST | 创建文章草稿 | 必需 |
-| 4 | `/api/articles/{article_id}` | PUT | 更新文章 | 必需 |
-| 5 | `/api/articles/{article_id}` | DELETE | 删除文章 | 必需 |
-| 6 | `/api/articles/{article_id}/submit` | POST | 提交审核 | 必需 |
-| 7 | `/api/articles/{article_id}/publish` | POST | 发布文章 | 必需 |
-| 8 | `/api/articles/{article_id}/like` | POST | 点赞文章 | 必需 |
-| 9 | `/api/articles/{article_id}/like` | DELETE | 取消点赞文章 | 必需 |
+| 序号 | 端点                                   | 方法   | 说明         | 认证要求 |
+| ---- | -------------------------------------- | ------ | ------------ | -------- |
+| 1    | `/api/articles`                      | GET    | 获取文章列表 | 可选     |
+| 2    | `/api/articles/{article_id}`         | GET    | 获取文章详情 | 可选     |
+| 3    | `/api/articles`                      | POST   | 创建文章草稿 | 必需     |
+| 4    | `/api/articles/{article_id}`         | PUT    | 更新文章     | 必需     |
+| 5    | `/api/articles/{article_id}`         | DELETE | 删除文章     | 必需     |
+| 6    | `/api/articles/{article_id}/submit`  | POST   | 提交审核     | 必需     |
+| 7    | `/api/articles/{article_id}/publish` | POST   | 发布文章     | 必需     |
+| 8    | `/api/articles/{article_id}/like`    | POST   | 点赞文章     | 必需     |
+| 9    | `/api/articles/{article_id}/like`    | DELETE | 取消点赞文章 | 必需     |
 
 #### 评论相关接口
 
-| 序号 | 端点 | 方法 | 说明 | 认证要求 |
-|------|--------|------|----------|----------|
-| 10 | `/api/articles/{article_id}/comments` | GET | 获取文章评论列表 | 可选 |
-| 11 | `/api/articles/{article_id}/comments` | POST | 创建评论 | 必需 |
-| 12 | `/api/articles/{article_id}/comments/{comment_id}` | PUT | 更新评论 | 必需 |
-| 13 | `/api/articles/{article_id}/comments/{comment_id}` | DELETE | 删除评论 | 必需 |
-| 14 | `/api/articles/{article_id}/comments/{comment_id}/like` | POST | 点赞评论 | 必需 |
-| 15 | `/api/articles/{article_id}/comments/{comment_id}/like` | DELETE | 取消点赞评论 | 必需 |
+| 序号 | 端点                                                      | 方法   | 说明             | 认证要求 |
+| ---- | --------------------------------------------------------- | ------ | ---------------- | -------- |
+| 10   | `/api/articles/{article_id}/comments`                   | GET    | 获取文章评论列表 | 可选     |
+| 11   | `/api/articles/{article_id}/comments`                   | POST   | 创建评论         | 必需     |
+| 12   | `/api/articles/{article_id}/comments/{comment_id}`      | PUT    | 更新评论         | 必需     |
+| 13   | `/api/articles/{article_id}/comments/{comment_id}`      | DELETE | 删除评论         | 必需     |
+| 14   | `/api/articles/{article_id}/comments/{comment_id}/like` | POST   | 点赞评论         | 必需     |
+| 15   | `/api/articles/{article_id}/comments/{comment_id}/like` | DELETE | 取消点赞评论     | 必需     |
 
 #### 后台管理员接口
 
-| 序号 | 端点 | 方法 | 说明 | 认证要求 |
-|------|--------|------|----------|----------|
-| 16 | `/api/admin/articles/pending-review` | GET | 获取待审核文章列表 | 必需（管理员） |
-| 17 | `/api/admin/articles/{article_id}/approve` | POST | 审核通过文章 | 必需（管理员） |
-| 18 | `/api/admin/articles/{article_id}/reject` | POST | 审核驳回文章 | 必需（管理员） |
-| 19 | `/api/admin/articles/{article_id}/request-revision` | POST | 请求修改 | 必需（管理员） |
-| 20 | `/api/admin/articles/{article_id}/archive` | POST | 归档文章 | 必需（管理员） |
-| 21 | `/api/admin/articles/{article_id}/audit-logs` | GET | 获取文章审核日志 | 必需（管理员） |
-| 22 | `/api/admin/articles/pending-comments` | GET | 获取待审核评论列表 | 必需（管理员） |
-| 23 | `/api/admin/articles/comments/{comment_id}/approve` | POST | 审核通过评论 | 必需（管理员） |
-| 24 | `/api/admin/articles/comments/{comment_id}/reject` | POST | 审核驳回评论 | 必需（管理员） |
-| 25 | `/api/admin/articles/comments/{comment_id}` | DELETE | 删除评论 | 必需（管理员） |
+| 序号 | 端点                                                  | 方法   | 说明               | 认证要求       |
+| ---- | ----------------------------------------------------- | ------ | ------------------ | -------------- |
+| 17   | `/api/admin/articles/pending-review`                | GET    | 获取待审核文章列表 | 必需（管理员） |
+| 18   | `/api/admin/articles/{article_id}/approve`          | POST   | 审核通过文章       | 必需（管理员） |
+| 19   | `/api/admin/articles/{article_id}/reject`           | POST   | 审核驳回文章       | 必需（管理员） |
+| 20   | `/api/admin/articles/{article_id}/request-revision` | POST   | 请求修改           | 必需（管理员） |
+| 21   | `/api/admin/articles/{article_id}/archive`          | POST   | 归档文章           | 必需（管理员） |
+| 22   | `/api/admin/articles/{article_id}/audit-logs`       | GET    | 获取文章审核日志   | 必需（管理员） |
+| 23   | `/api/admin/articles/pending-comments`              | GET    | 获取待审核评论列表 | 必需（管理员） |
+| 24   | `/api/admin/articles/comments/{comment_id}/approve` | POST   | 审核通过评论       | 必需（管理员） |
+| 25   | `/api/admin/articles/comments/{comment_id}/reject`  | POST   | 审核驳回评论       | 必需（管理员） |
+| 26   | `/api/admin/articles/comments/{comment_id}`         | DELETE | 删除评论           | 必需（管理员） |
 
-#### 权限管理接口（超级管理员）
+#### 权限管理接口
 
-| 序号 | 端点 | 方法 | 说明 | 认证要求 |
-|------|--------|------|----------|----------|
-| 26 | `/api/admin/articles/permissions/grant` | POST | 分配权限 | 必需（超级管理员） |
-| 27 | `/api/admin/articles/permissions/revoke` | POST | 撤销权限 | 必需（超级管理员） |
-| 28 | `/api/admin/articles/permissions` | GET | 获取权限列表 | 必需（超级管理员） |
+| 序号 | 端点                                           | 方法 | 说明                 | 认证要求           |
+| ---- | ---------------------------------------------- | ---- | -------------------- | ------------------ |
+| 27   | `/api/articles/my-permissions`               | GET  | 获取我的文章权限     | 必需               |
+| 28   | `/api/admin/articles/users-with-permissions` | GET  | 获取有权限的用户列表 | 必需（管理员）     |
+| 29   | `/api/admin/articles/permissions/grant`      | POST | 分配权限             | 必需（超级管理员） |
+| 30   | `/api/admin/articles/permissions/revoke`     | POST | 撤销权限             | 必需（超级管理员） |
+| 31   | `/api/admin/articles/permissions`            | GET  | 获取权限列表         | 必需（超级管理员） |
 
 #### 分类标签接口
 
-| 序号 | 端点 | 方法 | 说明 | 认证要求 |
-|------|--------|------|----------|----------|
-| 29 | `/api/articles/categories` | GET | 获取分类树 | 无 |
-| 30 | `/api/articles/tags` | GET | 获取标签列表 | 无 |
+| 序号 | 端点                         | 方法 | 说明         | 认证要求 |
+| ---- | ---------------------------- | ---- | ------------ | -------- |
+| 32   | `/api/articles/categories` | GET  | 获取分类树   | 无       |
+| 33   | `/api/articles/tags`       | GET  | 获取标签列表 | 无       |

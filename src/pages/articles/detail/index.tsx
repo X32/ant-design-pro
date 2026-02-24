@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, history, useModel, useParams } from '@umijs/max';
-import { Spin, Empty, message, Button, Tag, Space } from 'antd';
-import { HeartOutlined, HeartFilled, EyeOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
-import { getArticleDetail, likeArticle, unlikeArticle } from '@/services/ant-design-pro/api';
+import { Spin, Empty, message, Button, Tag, Space, Avatar, Form, Input as AntInput, Popconfirm } from 'antd';
+import { HeartOutlined, HeartFilled, EyeOutlined, CalendarOutlined, UserOutlined, SendOutlined, DeleteOutlined, EditOutlined, LikeOutlined, MessageOutlined } from '@ant-design/icons';
+import { getArticleDetail, likeArticle, unlikeArticle, getArticleComments, createComment, updateComment, deleteOwnComment, likeComment, unlikeComment } from '@/services/ant-design-pro/api';
 import './index.less';
+
+const { TextArea } = AntInput;
 
 const ArticleDetailPage: React.FC = () => {
   const { initialState } = useModel('@@initialState');
@@ -15,6 +17,16 @@ const ArticleDetailPage: React.FC = () => {
   // 数据状态
   const [article, setArticle] = useState<API.ArticleDetail | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // 评论相关状态
+  const [comments, setComments] = useState<API.CommentListItem[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentTotal, setCommentTotal] = useState(0);
+  const [commentPage, setCommentPage] = useState(1);
+  const [commentPageSize] = useState(20);
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [editingComment, setEditingComment] = useState<number | null>(null);
+  const [commentForm] = Form.useForm();
 
   // 文章类型配置
   const ARTICLE_TYPES = {
@@ -65,6 +77,129 @@ const ArticleDetailPage: React.FC = () => {
     }
   };
 
+  // 获取文章评论
+  const fetchComments = useCallback(async (page: number = 1) => {
+    if (!articleId) return;
+
+    setCommentsLoading(true);
+    try {
+      const response = await getArticleComments(parseInt(articleId), {
+        page,
+        page_size: commentPageSize,
+        sort: 'latest',
+      });
+
+      if (response?.success && response?.data) {
+        setComments(response.data.comments || []);
+        setCommentTotal(response.data.total || 0);
+        setCommentPage(page);
+      }
+    } catch (error) {
+      console.error('获取评论失败:', error);
+      message.error('获取评论失败，请重试');
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [articleId, commentPageSize]);
+
+  // 提交评论
+  const handleSubmitComment = async (values: { content: string }) => {
+    if (!isLoggedIn || !article) return;
+
+    if (!values.content?.trim()) {
+      message.warning('请输入评论内容');
+      return;
+    }
+
+    try {
+      const data: { content: string; parent_id?: number } = {
+        content: values.content,
+      };
+
+      if (replyTo) {
+        data.parent_id = replyTo;
+      }
+
+      if (editingComment) {
+        // 更新评论
+        await updateComment(article.id, editingComment, { content: values.content });
+        message.success('评论更新成功');
+        setEditingComment(null);
+      } else {
+        // 创建新评论
+        await createComment(article.id, data);
+        message.success('评论提交成功，等待审核');
+        setReplyTo(null);
+      }
+
+      commentForm.resetFields();
+      fetchComments(1);
+    } catch (error) {
+      console.error('提交评论失败:', error);
+      message.error('提交评论失败，请重试');
+    }
+  };
+
+  // 删除评论
+  const handleDeleteComment = async (commentId: number) => {
+    if (!article) return;
+
+    try {
+      await deleteOwnComment(article.id, commentId);
+      message.success('删除成功');
+      fetchComments(commentPage);
+    } catch (error) {
+      console.error('删除评论失败:', error);
+      message.error('删除失败，请重试');
+    }
+  };
+
+  // 点赞评论
+  const handleLikeComment = async (commentId: number, isLiked: boolean) => {
+    if (!isLoggedIn || !article) return;
+
+    try {
+      if (isLiked) {
+        await unlikeComment(article.id, commentId);
+        message.success('取消点赞成功');
+      } else {
+        await likeComment(article.id, commentId);
+        message.success('点赞成功');
+      }
+      fetchComments(commentPage);
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      message.error('操作失败，请重试');
+    }
+  };
+
+  // 回复评论
+  const handleReply = (commentId: number) => {
+    if (!isLoggedIn) {
+      message.warning('请先登录');
+      return;
+    }
+    setReplyTo(commentId);
+    setEditingComment(null);
+    commentForm.focus();
+  };
+
+  // 编辑评论
+  const handleEditComment = (comment: API.CommentListItem) => {
+    if (!isLoggedIn) {
+      message.warning('请先登录');
+      return;
+    }
+    if (!comment.is_own) {
+      message.warning('只能编辑自己的评论');
+      return;
+    }
+    setEditingComment(comment.id);
+    setReplyTo(null);
+    commentForm.setFieldsValue({ content: comment.content });
+    commentForm.focus();
+  };
+
   // 返回列表
   const handleBack = () => {
     history.push('/articles');
@@ -73,9 +208,10 @@ const ArticleDetailPage: React.FC = () => {
   // 初始化加载
   useEffect(() => {
     fetchArticleDetail();
+    fetchComments(1);
     // 滚动到顶部
     window.scrollTo(0, 0);
-  }, [fetchArticleDetail]);
+  }, [fetchArticleDetail, fetchComments]);
 
   // 渲染内容块
   const renderContentBlock = (block: API.ContentBlock) => {
@@ -296,6 +432,152 @@ const ArticleDetailPage: React.FC = () => {
         <Button className="action-button" onClick={handleBack} size="large">
           返回文章列表
         </Button>
+      </section>
+
+      {/* 评论区域 */}
+      <section className="comments-section">
+        <div className="comments-container">
+          <div className="comments-header">
+            <MessageOutlined />
+            <h2>评论 ({commentTotal})</h2>
+          </div>
+
+          {/* 评论输入框 */}
+          <div className="comment-input-area">
+            <Form form={commentForm} onFinish={handleSubmitComment}>
+              <Form.Item
+                name="content"
+                rules={[{ required: true, message: '请输入评论内容' }]}
+              >
+                <TextArea
+                  rows={4}
+                  placeholder={replyTo ? '回复评论...' : isLoggedIn ? '写下你的评论...' : '请登录后发表评论'}
+                  disabled={!isLoggedIn}
+                  maxLength={1000}
+                  showCount
+                />
+              </Form.Item>
+              <div className="comment-input-actions">
+                {replyTo && (
+                  <Button onClick={() => setReplyTo(null)}>
+                    取消回复
+                  </Button>
+                )}
+                {editingComment && (
+                  <Button onClick={() => {
+                    setEditingComment(null);
+                    commentForm.resetFields();
+                  }}>
+                    取消编辑
+                  </Button>
+                )}
+                <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
+                  {editingComment ? '更新评论' : '发表评论'}
+                </Button>
+              </div>
+            </Form>
+          </div>
+
+          {/* 评论列表 */}
+          <div className="comments-list">
+            <Spin spinning={commentsLoading}>
+              {comments.length === 0 ? (
+                <Empty description="暂无评论，快来抢沙发吧！" />
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="comment-item">
+                    <div className="comment-header">
+                      <Avatar
+                        src={comment.user?.avatar}
+                        icon={!comment.user?.avatar && <UserOutlined />}
+                        size={40}
+                      />
+                      <div className="comment-user-info">
+                        <span className="comment-username">
+                          {comment.user?.username}
+                        </span>
+                        <span className="comment-time">
+                          {new Date(comment.created_at).toLocaleString('zh-CN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="comment-content">
+                      {comment.parent && (
+                        <div className="reply-to">
+                          回复 @{comment.parent.user?.username}
+                        </div>
+                      )}
+                      <p>{comment.content}</p>
+                    </div>
+
+                    <div className="comment-actions">
+                      <Space size="middle">
+                        <span
+                          className={`comment-like ${comment.is_liked ? 'liked' : ''}`}
+                          onClick={() => handleLikeComment(comment.id, comment.is_liked || false)}
+                        >
+                          <LikeOutlined />
+                          {comment.like_count}
+                        </span>
+                        <span
+                          className="comment-reply"
+                          onClick={() => handleReply(comment.id)}
+                        >
+                          <MessageOutlined />
+                          回复
+                        </span>
+                        {comment.is_own && (
+                          <>
+                            <span
+                              className="comment-edit"
+                              onClick={() => handleEditComment(comment)}
+                            >
+                              <EditOutlined />
+                              编辑
+                            </span>
+                            <Popconfirm
+                              title="确认删除该评论？"
+                              onConfirm={() => handleDeleteComment(comment.id)}
+                              okText="确认"
+                              cancelText="取消"
+                            >
+                              <span className="comment-delete">
+                                <DeleteOutlined />
+                                删除
+                              </span>
+                            </Popconfirm>
+                          </>
+                        )}
+                      </Space>
+                    </div>
+                  </div>
+                ))
+              )}
+            </Spin>
+          </div>
+
+          {/* 分页 */}
+          {commentTotal > commentPageSize && (
+            <div className="comments-pagination">
+              <Button
+                disabled={commentPage <= 1}
+                onClick={() => fetchComments(commentPage - 1)}
+              >
+                上一页
+              </Button>
+              <span>
+                第 {commentPage} 页，共 {Math.ceil(commentTotal / commentPageSize)} 页
+              </span>
+              <Button
+                disabled={commentPage >= Math.ceil(commentTotal / commentPageSize)}
+                onClick={() => fetchComments(commentPage + 1)}
+              >
+                下一页
+              </Button>
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

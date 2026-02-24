@@ -9,6 +9,7 @@ import {
   PhoneOutlined,
   UserOutlined,
   WalletOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { App, Avatar, Button, Card, Form, Input, Spin, Statistic, Tag, List } from 'antd';
@@ -20,6 +21,7 @@ import {
   currentUser,
   updateUserPassword,
   updateUserProfile,
+  getMyArticlePermissions,
 } from '@/services/ant-design-pro/api';
 import { getMySubscription, UserSubscription, RenewalOption } from '@/services/ant-design-pro/api/vipSubscription';
 import { TOKEN_KEY, REFRESH_TOKEN_KEY, USER_ID_KEY, CONVERSATION_ID_KEY } from '@/config/apiConfig';
@@ -37,6 +39,11 @@ const UserProfile: React.FC = () => {
   const [usernameForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loginModalVisible, setLoginModalVisible] = useState(false);
+
+  // 文章权限状态
+  const [articlePermissions, setArticlePermissions] = useState<API.MyPermissionItem[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
+  const [hasCreatePermission, setHasCreatePermission] = useState(false);
 
   // 使用钱包 Hook
   const { balance, loading: walletLoading, fetchBalance } = useWallet();
@@ -87,11 +94,11 @@ const UserProfile: React.FC = () => {
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!isLoggedIn) return;
-      
+
       try {
         setSubscriptionLoading(true);
         const response = await getMySubscription();
-        
+
         if (response.success && response.data) {
           setHasSubscription(response.data.has_subscription);
           setSubscriptions(response.data.subscriptions || []); // 设置订阅数组
@@ -107,6 +114,36 @@ const UserProfile: React.FC = () => {
     };
 
     fetchSubscription();
+  }, [isLoggedIn]);
+
+  // 查询文章权限（仅在已登录时）
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!isLoggedIn) return;
+
+      try {
+        setPermissionsLoading(true);
+        const response = await getMyArticlePermissions();
+
+        if (response.success && response.data) {
+          setArticlePermissions(response.data.permissions || []);
+          // 检查是否有创建文章的激活权限
+          const hasCreate = response.data.permissions?.some(
+            (p) => p.permission_type === 'create' && p.status === 'active'
+          );
+          setHasCreatePermission(hasCreate || false);
+          console.log('文章权限信息:', response.data);
+        } else {
+          console.error('获取文章权限失败:', response.message);
+        }
+      } catch (error) {
+        console.error('获取文章权限失败:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+
+    fetchPermissions();
   }, [isLoggedIn]);
 
   // 返回首页
@@ -128,6 +165,11 @@ const UserProfile: React.FC = () => {
   // 跳转到反馈页面
   const handleFeedback = () => {
     history.push('/user/feedback');
+  };
+
+  // 跳转到写文章页面
+  const handleWriteArticle = () => {
+    history.push('/articles/edit');
   };
 
   // 退出登录
@@ -352,6 +394,23 @@ const UserProfile: React.FC = () => {
           <p className="user-role">
             {user?.access === 'admin' ? '管理员' : '普通用户'}
           </p>
+
+          {/* 用户ID显示 */}
+          <div className="user-id-card">
+            <span className="user-id-label">用户ID：</span>
+            <span className="user-id-value">{user?.userid || '-'}</span>
+            <Button
+              type="text"
+              size="small"
+              onClick={() => {
+                navigator.clipboard.writeText(user?.userid || '');
+                message.success('用户ID已复制到剪贴板');
+              }}
+              style={{ fontSize: '12px', padding: '0 4px' }}
+            >
+              复制
+            </Button>
+          </div>
 
           {/* 钱包余额显示 */}
           <Card
@@ -651,6 +710,50 @@ const UserProfile: React.FC = () => {
           >
             用户反馈
           </Button>
+
+          {/* 写文章入口按钮 - 根据权限显示 */}
+          {hasCreatePermission ? (
+            <Button
+              icon={<EditOutlined />}
+              onClick={handleWriteArticle}
+              style={{
+                marginTop: 12,
+                width: '100%',
+                background: '#FFD93D',
+                border: '3px solid #000',
+                borderRadius: '18px 20px 16px 22px',
+                boxShadow: '4px 4px 0px #000',
+                fontWeight: 700,
+                color: '#1A535C',
+                height: 'auto',
+                padding: '0.6rem 1.5rem'
+              }}
+              size="large"
+            >
+              写文章
+            </Button>
+          ) : (
+            <Spin spinning={permissionsLoading} tip="检查权限中...">
+              <Button
+                disabled
+                style={{
+                  marginTop: 12,
+                  width: '100%',
+                  background: '#999',
+                  border: '3px solid #000',
+                  borderRadius: '18px 20px 16px 22px',
+                  boxShadow: '4px 4px 0px #000',
+                  fontWeight: 700,
+                  color: '#666',
+                  height: 'auto',
+                  padding: '0.6rem 1.5rem'
+                }}
+                size="large"
+              >
+                暂无写文章权限
+              </Button>
+            </Spin>
+          )}
 
           {/* 退出登录按钮 */}
           <Button

@@ -1,0 +1,213 @@
+/* 评论审核管理页面特定样式 */
+.comments-review-page {
+  .filter-bar {
+    background: white;
+    padding: 1rem 2rem;
+    border-bottom: 2px solid #000;
+    border-radius: 15px 12px 18px 10px;
+    box-shadow: 4px 4px 0px #000;
+    margin-bottom: 2rem;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* Comment detail modal */
+  .comment-detail {
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #eee;
+    }
+
+    .detail-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      background: #f5f5f5;
+      border-radius: 12px 10px 14px 8px;
+    }
+
+    .detail-user img {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .detail-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px 10px 14px 8px;
+
+      .detail-text {
+        color: #333;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    }
+
+    .detail-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+      }
+    }
+
+    .reply-section {
+      margin-top: 1.5rem;
+      padding-left: 1.5rem;
+      border-left: 2px solid #eee;
+    }
+  }
+
+    .reply-item {
+      background: #fafafa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+  }
+
+  .reply-user {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      font-size: 0.9rem;
+    color: #666;
+    }
+
+    .reply-content {
+      color: #333;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  }
+  }
+
+  /* Review modal */
+  .review-modal-content {
+    .review-comment-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1A535C;
+      text-align: center;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #FFF9E6;
+      border-radius: 10px;
+      border: 2px solid #FFD93D;
+    }
+
+    .review-comment-text {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #666;
+      margin: 0;
+    }
+  }
+}
+
+  .ant-btn {
+    .ant-btn-primary {
+      background: #52c41a !important;
+      border-color: #52c41a !important;
+
+      &:hover {
+        background: #3aa877 !important;
+      }
+    }
+  }
+
+  .ant-btn-success {
+    background: #3aa877 !important;
+      border-color: #3aa877 !important;
+
+      &:hover {
+        background: #529b2c !important;
+      }
+    }
+
+  .ant-btn-error {
+    background: #ff4d4f !important;
+      border-color: #ff4d4f !important;
+
+      &:hover {
+        background: #ff7875 !important;
+      }
+    }
+}
+
+  .ant-btn-default {
+    background: white;
+      color: #1A535C;
+      border-color: #1A535C;
+
+    &:hover {
+      background: #4ECDC4;
+      color: white !important;
+    }
+  }
+}
+
+  .ant-btn-text {
+    &:hover .ant-btn-primary,
+    &:hover .ant-btn-success {
+      color: white !important;
+    }
+
+    &:hover .ant-btn-error {
+      color: white !important;
+    }
+  }
+}
+
+  .ant-btn-warning {
+    background: #FFD93D !important;
+    border-color: #FFD93D !important;
+
+    &:hover {
+      background: #FFC947 !important;
+      color: #1A535C !important;
+    }
+  }
+
+  .ant-btn-primary,
+  .ant-btn-success {
+    &:hover .ant-btn-warning {
+      background: #3aa877 !important;
+    color: white !important;
+    }
+  }
+}
+
+  .ant-btn-default {
+    &:hover .ant-btn-primary,
+    &:hover .ant-btn-success,
+    &:hover .ant-btn-warning {
+      background: #4ECDC4;
+      color: white !important;
+    }
+  }
+}

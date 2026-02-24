@@ -310,6 +310,39 @@ declare namespace API {
     avatar?: string;
   };
 
+  /** 评论状态 */
+  type CommentStatus = 'pending' | 'approved' | 'rejected' | 'deleted';
+
+  /** 评论列表项 */
+  type CommentListItem = {
+    id: number;
+    article_id: number;
+    user_id: number;
+    parent_id: number | null;
+    content: string;
+    status: CommentStatus;
+    like_count: number;
+    reply_count: number;
+    created_at: string;
+    updated_at?: string;
+    user?: {
+      id: number;
+      username: string;
+      avatar?: string;
+    };
+    parent?: {
+      id: number;
+      user_id: number;
+      username: string;
+      avatar?: string;
+      content: string;
+      created_at: string;
+      replies?: CommentListItem[];
+    };
+    is_liked?: boolean;
+    is_own?: boolean;
+  };
+
   /** 文章列表项 */
   type ArticleListItem = {
     id: number;
@@ -352,4 +385,80 @@ declare namespace API {
 
   /** 更新文章数据 */
   type ArticleUpdateData = Partial<ArticleCreateData>;
+
+  /** 评论列表响应 */
+  type CommentListResponse = {
+    comments: CommentListItem[];
+    total: number;
+    page: number;
+    page_size: number;
+  };
+
+  /** 创建评论响应 */
+  type CommentCreateResponse = {
+    success: boolean;
+    message?: string;
+    comment: CommentListItem;
+  };
+
+  /** 更新评论响应 */
+  type CommentUpdateResponse = {
+    success: boolean;
+    message?: string;
+    comment: CommentListItem;
+  };
+
+  /** 点赞评论响应 */
+  type CommentLikeResponse = {
+    success: boolean;
+    message?: string;
+    like_count: number;
+    is_liked: boolean;
+  };
+
+  /** 权限类型 */
+  type PermissionType = 'create' | 'create_review' | 'approve' | 'reject';
+
+  /** 用户权限项 */
+  type UserPermissionItem = {
+    user_id: number;
+    username: string;
+    avatar?: string;
+    email?: string;
+    permissions: PermissionType[];
+    granted_at?: string;
+  };
+
+  /** 权限列表响应 */
+  type PermissionListResponse = {
+    success: boolean;
+    data?: {
+      users: UserPermissionItem[];
+      total: number;
+    };
+  };
+
+  /** 我的权限项 */
+  type MyPermissionItem = {
+    id: number;
+    user_id: number;
+    permission_type: PermissionType;
+    status: 'active' | 'expired' | 'revoked';
+    expires_at?: string;
+    articles_created: number;
+    articles_published: number;
+    created_at: string;
+  };
+
+  /** 我的权限响应 */
+  type MyPermissionsResponse = {
+    success: boolean;
+    message?: string;
+    data?: {
+      total: number;
+      page: number;
+      page_size: number;
+      permissions: MyPermissionItem[];
+    };
+  };
 }

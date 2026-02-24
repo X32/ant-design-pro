@@ -4202,3 +4202,374 @@ export async function archiveArticle(
     ...(options || {}),
   });
 }
+
+// ==================== 评论审核相关 ====================
+
+/**
+ * 获取待审核评论列表
+ * GET /api/admin/articles/pending-comments
+ */
+export async function getPendingComments(
+  params?: {
+    page?: number;
+    page_size?: number;
+    article_id?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      total: number;
+      page: number;
+      page_size: number;
+      comments: API.CommentListItem[];
+    };
+  }>(`/api/admin/articles/pending-comments`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 审核通过评论
+ * POST /api/admin/articles/comments/{comment_id}/approve
+ */
+export async function approveComment(
+  commentId: number,
+  data: {
+    comment?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/comments/${commentId}/approve`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 审核驳回评论
+ * POST /api/admin/articles/comments/{comment_id}/reject
+ */
+export async function rejectComment(
+  commentId: number,
+  data: {
+    comment: string;
+    article_id: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/comments/${commentId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除评论
+ * DELETE /api/admin/articles/comments/{comment_id}
+ */
+export async function deleteComment(
+  commentId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/admin/articles/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取文章评论列表
+ * GET /api/articles/{article_id}/comments
+ */
+export async function getArticleComments(
+  articleId: number,
+  params?: {
+    page?: number;
+    page_size?: number;
+    sort?: 'latest' | 'oldest';
+    parent_id?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.CommentListResponse>(`/api/articles/${articleId}/comments`, {
+    method: 'GET',
+    headers: token ? {
+      'Authorization': `Bearer ${token}`,
+    } : {},
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 创建评论
+ * POST /api/articles/{article_id}/comments
+ */
+export async function createComment(
+  articleId: number,
+  data: {
+    content: string;
+    parent_id?: number;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.CommentCreateResponse>(`/api/articles/${articleId}/comments`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 更新评论
+ * PUT /api/articles/{article_id}/comments/{comment_id}
+ */
+export async function updateComment(
+  articleId: number,
+  commentId: number,
+  data: {
+    content: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.CommentUpdateResponse>(`/api/articles/${articleId}/comments/${commentId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 删除用户自己的评论
+ * DELETE /api/articles/{article_id}/comments/{comment_id}
+ */
+export async function deleteOwnComment(
+  articleId: number,
+  commentId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 点赞评论
+ * POST /api/articles/{article_id}/comments/{comment_id}/like
+ */
+export async function likeComment(
+  articleId: number,
+  commentId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.CommentLikeResponse>(`/api/articles/${articleId}/comments/${commentId}/like`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 取消点赞评论
+ * DELETE /api/articles/{article_id}/comments/{comment_id}/like
+ */
+export async function unlikeComment(
+  articleId: number,
+  commentId: number,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>(`/api/articles/${articleId}/comments/${commentId}/like`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取文章权限列表
+ * GET /api/admin/articles/permissions
+ */
+export async function getArticlePermissions(options?: { [key: string]: any }) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.PermissionListResponse>('/api/admin/articles/permissions', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}
+
+/**
+ * 分配文章权限
+ * POST /api/admin/articles/permissions/grant
+ */
+export async function grantArticlePermission(
+  data: {
+    user_id: number;
+    permission_type: 'create' | 'create_review';
+    expires_at?: string;
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>('/api/admin/articles/permissions/grant', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 撤销文章权限
+ * POST /api/admin/articles/permissions/revoke
+ */
+export async function revokeArticlePermission(
+  data: {
+    user_id: number;
+    permission_type: 'create' | 'create_review';
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+  }>('/api/admin/articles/permissions/revoke', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取有权限的用户列表
+ * GET /api/admin/articles/users-with-permissions
+ */
+export async function getUsersWithPermissions(
+  params?: {
+    permission_type?: 'create' | 'create_review';
+    status?: 'active' | 'revoked' | 'expired';
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success?: boolean;
+    users?: Array<{
+      id: number;
+      username: string;
+      email?: string;
+      avatar?: string;
+      permission_type: 'create' | 'create_review';
+    }>;
+  }>('/api/admin/articles/users-with-permissions', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
+/**
+ * 获取当前用户的文章权限
+ * GET /api/articles/my-permissions
+ */
+export async function getMyArticlePermissions(options?: { [key: string]: any }) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<API.MyPermissionsResponse>('/api/articles/my-permissions', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    ...(options || {}),
+  });
+}

@@ -220,7 +220,8 @@
 
   .form-actions {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: 1.5rem;
     margin-top: 1rem;
     padding: 2rem;
@@ -228,6 +229,57 @@
     border-radius: 25px 20px 30px 15px;
     border: 4px solid #000;
     box-shadow: 6px 6px 0px #000;
+
+    .publish-options {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px dashed #eee;
+
+      .ant-checkbox-wrapper {
+        padding: 0.8rem 1.5rem;
+        background: #F0FFF4;
+        border: 3px solid #52c41a;
+        border-radius: 15px 12px 18px 10px;
+        box-shadow: 3px 3px 0px #52c41a;
+        transition: all 0.2s;
+
+        &:hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 5px 5px 0px #52c41a;
+        }
+
+        .ant-checkbox {
+          .ant-checkbox-inner {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 3px solid #52c41a;
+
+            &.ant-checkbox-checked {
+              background: #52c41a;
+              border-color: #52c41a;
+            }
+          }
+
+          &.ant-checkbox-checked .ant-checkbox-inner {
+            background: #52c41a;
+          }
+        }
+
+        .ant-checkbox + span {
+          font-size: 1rem;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
 
     .ant-btn {
       min-width: 180px;

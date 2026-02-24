@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, history, useModel } from '@umijs/max';
 import { Input, Select, Spin, Empty, message, Tag } from 'antd';
 import { EyeOutlined, HeartOutlined, LikeOutlined } from '@ant-design/icons';
-import { getArticles, getArticleCategories, getArticleTags } from '@/services/ant-design-pro/api';
+import { getArticles, getArticleCategories } from '@/services/ant-design-pro/api';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
 import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
 import logoIcon from '@/img/icon_200.png';
@@ -18,18 +18,15 @@ const ArticlesPage: React.FC = () => {
   // Data state
   const [articles, setArticles] = useState<API.ArticleListItem[]>([]);
   const [categories, setCategories] = useState<API.ArticleCategory[]>([]);
-  const [tags, setTags] = useState<API.ArticleTag[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
   // Filter and pagination state
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
-  const [selectedTagId, setSelectedTagId] = useState<number | undefined>(undefined);
-  const [selectedArticleType, setSelectedArticleType] = useState<string | undefined>(undefined);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 12 });
 
-  // Article type config
+  // Article type config (用于显示文章类型标签)
   const ARTICLE_TYPES = [
     { value: 'study_guide', label: '学习指南', color: '#FFD93D' },
     { value: 'exam_tips', label: '考试技巧', color: '#4ECDC4' },
@@ -58,18 +55,6 @@ const ArticlesPage: React.FC = () => {
     }
   }, []);
 
-  // Fetch tags
-  const fetchTags = useCallback(async () => {
-    try {
-      const response = await getArticleTags();
-      if (response?.success && Array.isArray(response.data)) {
-        setTags(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, []);
-
   // Fetch articles
   const fetchArticles = useCallback(async () => {
     setLoading(true);
@@ -79,8 +64,6 @@ const ArticlesPage: React.FC = () => {
         page_size: pagination.pageSize,
         keyword: searchKeyword || undefined,
         category_id: selectedCategoryId,
-        tag_id: selectedTagId,
-        article_type: selectedArticleType,
         status: 'published', // Only show published articles
       });
 
@@ -94,7 +77,7 @@ const ArticlesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchKeyword, selectedCategoryId, selectedTagId, selectedArticleType, pagination]);
+  }, [searchKeyword, selectedCategoryId, pagination]);
 
   // View article detail
   const handleViewArticle = (articleId: number) => {
@@ -119,8 +102,7 @@ const ArticlesPage: React.FC = () => {
   // Initialize loading
   useEffect(() => {
     fetchCategories();
-    fetchTags();
-  }, [fetchCategories, fetchTags]);
+  }, [fetchCategories]);
 
   // Monitor filter changes, reload data
   useEffect(() => {
@@ -229,32 +211,6 @@ const ArticlesPage: React.FC = () => {
             {categories.map((cat) => (
               <Option key={cat.id} value={cat.id}>
                 {cat.name}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="选择标签"
-            value={selectedTagId}
-            onChange={(value) => setSelectedTagId(value)}
-            allowClear
-            className="filter-select"
-          >
-            {tags.map((tag) => (
-              <Option key={tag.id} value={tag.id}>
-                {tag.name}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="文章类型"
-            value={selectedArticleType}
-            onChange={(value) => setSelectedArticleType(value)}
-            allowClear
-            className="filter-select"
-          >
-            {ARTICLE_TYPES.map((type) => (
-              <Option key={type.value} value={type.value}>
-                {type.label}
               </Option>
             ))}
           </Select>

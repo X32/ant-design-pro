@@ -11,6 +11,7 @@ import {
   Modal,
   Divider,
   Tag,
+  Checkbox,
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,6 +28,7 @@ import {
   createArticle,
   updateArticle,
   submitArticleForReview,
+  approveArticle,
   getArticleCategories,
   getArticleTags,
 } from '@/services/ant-design-pro/api';
@@ -54,6 +56,7 @@ const ArticleEditPage: React.FC = () => {
 
   // 模态框状态
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [publishImmediately, setPublishImmediately] = useState(false);
 
   // 文章类型配置
   const ARTICLE_TYPES = [
@@ -242,9 +245,18 @@ const ArticleEditPage: React.FC = () => {
 
       await updateArticle(parseInt(articleId), data);
 
-      // 再提交审核
-      await submitArticleForReview(parseInt(articleId));
-      message.success('提交审核成功');
+      if (publishImmediately) {
+        // 如果选择立即发布，直接使用 approveArticle API 并设置 publish_immediately
+        await approveArticle(parseInt(articleId), {
+          comment: '作者直接发布',
+          publish_immediately: true,
+        });
+        message.success('文章已发布');
+      } else {
+        // 否则提交审核
+        await submitArticleForReview(parseInt(articleId));
+        message.success('提交审核成功');
+      }
 
       // 返回列表
       setTimeout(() => {
@@ -252,7 +264,7 @@ const ArticleEditPage: React.FC = () => {
       }, 1500);
     } catch (error) {
       console.error('提交审核失败:', error);
-      message.error('提交审核失败，请重试');
+      message.error(publishImmediately ? '发布失败，请重试' : '提交审核失败，请重试');
     } finally {
       setSubmitting(false);
     }
@@ -299,7 +311,6 @@ const ArticleEditPage: React.FC = () => {
           <Form
             form={form}
             layout="vertical"
-            onFinish={handleSubmitForReview}
           >
             <Form.Item
               name="title"
@@ -550,24 +561,37 @@ const ArticleEditPage: React.FC = () => {
         </Card>
 
         <div className="form-actions">
-          <Button
-            type="default"
-            icon={<SaveOutlined />}
-            onClick={() => form.validateFields().then(handleSaveDraft)}
-            loading={submitting}
-            size="large"
-          >
-            保存草稿
-          </Button>
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            htmlType="submit"
-            loading={submitting}
-            size="large"
-          >
-            {isEditMode ? '保存并提交审核' : '创建并提交审核'}
-          </Button>
+          <div className="publish-options">
+            <Checkbox
+              checked={publishImmediately}
+              onChange={(e) => setPublishImmediately(e.target.checked)}
+              style={{ fontSize: '14px' }}
+            >
+              <span style={{ color: '#52c41a', fontWeight: 'bold' }}>
+                立即发布（跳过审核直接发布）
+              </span>
+            </Checkbox>
+          </div>
+          <div className="action-buttons">
+            <Button
+              type="default"
+              icon={<SaveOutlined />}
+              onClick={() => form.validateFields().then(handleSaveDraft)}
+              loading={submitting}
+              size="large"
+            >
+              保存草稿
+            </Button>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={() => form.validateFields().then(handleSubmitForReview)}
+              loading={submitting}
+              size="large"
+            >
+              {publishImmediately ? '立即发布' : (isEditMode ? '保存并提交审核' : '创建并提交审核')}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

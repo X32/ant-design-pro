@@ -326,6 +326,18 @@ export default [
             path: '/back/articles/review',
             component: './back/articles/review',
           },
+          {
+            name: 'comments-review',
+            path: '/back/articles/comments',
+            component: './back/articles/comments',
+          },
+          {
+            name: 'permissions',
+            icon: 'safety',
+            path: '/back/articles/permissions',
+            component: './back/articles/permissions',
+            access: 'canAdmin',
+          },
         ],
       },
       {

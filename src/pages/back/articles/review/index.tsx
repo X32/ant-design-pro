@@ -17,15 +17,17 @@ import {
   CloseCircleOutlined,
   ReloadOutlined,
   SearchOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import {
-  getPendingReviewArticles,
+  getArticles,
   getArticleDetail,
   approveArticle,
   rejectArticle,
   requestArticleRevision,
   archiveArticle,
+  publishArticle,
   getArticleCategories,
 } from '@/services/ant-design-pro/api';
 import './index.less';
@@ -43,6 +45,7 @@ const ArticleReviewPage: React.FC = () => {
   // 筛选和分页状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+  const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20 });
 
   // 模态框状态
@@ -73,15 +76,16 @@ const ArticleReviewPage: React.FC = () => {
     }
   }, []);
 
-  // 获取待审核文章列表
+  // 获取文章列表
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getPendingReviewArticles({
+      const response = await getArticles({
         page: pagination.current,
         page_size: pagination.pageSize,
         keyword: searchKeyword || undefined,
         category_id: selectedCategoryId,
+        status: selectedStatus,
       });
 
       if (response?.success && response?.data) {
@@ -89,12 +93,12 @@ const ArticleReviewPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error('获取待审核文章失败:', error);
-      message.error('获取待审核文章失败，请重试');
+      console.error('获取文章列表失败:', error);
+      message.error('获取文章列表失败，请重试');
     } finally {
       setLoading(false);
     }
-  }, [searchKeyword, selectedCategoryId, pagination]);
+  }, [searchKeyword, selectedCategoryId, selectedStatus, pagination]);
 
   // 查看文章详情
   const handleView = async (record: API.ArticleListItem) => {
@@ -175,6 +179,18 @@ const ArticleReviewPage: React.FC = () => {
     }
   };
 
+  // 发布文章
+  const handlePublish = async (record: API.ArticleListItem) => {
+    try {
+      await publishArticle(record.id);
+      message.success('文章发布成功');
+      fetchArticles();
+    } catch (error) {
+      console.error('发布失败:', error);
+      message.error('发布失败，请重试');
+    }
+  };
+
   // 刷新列表
   const handleRefresh = () => {
     setPagination({ ...pagination, current: 1 });
@@ -184,6 +200,7 @@ const ArticleReviewPage: React.FC = () => {
   const handleReset = () => {
     setSearchKeyword('');
     setSelectedCategoryId(undefined);
+    setSelectedStatus(undefined);
     setPagination({ ...pagination, current: 1 });
   };
 
@@ -255,29 +272,51 @@ const ArticleReviewPage: React.FC = () => {
           >
             查看
           </Button>
-          <Button
-            type="text"
-            icon={<CheckCircleOutlined />}
-            style={{ color: '#52c41a' }}
-            onClick={() => openReviewModal(record, 'approve')}
-          >
-            通过
-          </Button>
-          <Button
-            type="text"
-            icon={<CloseCircleOutlined />}
-            style={{ color: '#ff4d4f' }}
-            onClick={() => openReviewModal(record, 'reject')}
-          >
-            驳回
-          </Button>
-          <Button
-            type="text"
-            style={{ color: '#faad14' }}
-            onClick={() => openReviewModal(record, 'revision')}
-          >
-            请求修改
-          </Button>
+          {/* 已通过状态的文章显示发布按钮 */}
+          {record.status === 'approved' && (
+            <Popconfirm
+              title="确认发布该文章？"
+              onConfirm={() => handlePublish(record)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <Button
+                type="text"
+                icon={<SendOutlined />}
+                style={{ color: '#52c41a' }}
+              >
+                发布
+              </Button>
+            </Popconfirm>
+          )}
+          {/* 待审核状态的文章显示审核操作按钮 */}
+          {record.status === 'pending_review' && (
+            <>
+              <Button
+                type="text"
+                icon={<CheckCircleOutlined />}
+                style={{ color: '#52c41a' }}
+                onClick={() => openReviewModal(record, 'approve')}
+              >
+                通过
+              </Button>
+              <Button
+                type="text"
+                icon={<CloseCircleOutlined />}
+                style={{ color: '#ff4d4f' }}
+                onClick={() => openReviewModal(record, 'reject')}
+              >
+                驳回
+              </Button>
+              <Button
+                type="text"
+                style={{ color: '#faad14' }}
+                onClick={() => openReviewModal(record, 'revision')}
+              >
+                请求修改
+              </Button>
+            </>
+          )}
           <Popconfirm
             title="确认归档该文章？"
             onConfirm={() => handleArchive(record)}
@@ -325,6 +364,18 @@ const ArticleReviewPage: React.FC = () => {
                 {cat.name}
               </Option>
             ))}
+          </Select>
+          <Select
+            placeholder="选择状态"
+            value={selectedStatus}
+            onChange={(value) => setSelectedStatus(value)}
+            allowClear
+            style={{ width: 150 }}
+          >
+            <Option value="pending_review">待审核</Option>
+            <Option value="approved">已通过</Option>
+            <Option value="rejected">已驳回</Option>
+            <Option value="published">已发布</Option>
           </Select>
           <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             刷新

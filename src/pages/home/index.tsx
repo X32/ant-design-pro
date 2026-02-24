@@ -55,6 +55,10 @@ const HomePage: React.FC = () => {
     history.push('/user/profile');
   };
 
+  const handleWriteArticle = () => {
+    history.push('/articles/edit');
+  };
+
   // 结构化数据 - 教育机构（SEO优化）
   const structuredData = {
     "@context": "https://schema.org",
@@ -277,6 +281,9 @@ const HomePage: React.FC = () => {
             </li>
             <li>
               <a href="#stats">数据</a>
+            </li>
+            <li>
+              <a href="/articles">文章</a>
             </li>
           </ul>
           {isLoggedIn ? (
