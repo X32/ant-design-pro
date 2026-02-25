@@ -1,10 +1,14 @@
-import React from 'react';
 import { Helmet, history } from '@umijs/max';
 import { Button } from 'antd';
-import { DownloadIcon, FileIcon, FileTextIcon } from '@/components/HandDrawnIcons';
+import React from 'react';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
-import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
+import {
+  DownloadIcon,
+  FileIcon,
+  FileTextIcon,
+} from '@/components/HandDrawnIcons';
 import logoIcon from '@/img/icon_200.png';
+import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
 import './index.less';
 
 const DownloadsPage: React.FC = () => {
@@ -13,34 +17,36 @@ const DownloadsPage: React.FC = () => {
     {
       id: 1,
       name: 'KET备考偷懒包',
-      description: '7个场景共约300个核心词汇，5个万能写作模板，每日40分钟训练计划，真题音频清单',
+      description:
+        '7个场景共约300个核心词汇，5个万能写作模板，每日40分钟训练计划，真题音频清单',
       size: '15.2 MB',
       url: '/downloads/ket-materials.zip',
       icon: <FileIcon size={64} />,
       category: 'KET',
-      color: '#FFD93D'
+      color: '#FFD93D',
     },
     {
       id: 2,
       name: 'PET备考偷懒包',
-      description: ' 8个场景共约500个核心词汇，6个写作模板，每日40分钟训练计划，真题音频清单',
+      description:
+        ' 8个场景共约500个核心词汇，6个写作模板，每日40分钟训练计划，真题音频清单',
       size: '',
       url: '/downloads/pet-materials.zip',
       icon: <FileTextIcon size={64} />,
       category: 'PET',
-      color: '#4ECDC4'
+      color: '#4ECDC4',
     },
     {
       id: 3,
       name: 'FCE备考偷懒包',
-      description: '800个高频核心词汇，7种写作题型模板，30天备考计划，听力资源清单',
+      description:
+        '800个高频核心词汇，7种写作题型模板，30天备考计划，听力资源清单',
       size: '22.8 MB',
       url: '/downloads/fce-materials.zip',
       icon: <DownloadIcon size={64} />,
       category: 'FCE',
-      color: '#FF6B6B'
+      color: '#FF6B6B',
     },
-   
   ];
 
   const handleDownload = (url: string, filename: string) => {
@@ -56,7 +62,7 @@ const DownloadsPage: React.FC = () => {
   // 面包屑导航数据
   const breadcrumbItems: BreadcrumbItemProps[] = [
     { title: '首页', href: '/home' },
-    { title: '资料下载' }
+    { title: '资料下载' },
   ];
 
   return (
@@ -97,7 +103,12 @@ const DownloadsPage: React.FC = () => {
               <a href="/about">品牌</a>
             </li>
             <li>
-              <a href="/downloads" className="active">资料</a>
+              <a href="/downloads" className="active">
+                资料
+              </a>
+            </li>
+            <li>
+              <a href="/articles">文章</a>
             </li>
             <li>
               <a href="/ket-speaking">KET专区</a>
@@ -127,7 +138,8 @@ const DownloadsPage: React.FC = () => {
             <span className="title-line">剑桥英语口语备考资料</span>
           </h1>
           <p className="header-description">
-            精心整理的KET、PET、FCE备考资料<br />
+            精心整理的KET、PET、FCE备考资料
+            <br />
             包含真题、词汇、话题解析，助你高效备考！
           </p>
         </div>
@@ -137,10 +149,12 @@ const DownloadsPage: React.FC = () => {
       <section className="downloads-content">
         <div className="downloads-grid">
           {downloadFiles.map((file) => (
-            <div key={file.id} className="download-card" style={{ '--card-color': file.color } as React.CSSProperties}>
-              <div className="card-icon">
-                {file.icon}
-              </div>
+            <div
+              key={file.id}
+              className="download-card"
+              style={{ '--card-color': file.color } as React.CSSProperties}
+            >
+              <div className="card-icon">{file.icon}</div>
               <div className="card-content">
                 <div className="card-category">{file.category}</div>
                 <h3 className="card-title">{file.name}</h3>
@@ -177,7 +191,11 @@ const DownloadsPage: React.FC = () => {
 
       {/* 返回按钮 */}
       <section className="downloads-footer">
-        <Button className="back-button" size="large" onClick={() => window.location.href = '/home'}>
+        <Button
+          className="back-button"
+          size="large"
+          onClick={() => (window.location.href = '/home')}
+        >
           返回首页
         </Button>
       </section>

@@ -184,16 +184,18 @@
 
   /* 英雄标题优化 */
   .hero-main-title {
-    font-size: 3.5rem;
-    line-height: 1.4;
-    margin-bottom: 2rem;
+    font-size: 3rem;
+    line-height: 1.3;
+    margin-bottom: 1.5rem;
+    font-weight: 800;
 
     .line {
       display: block;
     }
 
     .highlight {
-      color: white;
+      color: #FFD93D;
+      font-weight: 700;
     }
   }
 
@@ -201,21 +203,29 @@
   .hero-badge {
     background: #FFD93D;
     color: #1A535C;
-    font-size: 1rem;
-    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    border: 2px solid #000;
+    box-shadow: 3px 3px 0px #000;
   }
 
   /* 英雄副标题 */
   .hero-subtitle {
-    font-size: 1.8rem;
-    color: white;
-    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    color: #FFD93D;
+    margin-bottom: 1rem;
+    font-weight: 700;
   }
 
   .hero-description {
-    color: white;
-    font-size: 1.3rem;
-    max-width: 650px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.15rem;
+    max-width: 600px;
+    line-height: 1.8;
+    font-weight: 500;
   }
 
   /* 按钮区域优化 */
@@ -434,15 +444,16 @@
   }
 
   .feature-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    font-size: 1.35rem;
+    margin-bottom: 0.8rem;
     color: #1A535C;
+    font-weight: 800;
   }
 
   .feature-card p {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: #333;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #444;
     font-weight: 500;
   }
 
@@ -524,17 +535,17 @@
   }
 
   .advantage-content h3 {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.4rem;
     color: #1A535C;
     font-weight: 800;
   }
 
   .advantage-content p {
-    font-size: 1rem;
-    line-height: 1.7;
-    font-weight: 600;
-    color: #333;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    font-weight: 500;
+    color: #444;
   }
 
   .advantages-image {
@@ -671,30 +682,30 @@
   /* Section 标题样式 */
   .section-title {
     text-align: center;
-    font-size: 3rem;
-    font-weight: 900;
-    margin-bottom: 1rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.8rem;
     color: #1A535C;
-    text-shadow: 3px 3px 0px #FFD93D;
+    text-shadow: 2px 2px 0px #FFD93D;
     transform: rotate(-1deg);
   }
 
   .section-subtitle {
     text-align: center;
-    font-size: 1.3rem;
-    color: #666;
-    margin-bottom: 4rem;
+    font-size: 1.15rem;
+    color: #555;
+    margin-bottom: 3rem;
     font-weight: 600;
   }
 
-  /* 徽章动画 */
+  /* 徽章动画 - 缩短时间，减小幅度 */
   .hero-badge {
-    animation: wiggle 2s ease-in-out infinite;
+    animation: wiggle 1s ease-in-out infinite;
   }
 
   @keyframes wiggle {
-    0%, 100% { transform: rotate(-3deg); }
-    50% { transform: rotate(3deg); }
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
   }
 }
 
