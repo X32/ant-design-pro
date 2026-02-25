@@ -50,6 +50,12 @@ export default [
         layout: false,
       },
       {
+        name: 'my-articles',
+        path: '/user/articles',
+        component: './user/articles',
+        layout: false,
+      },
+      {
         name: 'test-auth',
         path: '/user/test-auth',
         component: './test-auth',

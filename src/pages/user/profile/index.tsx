@@ -10,6 +10,7 @@ import {
   UserOutlined,
   WalletOutlined,
   EditOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import { App, Avatar, Button, Card, Form, Input, Spin, Statistic, Tag, List } from 'antd';
@@ -170,6 +171,11 @@ const UserProfile: React.FC = () => {
   // 跳转到写文章页面
   const handleWriteArticle = () => {
     history.push('/articles/edit');
+  };
+
+  // 跳转到我的文章页面
+  const handleMyArticles = () => {
+    history.push('/user/articles');
   };
 
   // 退出登录
@@ -754,6 +760,27 @@ const UserProfile: React.FC = () => {
               </Button>
             </Spin>
           )}
+
+          {/* 我的文章入口按钮 */}
+          <Button
+            icon={<FileTextOutlined />}
+            onClick={handleMyArticles}
+            style={{
+              marginTop: 12,
+              width: '100%',
+              background: '#4ECDC4',
+              border: '3px solid #000',
+              borderRadius: '16px 20px 18px 22px',
+              boxShadow: '4px 4px 0px #000',
+              fontWeight: 700,
+              color: '#1A535C',
+              height: 'auto',
+              padding: '0.6rem 1.5rem'
+            }}
+            size="large"
+          >
+            我的文章
+          </Button>
 
           {/* 退出登录按钮 */}
           <Button

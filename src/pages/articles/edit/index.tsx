@@ -12,7 +12,11 @@ import {
   Divider,
   Tag,
   Checkbox,
+  Upload,
+  Radio,
 } from 'antd';
+import type { UploadFile } from 'antd/es/upload';
+import type { RcFile } from 'antd/es/upload/interface';
 import {
   PlusOutlined,
   MinusCircleOutlined,
@@ -22,6 +26,9 @@ import {
   DeleteOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
+  UploadOutlined,
+  LinkOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import {
   getArticleDetail,
@@ -31,6 +38,7 @@ import {
   approveArticle,
   getArticleCategories,
   getArticleTags,
+  uploadFile,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -57,6 +65,16 @@ const ArticleEditPage: React.FC = () => {
   // 模态框状态
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [publishImmediately, setPublishImmediately] = useState(false);
+
+  // 图片上传状态
+  const [imageUploadLoading, setImageUploadLoading] = useState<{ [key: number]: boolean }>({});
+  const [imageInputModes, setImageInputModes] = useState<{ [key: number]: 'upload' | 'link' }>({});
+  const [imageFileLists, setImageFileLists] = useState<{ [key: number]: UploadFile[] }>({});
+
+  // 封面图片上传状态
+  const [coverImageInputMode, setCoverImageInputMode] = useState<'upload' | 'link'>('upload');
+  const [coverImageFileList, setCoverImageFileList] = useState<UploadFile[]>([]);
+  const [coverImageLoading, setCoverImageLoading] = useState(false);
 
   // 文章类型配置
   const ARTICLE_TYPES = [
@@ -123,7 +141,52 @@ const ArticleEditPage: React.FC = () => {
         });
 
         // 设置内容块
-        setBlocks(article.blocks || []);
+        const blocksData = article.blocks || [];
+        setBlocks(blocksData);
+
+        // 初始化图片内容块的状态
+        const initialImageModes: { [key: number]: 'upload' | 'link' } = {};
+        const initialImageFileLists: { [key: number]: UploadFile[] } = {};
+        const initialImageUploadLoading: { [key: number]: boolean } = {};
+
+        blocksData.forEach((block, index) => {
+          if (block.block_type === 'image' && block.media_url) {
+            // 判断是本地上传还是链接，如果是http开头且不是本站地址，认为是链接模式
+            const isExternalLink = block.media_url.startsWith('http') &&
+              !block.media_url.includes(window.location.host);
+            initialImageModes[index] = isExternalLink ? 'link' : 'upload';
+
+            if (!isExternalLink) {
+              initialImageFileLists[index] = [{
+                uid: '-1',
+                name: '已上传图片',
+                status: 'done',
+                url: block.media_url,
+              }];
+            }
+            initialImageUploadLoading[index] = false;
+          }
+        });
+
+        setImageInputModes(initialImageModes);
+        setImageFileLists(initialImageFileLists);
+        setImageUploadLoading(initialImageUploadLoading);
+
+        // 初始化封面图片状态
+        if (article.cover_image) {
+          const isExternalLink = article.cover_image.startsWith('http') &&
+            !article.cover_image.includes(window.location.host);
+          setCoverImageInputMode(isExternalLink ? 'link' : 'upload');
+
+          if (!isExternalLink) {
+            setCoverImageFileList([{
+              uid: '-1',
+              name: '已上传封面',
+              status: 'done',
+              url: article.cover_image,
+            }]);
+          }
+        }
       } else {
         message.error(response?.message || '获取文章详情失败');
       }
@@ -187,6 +250,135 @@ const ArticleEditPage: React.FC = () => {
     });
 
     setBlocks(updatedBlocks);
+  };
+
+  // 图片上传前校验
+  const beforeUpload = (file: RcFile) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('只能上传图片文件！');
+      return false;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('图片大小不能超过 5MB！');
+      return false;
+    }
+    return true;
+  };
+
+  // 自定义图片上传处理
+  const handleImageUpload = async (index: number, options: any) => {
+    const { file, onSuccess, onError } = options;
+    setImageUploadLoading(prev => ({ ...prev, [index]: true }));
+    try {
+      const response = await uploadFile(file as File);
+      if (response.success && (response.url || response.file_path)) {
+        const url = response.url || response.file_path || '';
+        handleUpdateBlock(index, 'media_url', url);
+        setImageFileLists(prev => ({
+          ...prev,
+          [index]: [{
+            uid: '-1',
+            name: (file as File).name,
+            status: 'done',
+            url: url,
+          }]
+        }));
+        onSuccess?.(response, file);
+        message.success('图片上传成功');
+      } else {
+        throw new Error(response.message || '上传失败');
+      }
+    } catch (error: any) {
+      console.error('图片上传失败:', error);
+      message.error(error?.message || '图片上传失败');
+      onError?.(error);
+    } finally {
+      setImageUploadLoading(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  // 删除图片
+  const handleRemoveImage = (index: number) => {
+    handleUpdateBlock(index, 'media_url', '');
+    setImageFileLists(prev => ({ ...prev, [index]: [] }));
+  };
+
+  // 切换图片输入模式
+  const handleToggleImageMode = (index: number, mode: 'upload' | 'link') => {
+    setImageInputModes(prev => ({ ...prev, [index]: mode }));
+    // 切换模式时清空文件列表
+    if (mode === 'upload') {
+      const currentUrl = blocks[index]?.media_url;
+      if (currentUrl) {
+        setImageFileLists(prev => ({
+          ...prev,
+          [index]: [{
+            uid: '-1',
+            name: '已有图片',
+            status: 'done',
+            url: currentUrl,
+          }]
+        }));
+      }
+    } else {
+      setImageFileLists(prev => ({ ...prev, [index]: [] }));
+    }
+  };
+
+  // 封面图片上传处理
+  const handleCoverImageUpload = async (options: any) => {
+    const { file, onSuccess, onError } = options;
+    setCoverImageLoading(true);
+    try {
+      const response = await uploadFile(file as File);
+      if (response.success && (response.url || response.file_path)) {
+        const url = response.url || response.file_path || '';
+        form.setFieldValue('cover_image', url);
+        setCoverImageFileList([{
+          uid: '-1',
+          name: (file as File).name,
+          status: 'done',
+          url: url,
+        }]);
+        onSuccess?.(response, file);
+        message.success('封面图片上传成功');
+      } else {
+        throw new Error(response.message || '上传失败');
+      }
+    } catch (error: any) {
+      console.error('封面图片上传失败:', error);
+      message.error(error?.message || '封面图片上传失败');
+      onError?.(error);
+    } finally {
+      setCoverImageLoading(false);
+    }
+  };
+
+  // 删除封面图片
+  const handleRemoveCoverImage = () => {
+    form.setFieldValue('cover_image', '');
+    setCoverImageFileList([]);
+  };
+
+  // 切换封面图片输入模式
+  const handleToggleCoverImageMode = (mode: 'upload' | 'link') => {
+    setCoverImageInputMode(mode);
+    // 切换模式时处理文件列表
+    if (mode === 'upload') {
+      const currentUrl = form.getFieldValue('cover_image');
+      if (currentUrl) {
+        setCoverImageFileList([{
+          uid: '-1',
+          name: '已有图片',
+          status: 'done',
+          url: currentUrl,
+        }]);
+      }
+    } else {
+      setCoverImageFileList([]);
+    }
   };
 
   // 保存为草稿
@@ -338,8 +530,83 @@ const ArticleEditPage: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item name="cover_image" label="封面图片URL">
-              <Input placeholder="请输入封面图片URL" />
+            <Form.Item name="cover_image" label="封面图片">
+              {/* 模式切换 */}
+              <Radio.Group
+                value={coverImageInputMode}
+                onChange={(e) => handleToggleCoverImageMode(e.target.value)}
+                style={{ marginBottom: 12 }}
+              >
+                <Radio.Button value="upload">
+                  <UploadOutlined /> 本地上传
+                </Radio.Button>
+                <Radio.Button value="link">
+                  <LinkOutlined /> 链接地址
+                </Radio.Button>
+              </Radio.Group>
+
+              {/* 本地上传模式 */}
+              {coverImageInputMode === 'upload' && (
+                <>
+                  <Upload
+                    name="file"
+                    listType="picture-card"
+                    fileList={coverImageFileList}
+                    beforeUpload={beforeUpload}
+                    customRequest={handleCoverImageUpload}
+                    onRemove={handleRemoveCoverImage}
+                    maxCount={1}
+                    accept="image/*"
+                  >
+                    {coverImageFileList.length === 0 && (
+                      <div>
+                        {coverImageLoading ? <LoadingOutlined /> : <PlusOutlined />}
+                        <div style={{ marginTop: 8 }}>上传封面图片</div>
+                      </div>
+                    )}
+                  </Upload>
+                  <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                    支持 jpg、png、gif 格式，文件大小不超过 5MB
+                  </div>
+                </>
+              )}
+
+              {/* 链接输入模式 */}
+              {coverImageInputMode === 'link' && (
+                <>
+                  <Input
+                    value={form.getFieldValue('cover_image') || ''}
+                    onChange={(e) => form.setFieldValue('cover_image', e.target.value)}
+                    placeholder="请输入封面图片URL链接"
+                    prefix={<LinkOutlined />}
+                    style={{ marginBottom: 8 }}
+                  />
+                  {form.getFieldValue('cover_image') && (
+                    <div style={{ marginTop: 8 }}>
+                      <span style={{ color: '#999', fontSize: 12, marginBottom: 8, display: 'block' }}>封面预览：</span>
+                      <img
+                        src={form.getFieldValue('cover_image')}
+                        alt="封面预览"
+                        style={{
+                          maxWidth: 200,
+                          maxHeight: 150,
+                          borderRadius: 4,
+                          border: '1px solid #d9d9d9'
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                        onLoad={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'block';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                    请输入有效的图片URL地址，如 https://example.com/image.jpg
+                  </div>
+                </>
+              )}
             </Form.Item>
 
             <Form.Item
@@ -465,11 +732,83 @@ const ArticleEditPage: React.FC = () => {
 
                   {block.block_type === 'image' && (
                     <Form.Item style={{ marginBottom: 0 }}>
-                      <Input
-                        value={block.media_url || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'media_url', e.target.value)}
-                        placeholder="请输入图片URL"
-                      />
+                      {/* 模式切换 */}
+                      <Radio.Group
+                        value={imageInputModes[index] || 'upload'}
+                        onChange={(e) => handleToggleImageMode(index, e.target.value)}
+                        style={{ marginBottom: 12 }}
+                      >
+                        <Radio.Button value="upload">
+                          <UploadOutlined /> 本地上传
+                        </Radio.Button>
+                        <Radio.Button value="link">
+                          <LinkOutlined /> 链接地址
+                        </Radio.Button>
+                      </Radio.Group>
+
+                      {/* 本地上传模式 */}
+                      {(imageInputModes[index] || 'upload') === 'upload' && (
+                        <>
+                          <Upload
+                            name="file"
+                            listType="picture-card"
+                            fileList={imageFileLists[index] || []}
+                            beforeUpload={beforeUpload}
+                            customRequest={(options) => handleImageUpload(index, options)}
+                            onRemove={() => handleRemoveImage(index)}
+                            maxCount={1}
+                            accept="image/*"
+                          >
+                            {(!imageFileLists[index] || imageFileLists[index]?.length === 0) && (
+                              <div>
+                                {imageUploadLoading[index] ? <LoadingOutlined /> : <PlusOutlined />}
+                                <div style={{ marginTop: 8 }}>上传图片</div>
+                              </div>
+                            )}
+                          </Upload>
+                          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                            支持 jpg、png、gif 格式，文件大小不超过 5MB
+                          </div>
+                        </>
+                      )}
+
+                      {/* 链接输入模式 */}
+                      {(imageInputModes[index] || 'upload') === 'link' && (
+                        <>
+                          <Input
+                            value={block.media_url || ''}
+                            onChange={(e) => handleUpdateBlock(index, 'media_url', e.target.value)}
+                            placeholder="请输入图片URL链接"
+                            prefix={<LinkOutlined />}
+                            style={{ marginBottom: 8 }}
+                          />
+                          {block.media_url && (
+                            <div style={{ marginTop: 8 }}>
+                              <span style={{ color: '#999', fontSize: 12, marginBottom: 8, display: 'block' }}>图片预览：</span>
+                              <img
+                                src={block.media_url}
+                                alt="图片预览"
+                                style={{
+                                  maxWidth: 200,
+                                  maxHeight: 150,
+                                  borderRadius: 4,
+                                  border: '1px solid #d9d9d9'
+                                }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                                onLoad={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'block';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                            请输入有效的图片URL地址，如 https://example.com/image.jpg
+                          </div>
+                        </>
+                      )}
+
                       <Input
                         value={block.media_alt || ''}
                         onChange={(e) => handleUpdateBlock(index, 'media_alt', e.target.value)}

@@ -1,3 +1,4 @@
+
 # 备考文章发布系统 API 文档
 
 > 文档版本：v1.0
@@ -327,6 +328,84 @@ POST /api/admin/articles/1/archive
 **权限要求：**
 
 - 需要超级管理员或内容管理员权限
+
+---
+
+### 5.1. 管理员更新文章
+
+管理员直接修改文章内容，可修改任何状态的文章。
+
+**接口地址：** `PUT /api/admin/articles/{article_id}`
+
+**接口说明：** 管理员使用该接口直接修改文章内容，不受文章状态限制。
+
+**认证要求：** 必需（管理员权限）
+
+**路径参数：**
+
+| 参数       | 类型 | 必填 | 说明   |
+| ---------- | ---- | ---- | ------ |
+| article_id | int  | 是   | 文章ID |
+
+**请求体：**
+
+| 字段             | 类型   | 必填 | 说明        |
+| ---------------- | ------ | ---- | ----------- |
+| title            | string | 否   | 文章标题    |
+| summary          | string | 否   | 文章摘要    |
+| cover_image      | string | 否   | 封面图片URL |
+| article_type     | string | 否   | 文章类型    |
+| category_ids     | array  | 否   | 分类ID列表  |
+| tag_ids          | array  | 否   | 标签ID列表  |
+| blocks           | array  | 否   | 内容块列表  |
+| keywords         | string | 否   | SEO关键词   |
+| meta_description | string | 否   | SEO描述     |
+
+**请求示例：**
+
+```json
+PUT /api/admin/articles/1
+
+{
+  "title": "KET 口语考试 Part 1 完整备考指南（已更新）",
+  "summary": "本文详细介绍 KET 口语考试 Part 1 的考试形式、评分标准和备考技巧",
+  "blocks": [
+    {
+      "block_type": "text",
+      "sort_order": 1,
+      "content": "更新后的内容..."
+    }
+  ]
+}
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "article": {
+      "id": 1,
+      "title": "KET 口语考试 Part 1 完整备考指南（已更新）",
+      "status": "published",
+      ...
+    }
+  }
+}
+```
+
+**权限要求：**
+
+- 需要超级管理员或内容管理员权限
+- 可以修改任何状态的文章（草稿、待审核、已通过、已发布）
+
+**与用户更新接口的区别：**
+
+| 接口                   | 路径                                     | 权限要求   | 可修改状态                               |
+| ---------------------- | ---------------------------------------- | ---------- | ---------------------------------------- |
+| 用户更新文章           | `PUT /api/articles/{article_id}`       | 文章作者   | 仅草稿、已驳回                           |
+| 管理员更新文章（新增） | `PUT /api/admin/articles/{article_id}` | 管理员权限 | 所有状态（草稿、待审核、已通过、已发布） |
 
 ---
 
@@ -779,6 +858,82 @@ GET /api/articles/1
 
 ---
 
+### 13. 获取我的文章
+
+获取当前登录用户创建的所有文章。
+
+**接口地址：** `GET /api/articles/my-articles`
+
+**接口说明：** 用户使用该接口获取自己的所有文章，支持按状态筛选。
+
+**认证要求：** 必需
+
+**请求参数：**
+
+| 参数        | 类型   | 必填 | 默认值 | 说明                                                         |
+| ----------- | ------ | ---- | ------ | ------------------------------------------------------------ |
+| page        | int    | 否   | 1      | 页码                                                         |
+| page_size   | int    | 否   | 10     | 每页数量                                                     |
+| category_id | int    | 否   | -      | 分类ID                                                       |
+| tag_id      | int    | 否   | -      | 标签ID                                                       |
+| keyword     | string | 否   | -      | 搜索关键词                                                   |
+| status      | string | 否   | -      | 文章状态（draft/pending_review/approved/rejected/published） |
+
+**请求示例：**
+
+```http
+# 获取所有我的文章
+GET /api/articles/my-articles?page=1&page_size=10
+
+# 只获取草稿状态的文章
+GET /api/articles/my-articles?status=draft
+
+# 获取待审核的文章
+GET /api/articles/my-articles?status=pending_review
+
+# 获取已发布的文章
+GET /api/articles/my-articles?status=published
+```
+
+**响应示例：**
+
+```json
+{
+  "success": true,
+  "data": {
+    "total": 5,
+    "page": 1,
+    "page_size": 10,
+    "articles": [
+      {
+        "id": 1,
+        "title": "我的草稿文章",
+        "status": "draft",
+        ...
+      },
+      {
+        "id": 2,
+        "title": "待审核的文章",
+        "status": "pending_review",
+        ...
+      }
+    ]
+  }
+}
+```
+
+**可查看状态说明：**
+
+| 状态               | 是否显示 | 是否可修改 |
+| ------------------ | -------- | ---------- |
+| `draft`          | ✅       | ✅         |
+| `pending_review` | ✅       | ✅         |
+| `approved`       | ✅       | ❌         |
+| `rejected`       | ✅       | ✅         |
+| `published`      | ✅       | ❌         |
+
+---
+
 ### 14. 创建文章
 
 创建新的文章草稿。
@@ -858,9 +1013,21 @@ POST /api/articles
 
 **接口地址：** `PUT /api/articles/{article_id}`
 
-**接口说明：** 更新文章，只能编辑草稿或已驳回状态的文章。
+**接口说明：** 更新文章，作者可以编辑草稿、已驳回、待审核状态的文章。
 
-**认证要求：** 必需（仅作者可编辑自己的草稿/已驳回文章）
+**认证要求：** 必需（仅作者可编辑自己的文章）
+
+**可编辑状态说明：**
+
+| 状态               | 是否可编辑 | 说明                                 |
+| ------------------ | ---------- | ------------------------------------ |
+| `draft`          | ✅         | 草稿状态，可以自由修改               |
+| `pending_review` | ✅         | 待审核状态，可以修改并重新提交审核   |
+| `approved`       | ❌         | 已通过状态，需要管理员修改或重新审核 |
+| `rejected`       | ✅         | 已驳回状态，可以修改后重新提交审核   |
+| `published`      | ❌         | 已发布状态，需要管理员修改           |
+
+**注意：** 待审核状态的文章修改后，需要重新提交审核才能进入审核流程。
 
 **路径参数：**
 
@@ -1860,56 +2027,57 @@ GET /api/articles/tags
 
 #### 文章相关接口
 
-| 序号 | 端点                                   | 方法   | 说明         | 认证要求 |
-| ---- | -------------------------------------- | ------ | ------------ | -------- |
-| 1    | `/api/articles`                      | GET    | 获取文章列表 | 可选     |
-| 2    | `/api/articles/{article_id}`         | GET    | 获取文章详情 | 可选     |
-| 3    | `/api/articles`                      | POST   | 创建文章草稿 | 必需     |
-| 4    | `/api/articles/{article_id}`         | PUT    | 更新文章     | 必需     |
-| 5    | `/api/articles/{article_id}`         | DELETE | 删除文章     | 必需     |
-| 6    | `/api/articles/{article_id}/submit`  | POST   | 提交审核     | 必需     |
-| 7    | `/api/articles/{article_id}/publish` | POST   | 发布文章     | 必需     |
-| 8    | `/api/articles/{article_id}/like`    | POST   | 点赞文章     | 必需     |
-| 9    | `/api/articles/{article_id}/like`    | DELETE | 取消点赞文章 | 必需     |
+| 序号 | 端点                                   | 方法   | 说明             | 认证要求 |
+| ---- | -------------------------------------- | ------ | ---------------- | -------- |
+| 1    | `/api/articles`                      | GET    | 获取文章列表     | 可选     |
+| 2    | `/api/articles/{article_id}`         | GET    | 获取文章详情     | 可选     |
+| 3    | `/api/articles`                      | POST   | 创建文章草稿     | 必需     |
+| 3.1  | `/api/articles/my-articles`          | GET    | 获取我的文章列表 | 必需     |
+| 4    | `/api/articles/{article_id}`         | PUT    | 更新文章         | 必需     |
+| 5    | `/api/articles/{article_id}`         | DELETE | 删除文章         | 必需     |
+| 6    | `/api/articles/{article_id}/submit`  | POST   | 提交审核         | 必需     |
+| 7    | `/api/articles/{article_id}/publish` | POST   | 发布文章         | 必需     |
+| 8    | `/api/articles/{article_id}/like`    | POST   | 点赞文章         | 必需     |
+| 9    | `/api/articles/{article_id}/like`    | DELETE | 取消点赞文章     | 必需     |
 
 #### 评论相关接口
 
 | 序号 | 端点                                                      | 方法   | 说明             | 认证要求 |
 | ---- | --------------------------------------------------------- | ------ | ---------------- | -------- |
-| 10   | `/api/articles/{article_id}/comments`                   | GET    | 获取文章评论列表 | 可选     |
-| 11   | `/api/articles/{article_id}/comments`                   | POST   | 创建评论         | 必需     |
-| 12   | `/api/articles/{article_id}/comments/{comment_id}`      | PUT    | 更新评论         | 必需     |
-| 13   | `/api/articles/{article_id}/comments/{comment_id}`      | DELETE | 删除评论         | 必需     |
-| 14   | `/api/articles/{article_id}/comments/{comment_id}/like` | POST   | 点赞评论         | 必需     |
-| 15   | `/api/articles/{article_id}/comments/{comment_id}/like` | DELETE | 取消点赞评论     | 必需     |
+| 11   | `/api/articles/{article_id}/comments`                   | GET    | 获取文章评论列表 | 可选     |
+| 12   | `/api/articles/{article_id}/comments`                   | POST   | 创建评论         | 必需     |
+| 13   | `/api/articles/{article_id}/comments/{comment_id}`      | PUT    | 更新评论         | 必需     |
+| 14   | `/api/articles/{article_id}/comments/{comment_id}`      | DELETE | 删除评论         | 必需     |
+| 15   | `/api/articles/{article_id}/comments/{comment_id}/like` | POST   | 点赞评论         | 必需     |
+| 16   | `/api/articles/{article_id}/comments/{comment_id}/like` | DELETE | 取消点赞评论     | 必需     |
 
 #### 后台管理员接口
 
 | 序号 | 端点                                                  | 方法   | 说明               | 认证要求       |
 | ---- | ----------------------------------------------------- | ------ | ------------------ | -------------- |
-| 17   | `/api/admin/articles/pending-review`                | GET    | 获取待审核文章列表 | 必需（管理员） |
-| 18   | `/api/admin/articles/{article_id}/approve`          | POST   | 审核通过文章       | 必需（管理员） |
-| 19   | `/api/admin/articles/{article_id}/reject`           | POST   | 审核驳回文章       | 必需（管理员） |
-| 20   | `/api/admin/articles/{article_id}/request-revision` | POST   | 请求修改           | 必需（管理员） |
-| 21   | `/api/admin/articles/{article_id}/archive`          | POST   | 归档文章           | 必需（管理员） |
-| 22   | `/api/admin/articles/{article_id}/audit-logs`       | GET    | 获取文章审核日志   | 必需（管理员） |
-| 23   | `/api/admin/articles/pending-comments`              | GET    | 获取待审核评论列表 | 必需（管理员） |
-| 24   | `/api/admin/articles/comments/{comment_id}/approve` | POST   | 审核通过评论       | 必需（管理员） |
-| 25   | `/api/admin/articles/comments/{comment_id}/reject`  | POST   | 审核驳回评论       | 必需（管理员） |
-| 26   | `/api/admin/articles/comments/{comment_id}`         | DELETE | 删除评论           | 必需（管理员） |
+| 18   | `/api/admin/articles/pending-review`                | GET    | 获取待审核文章列表 | 必需（管理员） |
+| 19   | `/api/admin/articles/{article_id}/approve`          | POST   | 审核通过文章       | 必需（管理员） |
+| 20   | `/api/admin/articles/{article_id}/reject`           | POST   | 审核驳回文章       | 必需（管理员） |
+| 21   | `/api/admin/articles/{article_id}/request-revision` | POST   | 请求修改           | 必需（管理员） |
+| 21.1 | `/api/admin/articles/{article_id}`                  | PUT    | 管理员更新文章     | 必需（管理员） |
+| 22   | `/api/admin/articles/{article_id}/archive`          | POST   | 归档文章           | 必需（管理员） |
+| 23   | `/api/admin/articles/{article_id}/audit-logs`       | GET    | 获取文章审核日志   | 必需（管理员） |
+| 24   | `/api/admin/articles/pending-comments`              | GET    | 获取待审核评论列表 | 必需（管理员） |
+| 25   | `/api/admin/articles/comments/{comment_id}/approve` | POST   | 审核通过评论       | 必需（管理员） |
+| 26   | `/api/admin/articles/comments/{comment_id}/reject`  | POST   | 审核驳回评论       | 必需（管理员） |
+| 27   | `/api/admin/articles/comments/{comment_id}`         | DELETE | 删除评论           | 必需（管理员） |
 
 #### 权限管理接口
 
 | 序号 | 端点                                           | 方法 | 说明                 | 认证要求           |
 | ---- | ---------------------------------------------- | ---- | -------------------- | ------------------ |
-| 27   | `/api/articles/my-permissions`               | GET  | 获取我的文章权限     | 必需               |
-| 28   | `/api/admin/articles/users-with-permissions` | GET  | 获取有权限的用户列表 | 必需（管理员）     |
-| 29   | `/api/admin/articles/permissions/grant`      | POST | 分配权限             | 必需（超级管理员） |
-| 30   | `/api/admin/articles/permissions/revoke`     | POST | 撤销权限             | 必需（超级管理员） |
-| 31   | `/api/admin/articles/permissions`            | GET  | 获取权限列表         | 必需（超级管理员） |
+| 28   | `/api/articles/my-permissions`               | GET  | 获取我的文章权限     | 必需               |
+| 29   | `/api/admin/articles/users-with-permissions` | GET  | 获取有权限的用户列表 | 必需（管理员）     |
+| 30   | `/api/admin/articles/permissions/grant`      | POST | 分配权限             | 必需（超级管理员） |
+| 31   | `/api/admin/articles/permissions/revoke`     | POST | 撤销权限             | 必需（超级管理员） |
+| 32   | `/api/admin/articles/permissions`            | GET  | 获取权限列表         | 必需（超级管理员） |
 
 #### 分类标签接口
-
 
 | 序号 | 端点                         | 方法 | 说明         | 认证要求 |
 | ---- | ---------------------------- | ---- | ------------ | -------- |

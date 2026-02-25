@@ -4063,6 +4063,42 @@ export async function getArticleTags(
   });
 }
 
+/**
+ * 获取我的文章列表
+ * GET /api/articles/my-articles
+ */
+export async function getMyArticles(
+  params?: {
+    page?: number;
+    page_size?: number;
+    category_id?: number;
+    tag_id?: number;
+    keyword?: string;
+    status?: 'draft' | 'pending_review' | 'approved' | 'rejected' | 'published';
+  },
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data: {
+      total: number;
+      page: number;
+      page_size: number;
+      articles: API.ArticleListItem[];
+    };
+  }>('/api/articles/my-articles', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    params,
+    ...(options || {}),
+  });
+}
+
 // ==================== 后台管理员文章审核相关 ====================
 
 /**
