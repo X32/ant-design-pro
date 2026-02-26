@@ -1,43 +1,39 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ArrowDownOutlined,
+  ArrowLeftOutlined,
+  ArrowUpOutlined,
+  DeleteOutlined,
+  LinkOutlined,
+  LoadingOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  SendOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { Helmet, history, useModel, useParams } from '@umijs/max';
 import {
+  Button,
+  Card,
+  Divider,
   Form,
   Input,
-  Select,
-  Button,
   message,
-  Card,
-  Space,
-  Modal,
-  Divider,
-  Tag,
-  Checkbox,
-  Upload,
   Radio,
+  Select,
+  Space,
+  Tag,
+  Upload,
 } from 'antd';
 import type { UploadFile } from 'antd/es/upload';
 import type { RcFile } from 'antd/es/upload/interface';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  PlusOutlined,
-  MinusCircleOutlined,
-  SaveOutlined,
-  SendOutlined,
-  ArrowLeftOutlined,
-  DeleteOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  UploadOutlined,
-  LinkOutlined,
-  LoadingOutlined,
-} from '@ant-design/icons';
-import {
-  getArticleDetail,
   createArticle,
-  updateArticle,
-  submitArticleForReview,
-  approveArticle,
   getArticleCategories,
+  getArticleDetail,
   getArticleTags,
+  submitArticleForReview,
+  updateArticle,
   uploadFile,
 } from '@/services/ant-design-pro/api';
 import './index.less';
@@ -56,24 +52,33 @@ const ArticleEditPage: React.FC = () => {
   const [form] = Form.useForm();
 
   // 数据状态
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<API.ArticleCategory[]>([]);
   const [tags, setTags] = useState<API.ArticleTag[]>([]);
   const [blocks, setBlocks] = useState<API.ContentBlock[]>([]);
 
   // 模态框状态
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
-  const [publishImmediately, setPublishImmediately] = useState(false);
+  const [_previewModalVisible, _setPreviewModalVisible] = useState(false);
 
   // 图片上传状态
-  const [imageUploadLoading, setImageUploadLoading] = useState<{ [key: number]: boolean }>({});
-  const [imageInputModes, setImageInputModes] = useState<{ [key: number]: 'upload' | 'link' }>({});
-  const [imageFileLists, setImageFileLists] = useState<{ [key: number]: UploadFile[] }>({});
+  const [imageUploadLoading, setImageUploadLoading] = useState<{
+    [key: number]: boolean;
+  }>({});
+  const [imageInputModes, setImageInputModes] = useState<{
+    [key: number]: 'upload' | 'link';
+  }>({});
+  const [imageFileLists, setImageFileLists] = useState<{
+    [key: number]: UploadFile[];
+  }>({});
 
   // 封面图片上传状态
-  const [coverImageInputMode, setCoverImageInputMode] = useState<'upload' | 'link'>('upload');
-  const [coverImageFileList, setCoverImageFileList] = useState<UploadFile[]>([]);
+  const [coverImageInputMode, setCoverImageInputMode] = useState<
+    'upload' | 'link'
+  >('upload');
+  const [coverImageFileList, setCoverImageFileList] = useState<UploadFile[]>(
+    [],
+  );
   const [coverImageLoading, setCoverImageLoading] = useState(false);
 
   // 文章类型配置
@@ -124,7 +129,7 @@ const ArticleEditPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await getArticleDetail(parseInt(articleId));
+      const response = await getArticleDetail(parseInt(articleId, 10));
       if (response?.success && response?.data) {
         const article = response.data.article;
 
@@ -134,8 +139,8 @@ const ArticleEditPage: React.FC = () => {
           summary: article.summary,
           cover_image: article.cover_image,
           article_type: article.article_type,
-          category_ids: article.categories.map(c => c.id),
-          tag_ids: article.tags.map(t => t.id),
+          category_ids: article.categories.map((c) => c.id),
+          tag_ids: article.tags.map((t) => t.id),
           keywords: article.keywords,
           meta_description: article.meta_description,
         });
@@ -152,17 +157,20 @@ const ArticleEditPage: React.FC = () => {
         blocksData.forEach((block, index) => {
           if (block.block_type === 'image' && block.media_url) {
             // 判断是本地上传还是链接，如果是http开头且不是本站地址，认为是链接模式
-            const isExternalLink = block.media_url.startsWith('http') &&
+            const isExternalLink =
+              block.media_url.startsWith('http') &&
               !block.media_url.includes(window.location.host);
             initialImageModes[index] = isExternalLink ? 'link' : 'upload';
 
             if (!isExternalLink) {
-              initialImageFileLists[index] = [{
-                uid: '-1',
-                name: '已上传图片',
-                status: 'done',
-                url: block.media_url,
-              }];
+              initialImageFileLists[index] = [
+                {
+                  uid: '-1',
+                  name: '已上传图片',
+                  status: 'done',
+                  url: block.media_url,
+                },
+              ];
             }
             initialImageUploadLoading[index] = false;
           }
@@ -174,17 +182,20 @@ const ArticleEditPage: React.FC = () => {
 
         // 初始化封面图片状态
         if (article.cover_image) {
-          const isExternalLink = article.cover_image.startsWith('http') &&
+          const isExternalLink =
+            article.cover_image.startsWith('http') &&
             !article.cover_image.includes(window.location.host);
           setCoverImageInputMode(isExternalLink ? 'link' : 'upload');
 
           if (!isExternalLink) {
-            setCoverImageFileList([{
-              uid: '-1',
-              name: '已上传封面',
-              status: 'done',
-              url: article.cover_image,
-            }]);
+            setCoverImageFileList([
+              {
+                uid: '-1',
+                name: '已上传封面',
+                status: 'done',
+                url: article.cover_image,
+              },
+            ]);
           }
         }
       } else {
@@ -215,7 +226,11 @@ const ArticleEditPage: React.FC = () => {
   };
 
   // 更新内容块
-  const handleUpdateBlock = (index: number, field: keyof API.ContentBlock, value: any) => {
+  const handleUpdateBlock = (
+    index: number,
+    field: keyof API.ContentBlock,
+    value: any,
+  ) => {
     const updatedBlocks = [...blocks];
     updatedBlocks[index] = {
       ...updatedBlocks[index],
@@ -242,7 +257,10 @@ const ArticleEditPage: React.FC = () => {
     if (newIndex < 0 || newIndex >= updatedBlocks.length) return;
 
     // 交换位置
-    [updatedBlocks[index], updatedBlocks[newIndex]] = [updatedBlocks[newIndex], updatedBlocks[index]];
+    [updatedBlocks[index], updatedBlocks[newIndex]] = [
+      updatedBlocks[newIndex],
+      updatedBlocks[index],
+    ];
 
     // 更新排序
     updatedBlocks.forEach((block, i) => {
@@ -270,20 +288,22 @@ const ArticleEditPage: React.FC = () => {
   // 自定义图片上传处理
   const handleImageUpload = async (index: number, options: any) => {
     const { file, onSuccess, onError } = options;
-    setImageUploadLoading(prev => ({ ...prev, [index]: true }));
+    setImageUploadLoading((prev) => ({ ...prev, [index]: true }));
     try {
       const response = await uploadFile(file as File);
       if (response.success && (response.url || response.file_path)) {
         const url = response.url || response.file_path || '';
         handleUpdateBlock(index, 'media_url', url);
-        setImageFileLists(prev => ({
+        setImageFileLists((prev) => ({
           ...prev,
-          [index]: [{
-            uid: '-1',
-            name: (file as File).name,
-            status: 'done',
-            url: url,
-          }]
+          [index]: [
+            {
+              uid: '-1',
+              name: (file as File).name,
+              status: 'done',
+              url: url,
+            },
+          ],
         }));
         onSuccess?.(response, file);
         message.success('图片上传成功');
@@ -295,35 +315,37 @@ const ArticleEditPage: React.FC = () => {
       message.error(error?.message || '图片上传失败');
       onError?.(error);
     } finally {
-      setImageUploadLoading(prev => ({ ...prev, [index]: false }));
+      setImageUploadLoading((prev) => ({ ...prev, [index]: false }));
     }
   };
 
   // 删除图片
   const handleRemoveImage = (index: number) => {
     handleUpdateBlock(index, 'media_url', '');
-    setImageFileLists(prev => ({ ...prev, [index]: [] }));
+    setImageFileLists((prev) => ({ ...prev, [index]: [] }));
   };
 
   // 切换图片输入模式
   const handleToggleImageMode = (index: number, mode: 'upload' | 'link') => {
-    setImageInputModes(prev => ({ ...prev, [index]: mode }));
+    setImageInputModes((prev) => ({ ...prev, [index]: mode }));
     // 切换模式时清空文件列表
     if (mode === 'upload') {
       const currentUrl = blocks[index]?.media_url;
       if (currentUrl) {
-        setImageFileLists(prev => ({
+        setImageFileLists((prev) => ({
           ...prev,
-          [index]: [{
-            uid: '-1',
-            name: '已有图片',
-            status: 'done',
-            url: currentUrl,
-          }]
+          [index]: [
+            {
+              uid: '-1',
+              name: '已有图片',
+              status: 'done',
+              url: currentUrl,
+            },
+          ],
         }));
       }
     } else {
-      setImageFileLists(prev => ({ ...prev, [index]: [] }));
+      setImageFileLists((prev) => ({ ...prev, [index]: [] }));
     }
   };
 
@@ -336,12 +358,14 @@ const ArticleEditPage: React.FC = () => {
       if (response.success && (response.url || response.file_path)) {
         const url = response.url || response.file_path || '';
         form.setFieldValue('cover_image', url);
-        setCoverImageFileList([{
-          uid: '-1',
-          name: (file as File).name,
-          status: 'done',
-          url: url,
-        }]);
+        setCoverImageFileList([
+          {
+            uid: '-1',
+            name: (file as File).name,
+            status: 'done',
+            url: url,
+          },
+        ]);
         onSuccess?.(response, file);
         message.success('封面图片上传成功');
       } else {
@@ -369,12 +393,14 @@ const ArticleEditPage: React.FC = () => {
     if (mode === 'upload') {
       const currentUrl = form.getFieldValue('cover_image');
       if (currentUrl) {
-        setCoverImageFileList([{
-          uid: '-1',
-          name: '已有图片',
-          status: 'done',
-          url: currentUrl,
-        }]);
+        setCoverImageFileList([
+          {
+            uid: '-1',
+            name: '已有图片',
+            status: 'done',
+            url: currentUrl,
+          },
+        ]);
       }
     } else {
       setCoverImageFileList([]);
@@ -396,7 +422,7 @@ const ArticleEditPage: React.FC = () => {
       };
 
       if (isEditMode && articleId) {
-        await updateArticle(parseInt(articleId), data);
+        await updateArticle(parseInt(articleId, 10), data);
         message.success('更新草稿成功');
       } else {
         const response = await createArticle(data);
@@ -435,20 +461,11 @@ const ArticleEditPage: React.FC = () => {
         blocks,
       };
 
-      await updateArticle(parseInt(articleId), data);
+      await updateArticle(parseInt(articleId, 10), data);
 
-      if (publishImmediately) {
-        // 如果选择立即发布，直接使用 approveArticle API 并设置 publish_immediately
-        await approveArticle(parseInt(articleId), {
-          comment: '作者直接发布',
-          publish_immediately: true,
-        });
-        message.success('文章已发布');
-      } else {
-        // 否则提交审核
-        await submitArticleForReview(parseInt(articleId));
-        message.success('提交审核成功');
-      }
+      // 提交审核
+      await submitArticleForReview(parseInt(articleId, 10));
+      message.success('提交审核成功');
 
       // 返回列表
       setTimeout(() => {
@@ -456,15 +473,15 @@ const ArticleEditPage: React.FC = () => {
       }, 1500);
     } catch (error) {
       console.error('提交审核失败:', error);
-      message.error(publishImmediately ? '发布失败，请重试' : '提交审核失败，请重试');
+      message.error('提交审核失败，请重试');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 返回列表
+  // 返回上一页
   const handleBack = () => {
-    history.push('/articles');
+    history.back();
   };
 
   // 初始化加载
@@ -481,18 +498,18 @@ const ArticleEditPage: React.FC = () => {
     <div className="article-edit-page">
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>{isEditMode ? '编辑文章' : '创建文章'} - 口语魔方SpeakCube</title>
+        <title>
+          {isEditMode ? '编辑文章' : '创建文章'} - 口语魔方SpeakCube
+        </title>
       </Helmet>
 
       {/* 导航栏 */}
       <nav className="navbar">
         <div className="nav-container">
-          <button className="back-button" onClick={handleBack}>
+          <button type="button" className="back-button" onClick={handleBack}>
             <ArrowLeftOutlined /> 返回
           </button>
-          <h1 className="page-title">
-            {isEditMode ? '编辑文章' : '创建文章'}
-          </h1>
+          <h1 className="page-title">{isEditMode ? '编辑文章' : '创建文章'}</h1>
           <div style={{ width: 100 }}></div>
         </div>
       </nav>
@@ -500,10 +517,7 @@ const ArticleEditPage: React.FC = () => {
       {/* 主内容 */}
       <div className="edit-content">
         <Card className="form-card" title="文章信息">
-          <Form
-            form={form}
-            layout="vertical"
-          >
+          <Form form={form} layout="vertical">
             <Form.Item
               name="title"
               label="文章标题"
@@ -512,15 +526,17 @@ const ArticleEditPage: React.FC = () => {
                 { max: 200, message: '标题最多200个字符' },
               ]}
             >
-              <Input placeholder="请输入文章标题（1-200字符）" maxLength={200} showCount />
+              <Input
+                placeholder="请输入文章标题（1-200字符）"
+                maxLength={200}
+                showCount
+              />
             </Form.Item>
 
             <Form.Item
               name="summary"
               label="文章摘要"
-              rules={[
-                { max: 500, message: '摘要最多500个字符' },
-              ]}
+              rules={[{ max: 500, message: '摘要最多500个字符' }]}
             >
               <TextArea
                 placeholder="请输入文章摘要（最多500字符）"
@@ -560,7 +576,11 @@ const ArticleEditPage: React.FC = () => {
                   >
                     {coverImageFileList.length === 0 && (
                       <div>
-                        {coverImageLoading ? <LoadingOutlined /> : <PlusOutlined />}
+                        {coverImageLoading ? (
+                          <LoadingOutlined />
+                        ) : (
+                          <PlusOutlined />
+                        )}
                         <div style={{ marginTop: 8 }}>上传封面图片</div>
                       </div>
                     )}
@@ -576,14 +596,25 @@ const ArticleEditPage: React.FC = () => {
                 <>
                   <Input
                     value={form.getFieldValue('cover_image') || ''}
-                    onChange={(e) => form.setFieldValue('cover_image', e.target.value)}
+                    onChange={(e) =>
+                      form.setFieldValue('cover_image', e.target.value)
+                    }
                     placeholder="请输入封面图片URL链接"
                     prefix={<LinkOutlined />}
                     style={{ marginBottom: 8 }}
                   />
                   {form.getFieldValue('cover_image') && (
                     <div style={{ marginTop: 8 }}>
-                      <span style={{ color: '#999', fontSize: 12, marginBottom: 8, display: 'block' }}>封面预览：</span>
+                      <span
+                        style={{
+                          color: '#999',
+                          fontSize: 12,
+                          marginBottom: 8,
+                          display: 'block',
+                        }}
+                      >
+                        封面预览：
+                      </span>
                       <img
                         src={form.getFieldValue('cover_image')}
                         alt="封面预览"
@@ -591,13 +622,14 @@ const ArticleEditPage: React.FC = () => {
                           maxWidth: 200,
                           maxHeight: 150,
                           borderRadius: 4,
-                          border: '1px solid #d9d9d9'
+                          border: '1px solid #d9d9d9',
                         }}
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                         onLoad={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'block';
+                          (e.target as HTMLImageElement).style.display =
+                            'block';
                         }}
                       />
                     </div>
@@ -683,10 +715,16 @@ const ArticleEditPage: React.FC = () => {
           ) : (
             <div className="blocks-list">
               {blocks.map((block, index) => (
-                <div key={index} className="block-item">
+                <div
+                  key={`block-${block.sort_order || index}`}
+                  className="block-item"
+                >
                   <div className="block-header">
                     <Tag color="blue">
-                      {BLOCK_TYPES.find(t => t.value === block.block_type)?.label}
+                      {
+                        BLOCK_TYPES.find((t) => t.value === block.block_type)
+                          ?.label
+                      }
                     </Tag>
                     <Space size="small">
                       <Button
@@ -723,7 +761,9 @@ const ArticleEditPage: React.FC = () => {
                     <Form.Item style={{ marginBottom: 0 }}>
                       <TextArea
                         value={block.content}
-                        onChange={(e) => handleUpdateBlock(index, 'content', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'content', e.target.value)
+                        }
                         placeholder="请输入文本内容"
                         rows={4}
                       />
@@ -735,7 +775,9 @@ const ArticleEditPage: React.FC = () => {
                       {/* 模式切换 */}
                       <Radio.Group
                         value={imageInputModes[index] || 'upload'}
-                        onChange={(e) => handleToggleImageMode(index, e.target.value)}
+                        onChange={(e) =>
+                          handleToggleImageMode(index, e.target.value)
+                        }
                         style={{ marginBottom: 12 }}
                       >
                         <Radio.Button value="upload">
@@ -754,19 +796,32 @@ const ArticleEditPage: React.FC = () => {
                             listType="picture-card"
                             fileList={imageFileLists[index] || []}
                             beforeUpload={beforeUpload}
-                            customRequest={(options) => handleImageUpload(index, options)}
+                            customRequest={(options) =>
+                              handleImageUpload(index, options)
+                            }
                             onRemove={() => handleRemoveImage(index)}
                             maxCount={1}
                             accept="image/*"
                           >
-                            {(!imageFileLists[index] || imageFileLists[index]?.length === 0) && (
+                            {(!imageFileLists[index] ||
+                              imageFileLists[index]?.length === 0) && (
                               <div>
-                                {imageUploadLoading[index] ? <LoadingOutlined /> : <PlusOutlined />}
+                                {imageUploadLoading[index] ? (
+                                  <LoadingOutlined />
+                                ) : (
+                                  <PlusOutlined />
+                                )}
                                 <div style={{ marginTop: 8 }}>上传图片</div>
                               </div>
                             )}
                           </Upload>
-                          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+                          <div
+                            style={{
+                              marginTop: 8,
+                              color: '#999',
+                              fontSize: 12,
+                            }}
+                          >
                             支持 jpg、png、gif 格式，文件大小不超过 5MB
                           </div>
                         </>
@@ -777,14 +832,29 @@ const ArticleEditPage: React.FC = () => {
                         <>
                           <Input
                             value={block.media_url || ''}
-                            onChange={(e) => handleUpdateBlock(index, 'media_url', e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateBlock(
+                                index,
+                                'media_url',
+                                e.target.value,
+                              )
+                            }
                             placeholder="请输入图片URL链接"
                             prefix={<LinkOutlined />}
                             style={{ marginBottom: 8 }}
                           />
                           {block.media_url && (
                             <div style={{ marginTop: 8 }}>
-                              <span style={{ color: '#999', fontSize: 12, marginBottom: 8, display: 'block' }}>图片预览：</span>
+                              <span
+                                style={{
+                                  color: '#999',
+                                  fontSize: 12,
+                                  marginBottom: 8,
+                                  display: 'block',
+                                }}
+                              >
+                                图片预览：
+                              </span>
                               <img
                                 src={block.media_url}
                                 alt="图片预览"
@@ -792,32 +862,45 @@ const ArticleEditPage: React.FC = () => {
                                   maxWidth: 200,
                                   maxHeight: 150,
                                   borderRadius: 4,
-                                  border: '1px solid #d9d9d9'
+                                  border: '1px solid #d9d9d9',
                                 }}
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  (e.target as HTMLImageElement).style.display =
+                                    'none';
                                 }}
                                 onLoad={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'block';
+                                  (e.target as HTMLImageElement).style.display =
+                                    'block';
                                 }}
                               />
                             </div>
                           )}
-                          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-                            请输入有效的图片URL地址，如 https://example.com/image.jpg
+                          <div
+                            style={{
+                              marginTop: 8,
+                              color: '#999',
+                              fontSize: 12,
+                            }}
+                          >
+                            请输入有效的图片URL地址，如
+                            https://example.com/image.jpg
                           </div>
                         </>
                       )}
 
                       <Input
                         value={block.media_alt || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'media_alt', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'media_alt', e.target.value)
+                        }
                         placeholder="请输入图片alt文本（可选）"
                         style={{ marginTop: '0.5rem' }}
                       />
                       <Input
                         value={block.caption || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'caption', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'caption', e.target.value)
+                        }
                         placeholder="请输入图片说明（可选）"
                         style={{ marginTop: '0.5rem' }}
                       />
@@ -828,12 +911,16 @@ const ArticleEditPage: React.FC = () => {
                     <Form.Item style={{ marginBottom: 0 }}>
                       <Input
                         value={block.media_url || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'media_url', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'media_url', e.target.value)
+                        }
                         placeholder="请输入视频URL"
                       />
                       <Input
                         value={block.caption || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'caption', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'caption', e.target.value)
+                        }
                         placeholder="请输入视频说明（可选）"
                         style={{ marginTop: '0.5rem' }}
                       />
@@ -844,7 +931,9 @@ const ArticleEditPage: React.FC = () => {
                     <Form.Item style={{ marginBottom: 0 }}>
                       <Select
                         value={block.code_language}
-                        onChange={(value) => handleUpdateBlock(index, 'code_language', value)}
+                        onChange={(value) =>
+                          handleUpdateBlock(index, 'code_language', value)
+                        }
                         style={{ width: '100%', marginBottom: '0.5rem' }}
                       >
                         <Option value="javascript">JavaScript</Option>
@@ -856,7 +945,9 @@ const ArticleEditPage: React.FC = () => {
                       </Select>
                       <TextArea
                         value={block.content || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'content', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'content', e.target.value)
+                        }
                         placeholder="请输入代码"
                         rows={6}
                         style={{ fontFamily: 'monospace' }}
@@ -868,7 +959,9 @@ const ArticleEditPage: React.FC = () => {
                     <Form.Item style={{ marginBottom: 0 }}>
                       <TextArea
                         value={block.content || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'content', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'content', e.target.value)
+                        }
                         placeholder="请输入引用内容"
                         rows={3}
                       />
@@ -879,7 +972,9 @@ const ArticleEditPage: React.FC = () => {
                     <Form.Item style={{ marginBottom: 0 }}>
                       <Select
                         value={block.list_type}
-                        onChange={(value) => handleUpdateBlock(index, 'list_type', value)}
+                        onChange={(value) =>
+                          handleUpdateBlock(index, 'list_type', value)
+                        }
                         style={{ width: '100%', marginBottom: '0.5rem' }}
                       >
                         <Option value="unordered">无序列表</Option>
@@ -887,7 +982,9 @@ const ArticleEditPage: React.FC = () => {
                       </Select>
                       <TextArea
                         value={block.content || ''}
-                        onChange={(e) => handleUpdateBlock(index, 'content', e.target.value)}
+                        onChange={(e) =>
+                          handleUpdateBlock(index, 'content', e.target.value)
+                        }
                         placeholder="请输入列表内容（每行一项）"
                         rows={4}
                       />
@@ -900,17 +997,6 @@ const ArticleEditPage: React.FC = () => {
         </Card>
 
         <div className="form-actions">
-          <div className="publish-options">
-            <Checkbox
-              checked={publishImmediately}
-              onChange={(e) => setPublishImmediately(e.target.checked)}
-              style={{ fontSize: '14px' }}
-            >
-              <span style={{ color: '#52c41a', fontWeight: 'bold' }}>
-                立即发布（跳过审核直接发布）
-              </span>
-            </Checkbox>
-          </div>
           <div className="action-buttons">
             <Button
               type="default"
@@ -928,7 +1014,7 @@ const ArticleEditPage: React.FC = () => {
               loading={submitting}
               size="large"
             >
-              {publishImmediately ? '立即发布' : (isEditMode ? '保存并提交审核' : '创建并提交审核')}
+              {isEditMode ? '保存并提交审核' : '创建并提交审核'}
             </Button>
           </div>
         </div>

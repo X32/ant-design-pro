@@ -2,29 +2,26 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  FileTextOutlined,
   PlusOutlined,
   ReloadOutlined,
-  FileTextOutlined,
 } from '@ant-design/icons';
+import { history } from '@umijs/max';
 import {
   Button,
   Card,
+  Input,
   message,
   Popconfirm,
+  Select,
   Space,
   Table,
   Tag,
   Tooltip,
-  Input,
-  Select,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import React, { useEffect, useState } from 'react';
-import { history } from '@umijs/max';
-import {
-  getMyArticles,
-  deleteArticle,
-} from '@/services/ant-design-pro/api';
+import { deleteArticle, getMyArticles } from '@/services/ant-design-pro/api';
 import './index.less';
 
 const { Search } = Input;
@@ -198,7 +195,8 @@ const UserArticles: React.FC = () => {
       key: 'article_type',
       width: 120,
       render: (type: string) => {
-        const config = ARTICLE_TYPE_CONFIG[type as keyof typeof ARTICLE_TYPE_CONFIG];
+        const config =
+          ARTICLE_TYPE_CONFIG[type as keyof typeof ARTICLE_TYPE_CONFIG];
         return <Tag color={config?.color}>{config?.text || type}</Tag>;
       },
     },
@@ -242,42 +240,52 @@ const UserArticles: React.FC = () => {
       key: 'action',
       width: 180,
       fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="查看">
-            <Button
-              type="link"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => handleView(record.id)}
-            />
-          </Tooltip>
-          <Tooltip title="编辑">
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record.id)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="确认删除"
-            description="删除后将无法恢复，确定要删除吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="删除">
+      render: (_, record) => {
+        // 只有未发布的文章可以编辑（草稿、待审核、已驳回、审核通过）
+        const canEdit = record.status !== 'published';
+        // 只有草稿状态可以删除
+        const canDelete = record.status === 'draft';
+
+        return (
+          <Space size="small">
+            <Tooltip title="查看">
               <Button
                 type="link"
                 size="small"
-                danger
-                icon={<DeleteOutlined />}
+                icon={<EyeOutlined />}
+                onClick={() => handleView(record.id)}
               />
             </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
+            <Tooltip title={canEdit ? '编辑' : '已发布不可编辑'}>
+              <Button
+                type="link"
+                size="small"
+                icon={<EditOutlined />}
+                disabled={!canEdit}
+                onClick={() => handleEdit(record.id)}
+              />
+            </Tooltip>
+            <Popconfirm
+              title="确认删除"
+              description="删除后将无法恢复，确定要删除吗？"
+              onConfirm={() => handleDelete(record.id)}
+              okText="确定"
+              cancelText="取消"
+              disabled={!canDelete}
+            >
+              <Tooltip title={canDelete ? '删除' : '仅草稿可删除'}>
+                <Button
+                  type="link"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  disabled={!canDelete}
+                />
+              </Tooltip>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -307,7 +315,10 @@ const UserArticles: React.FC = () => {
       >
         {/* 筛选栏 */}
         <div className="filter-bar">
-          <Space size="middle" style={{ width: '100%', justifyContent: 'flex-start' }}>
+          <Space
+            size="middle"
+            style={{ width: '100%', justifyContent: 'flex-start' }}
+          >
             <Search
               placeholder="搜索文章标题"
               allowClear

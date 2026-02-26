@@ -4218,6 +4218,34 @@ export async function requestArticleRevision(
 }
 
 /**
+ * 管理员更新文章
+ * PUT /api/admin/articles/{article_id}
+ */
+export async function adminUpdateArticle(
+  articleId: number,
+  data: API.ArticleUpdateData,
+  options?: { [key: string]: any },
+) {
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  return request<{
+    success: boolean;
+    message?: string;
+    data?: {
+      article: API.ArticleDetail;
+    };
+  }>(`/api/admin/articles/${articleId}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data,
+    ...(options || {}),
+  });
+}
+
+/**
  * 归档文章
  * POST /api/admin/articles/{article_id}/archive
  */
