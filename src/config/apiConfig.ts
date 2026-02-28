@@ -17,7 +17,6 @@ console.log('isDev:', isDev);
 export const API_BASE_URL = 'https://api.qtoplay.com';
 // export const API_BASE_URL = 'http://localhost:9002';
 
-
 // 临时强制使用空字符串进行调试
 // export const API_BASE_URL = ''; // 强制走 proxy
 
@@ -159,7 +158,7 @@ export const API_ENDPOINTS = {
   ADMIN_CONVERSATIONS: `${API_BASE_URL}/api/spoken/admin/conversations`,
 
   // 工作流类型管理
-  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflowtypes`,
+  WORKFLOW_TYPES: `${API_BASE_URL}/api/workflowtypes/`,
 
   // 用户反馈相关
   FEEDBACK_SUBMIT: `${API_BASE_URL}/api/auth/feedback`,
