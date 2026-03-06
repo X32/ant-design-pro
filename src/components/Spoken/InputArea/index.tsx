@@ -3,11 +3,7 @@
  * 支持文本输入和语音录制切换
  */
 
-import {
-  AudioOutlined,
-  KeyboardOutlined,
-  SendOutlined,
-} from '@ant-design/icons';
+import { AudioOutlined, KeyOutlined, SendOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Tooltip } from 'antd';
 import React from 'react';
 import type { InputAreaProps } from '@/types/spoken';
@@ -114,7 +110,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
                 type="default"
                 shape="circle"
                 size="large"
-                icon={<KeyboardOutlined />}
+                icon={<KeyOutlined />}
                 onClick={onToggleTextInput}
                 disabled={disabled || isRecording}
                 className={`toggle-text-button ${showTextInput ? 'active' : ''}`}
