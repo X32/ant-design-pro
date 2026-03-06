@@ -1,0 +1,193 @@
+// ConversationHeader 组件样式
+
+.conversation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #f0f0f0;
+
+  // 左侧区域（返回按钮）
+  .header-left {
+    display: flex;
+    align-items: center;
+    min-width: 120px;
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 16px;
+      color: #333;
+      padding: 4px 12px;
+      transition: all 0.3s;
+
+      &:hover {
+        background-color: #f5f5f5;
+        color: #1890ff;
+      }
+
+      .back-icon {
+        font-size: 20px;
+      }
+    }
+  }
+
+  // 中间区域（标题 + 状态）
+  .header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex: 1;
+    margin: 0 24px;
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+
+    .workflow-tag {
+      font-size: 12px;
+      padding: 2px 8px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: all 0.3s;
+
+      &.connected {
+        background-color: #f6ffed;
+        color: #52c41a;
+
+        .connection-icon {
+          color: #52c41a;
+        }
+      }
+
+      &.disconnected {
+        background-color: #fff1f0;
+        color: #ff4d4f;
+
+        .connection-icon {
+          color: #ff4d4f;
+        }
+      }
+
+      .connection-text {
+        font-weight: 500;
+      }
+    }
+  }
+
+  // 右侧区域（VIP 状态 + 头像）
+  .header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 120px;
+
+    .vip-tag {
+      font-size: 12px;
+      padding: 2px 12px;
+      font-weight: 500;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .conversation-header {
+    height: 56px;
+    padding: 0 16px;
+
+    .header-left {
+      min-width: 80px;
+
+      .back-button {
+        font-size: 14px;
+        padding: 4px 8px;
+
+        .back-icon {
+          font-size: 18px;
+        }
+      }
+    }
+
+    .header-center {
+      margin: 0 16px;
+      gap: 12px;
+
+      .app-title {
+        font-size: 18px;
+      }
+
+      .workflow-tag {
+        display: none; // 移动端隐藏工作流标签
+      }
+
+      .connection-status {
+        padding: 2px 8px;
+        font-size: 12px;
+
+        .connection-text {
+          display: none; // 移动端只显示图标
+        }
+      }
+    }
+
+    .header-right {
+      min-width: 80px;
+      justify-content: flex-end;
+
+      .vip-tag {
+        display: none; // 移动端隐藏 VIP 标签
+      }
+    }
+  }
+}
+
+// 深色模式支持（可选）
+@media (prefers-color-scheme: dark) {
+  .conversation-header {
+    background-color: #141414;
+    border-bottom-color: #303030;
+
+    .header-left {
+      .back-button {
+        color: #fff;
+
+        &:hover {
+          background-color: #1f1f1f;
+          color: #1890ff;
+        }
+      }
+    }
+
+    .header-center {
+      .app-title {
+        color: #fff;
+      }
+
+      .connection-status {
+        &.connected {
+          background-color: rgba(82, 196, 26, 0.2);
+        }
+
+        &.disconnected {
+          background-color: rgba(255, 77, 79, 0.2);
+        }
+      }
+    }
+  }
+}
