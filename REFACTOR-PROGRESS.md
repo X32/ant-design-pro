@@ -3,7 +3,7 @@
 > 重构启动日期：2026-03-06  
 > 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中**  
 > 报告生成时间：2026-03-06 18:35  
-> 最后更新：2026-03-06 18:45 (Phase 2 任务 1 完成)
+> 最后更新：2026-03-06 19:10 (Phase 2 任务 2 完成)
 
 ---
 
@@ -302,6 +302,28 @@ describe('useAudioPlayer', () => {
 
 **测试状态**：✅ 构建成功，无错误
 
+### 任务 2：ConversationHeader 会话头部组件
+
+**文件**：
+- `src/components/Spoken/ConversationHeader/index.tsx` (3,011 字节)
+- `src/components/Spoken/ConversationHeader/index.less` (3,241 字节)
+
+**功能**：
+| 功能模块 | 描述 |
+|----------|------|
+| 返回按钮 | 带资源清理回调，自动清除 conversationId |
+| 标题 | 可自定义标题文字 |
+| 连接状态 | WiFi 图标 + 文字（已连接/未连接） |
+| VIP 状态 | 金色标签显示剩余天数 |
+| 工作流类型 | 蓝色标签显示当前工作流 |
+| 用户头像 | 集成 UserAvatar 组件 |
+| 响应式 | 移动端自适应（隐藏部分标签） |
+| 深色模式 | 支持系统深色主题 |
+
+**复用度**：100%（spokenPages 和 spokenExamPage 通用）
+
+**测试状态**：✅ 构建成功，无错误
+
 ---
 
 ## 📋 下一步行动
@@ -415,6 +437,20 @@ git commit -m "refactor(spoken): 提取基础组件和 Hooks (Phase 1)
 | Commit | 信息 | 状态 |
 |--------|------|------|
 | `2af59f2a` | feat(spoken): 新增 GrammarFeedbackModal 语法反馈弹窗组件 | ✅ 已推送 |
+
+### Phase 2 任务 2（2026-03-06 19:10）
+
+**构建测试**：
+```bash
+✅ npm run build - 构建成功，无错误
+✅ 生成 50+ 页面 HTML 文件
+✅ Biome lint 自动修复通过
+```
+
+**Git 提交记录**：
+| Commit | 信息 | 状态 |
+|--------|------|------|
+| `ceca7e98` | feat(spoken): 新增 ConversationHeader 会话头部组件 | ✅ 已推送 |
 
 ### 远程仓库
 
