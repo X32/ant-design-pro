@@ -148,8 +148,8 @@ interface Message {
 
 // AI音频基础URL
 // const AI_AUDIO_BASE_URL = isDev ? 'http://localhost:9002' : 'https://api.qtoplay.com';
-// const AI_AUDIO_BASE_URL = 'http://localhost:9002';
-const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
+const AI_AUDIO_BASE_URL = 'http://localhost:9002';
+// const AI_AUDIO_BASE_URL = 'https://api.qtoplay.com';
 
 /**
  * AI口语练习组件
@@ -1079,68 +1079,217 @@ const SpokenPractice: React.FC = () => {
           }));
         });
         
+        // ============================================================
+        // 📨 WebSocket 消息处理器 - 按消息类型分类处理
+        // ============================================================
+
         /**
-         * 🆕 处理语法反馈消息
-         * @param data WebSocket 消息数据
-         * @param messageId 消息 ID
+         * WebSocket 消息数据类型
          */
-        const handleGrammarFeedbackMessage = (
-          data: { content: any; round_num?: number; origin_message_id?: string }, // 🔧 修改为 string
-          messageId: string, // 🔧 修改为 string
-        ) => {
+        interface WebSocketMessageData {
+          type?: string;
+          content: any;
+          timestamp?: number;
+          round_num?: number;
+          audio_url?: string;
+          audio_cached?: boolean;
+          score?: string;
+          origin_message_id?: string;
+        }
+
+        /**
+         * 解析评分内容（辅助函数）
+         */
+        const parseScoreContent = (text: string): ScoreContent => {
+          const lines = text.split('\n');
+          const result: ScoreContent = { rawText: text };
+
+          if (lines.length > 0) {
+            result.dimensionScores = lines[0];
+          }
+
+          let currentSection = '';
+          let advantagesText = '';
+          let disadvantagesText = '';
+          let suggestionsText = '';
+          let improvedAnswerText = '';
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            if (line.startsWith('总分：')) {
+              result.totalScore = line;
+              continue;
+            }
+
+            if (line === '详细评价：') { currentSection = 'detail'; continue; }
+            if (line === '优势：') { currentSection = 'advantages'; continue; }
+            if (line === '不足：') { currentSection = 'disadvantages'; continue; }
+            if (line === '改进建议：') { currentSection = 'suggestions'; continue; }
+            if (line === '改进的回答：') { currentSection = 'improved_answer'; continue; }
+
+            if (currentSection === 'advantages' && line) { advantagesText += line + '\n'; }
+            else if (currentSection === 'disadvantages' && line) { disadvantagesText += line + '\n'; }
+            else if (currentSection === 'suggestions' && line) { suggestionsText += line + '\n'; }
+            else if (currentSection === 'improved_answer' && line) { improvedAnswerText += line + '\n'; }
+          }
+
+          result.advantages = advantagesText.trim();
+          result.disadvantages = disadvantagesText.trim();
+          result.suggestions = suggestionsText.trim();
+          result.improvedAnswer = improvedAnswerText.trim();
+
+          return result;
+        };
+
+        /**
+         * 🏁 处理 finish 消息 - 对话结束
+         */
+        const handleFinishMessage = async () => {
+          console.log('🏁 对话结束，开始保存缓存消息...');
+
           try {
-            // 解析 JSON 内容
+            // 1. 批量保存缓存消息
+            console.log('💾 开始保存消息，使用会话 ID:', realConversationIdRef.current);
+            await batchSaveMessages(realConversationIdRef.current, messageCacheRef.current);
+
+            // 2. 清空缓存
+            messageCacheRef.current = [];
+
+            // 3. 处理对话结束扣款
+            await handleFinishConsumeCoins();
+
+            // 4. 设置会话结束状态（触发 UI 禁用）
+            setConversationFinished(true);
+
+            // 5. 触发烟花动画
+            setShowFirework(true);
+            console.log('🎆 烟花动画已触发');
+
+            // 6. 移除 disconnect 事件监听器（避免触发自动刷新）
+            console.log('🔌 移除 disconnect 事件监听器');
+            wsSocket.off('disconnect');
+
+            // 7. 断开 WebSocket
+            console.log('🔌 断开 WebSocket 连接');
+            wsSocket.disconnect();
+            setSocket(null);
+            setIsConnected(false);
+            setIsAuthenticated(false);
+
+            // 8. 插入结束消息到消息列表
+            const now = new Date();
+            const finishMessage: Message = {
+              id: generateMessageId(),
+              content: '🎉 对话已结束，您的口语练习已完成，成绩已保存！',
+              sender: 'ai',
+              timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              fullTimestamp: now,
+              messageType: 'finish',
+            };
+
+            setMessages(prevMessages => [...prevMessages, finishMessage]);
+            console.log('✅ 对话结束处理完成，已插入结束消息');
+
+          } catch (error) {
+            console.error('❌ 保存消息失败:', error);
+            Modal.error({ title: '保存失败', content: '消息保存失败，请稍后重试' });
+          }
+        };
+
+        /**
+         * 🖼️ 处理图片消息
+         */
+        const handleImageMessage = (data: WebSocketMessageData) => {
+          const messageId = generateMessageId();
+          const now = new Date();
+
+          const imageMessage: Message = {
+            id: messageId,
+            content: data.content,
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: now,
+            messageType: 'image',
+            imageUrl: data.content,
+            roundNum: data.round_num,
+          };
+
+          setMessages(prevMessages => [...prevMessages, imageMessage]);
+          messageCacheRef.current.push(imageMessage);
+          console.log('📝 收到图片消息，已缓存:', data.content);
+        };
+
+        /**
+         * 📊 处理评分消息
+         */
+        const handleScoreMessage = (data: WebSocketMessageData) => {
+          const messageId = generateMessageId();
+          const contentText = typeof data.content === 'string' ? data.content : '';
+          const parsedContent = parseScoreContent(contentText);
+          const now = new Date();
+
+          const scoreMessage: Message = {
+            id: messageId,
+            content: parsedContent,
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: now,
+            messageType: 'score',
+            score: data.score,
+            roundNum: data.round_num,
+          };
+
+          setMessages(prevMessages => [...prevMessages, scoreMessage]);
+          messageCacheRef.current.push(scoreMessage);
+          console.log('📝 收到评分消息，已缓存, 总分:', data.score);
+        };
+
+        /**
+         * 📝 处理语法反馈消息
+         */
+        const handleGrammarFeedbackMessage = (data: WebSocketMessageData) => {
+          try {
             let grammarFeedback: GrammarFeedbackContent;
             if (typeof data.content === 'string') {
               grammarFeedback = JSON.parse(data.content);
             } else {
               grammarFeedback = data.content;
             }
-        
-            // 🔥 仅使用 origin_message_id 精确匹配，如果没有则丢弃
-            const originMessageId = String(data.origin_message_id); // 🔧 确保为字符串类型
-                
+
+            const originMessageId = String(data.origin_message_id);
+
             if (!originMessageId || originMessageId === 'undefined') {
               console.warn('⚠️ 语法反馈消息缺少 origin_message_id，丢弃该消息');
               return;
             }
-            
+
             console.log(`🔗 关联语法反馈到用户消息, origin_message_id: ${originMessageId}`);
-                  
-            // 更新对应的用户消息，添加语法反馈
+
             setMessages(prevMessages => {
               const updated = prevMessages.map(msg => {
                 if (msg.id === originMessageId) {
                   console.log(`✅ 找到匹配的用户消息, id: ${msg.id}, type: ${msg.messageType}, 错误数: ${grammarFeedback.errors?.length || 0}`);
-                  return {
-                    ...msg,
-                    grammarFeedback: grammarFeedback,
-                    grammarFeedbackStatus: 'received' as const
-                  };
+                  return { ...msg, grammarFeedback, grammarFeedbackStatus: 'received' as const };
                 }
                 return msg;
               });
-              
-              // 检查是否找到匹配
+
               const found = updated.some(msg => msg.id === originMessageId);
               if (!found) {
                 console.warn(`⚠️ 未找到 id=${originMessageId} 的消息，丢弃该语法反馈`);
               }
-              
+
               return updated;
             });
-                  
+
             // 同步更新缓存
             messageCacheRef.current = messageCacheRef.current.map(msg =>
               msg.id === originMessageId
-                ? {
-                    ...msg,
-                    grammarFeedback: grammarFeedback,
-                    grammarFeedbackStatus: 'received' as const
-                  }
+                ? { ...msg, grammarFeedback, grammarFeedbackStatus: 'received' as const }
                 : msg
             );
-                  
+
             console.log('📝 收到语法反馈消息并已关联:', {
               origin_message_id: originMessageId,
               round_num: data.round_num,
@@ -1152,258 +1301,94 @@ const SpokenPractice: React.FC = () => {
             console.error('❌ 处理语法反馈消息失败:', error);
           }
         };
-        
-        // 监听接收消息事件
-        wsSocket.on('receive_message', async (data: { 
-          type?: string;
-          content: any;
-          timestamp?: number;
-          round_num?: number;
-          audio_url?: string;
-          audio_cached?: boolean;
-          score?: string;
-        }) => {
-          console.log('📨 收到 WebSocket 消息:', data);
-          
-          // 🏁 检查是否是 finish 消息
-          if (data.type === 'finish') {
-            console.log('🏁 对话结束，开始保存缓存消息...');
-            
-            try {
-              // 1. 批量保存缓存消息
-              console.log('💾 开始保存消息，使用会话 ID:', realConversationIdRef.current);
-              await batchSaveMessages(realConversationIdRef.current, messageCacheRef.current);
 
-              // 2. 清空缓存
-              messageCacheRef.current = [];
-              
-              // 3. 处理对话结束扣款
-              await handleFinishConsumeCoins();
-              
-              // 4. 设置会话结束状态（触发 UI 禁用）
-              setConversationFinished(true);
-              
-              // 🎆 触发烟花动画
-              setShowFirework(true);
-              console.log('🎆 烟花动画已触发');
-              
-              // 5. 移除 disconnect 事件监听器（避免触发自动刷新）
-              console.log('🔌 移除 disconnect 事件监听器');
-              wsSocket.off('disconnect');
-              
-              // 6. 断开 WebSocket
-              console.log('🔌 断开 WebSocket 连接');
-              wsSocket.disconnect();
-              setSocket(null);
-              setIsConnected(false);
-              setIsAuthenticated(false);
-              
-              // 7. 插入结束消息到消息列表
-              const now = new Date();
-              const finishMessage: Message = {
-                id: generateMessageId(),
-                content: '🎉 对话已结束，您的口语练习已完成，成绩已保存！',
-                sender: 'ai',
-                timestamp: now.toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }),
-                fullTimestamp: now, // ⭐ 保存完整时间戳
-                messageType: 'finish',
-              };
-              
-              setMessages(prevMessages => [...prevMessages, finishMessage]);
-              console.log('✅ 对话结束处理完成，已插入结束消息');
-              
-            } catch (error) {
-              console.error('❌ 保存消息失败:', error);
-              
-              Modal.error({
-                title: '保存失败',
-                content: '消息保存失败，请稍后重试',
-              });
-            }
-            
-            return; // finish 消息处理完毕，不继续处理
-          }
-                  
+        /**
+         * 🔄 处理 loading 消息 - 仅显示不缓存
+         */
+        const handleLoadingMessage = (data: WebSocketMessageData) => {
           const messageId = generateMessageId();
-                  
-          // 判断消息类型
-          if (data.type === 'image_url') {
-            // 图片消息
-            const now = new Date();
-            const imageMessage: Message = {
-              id: messageId,
-              content: data.content,
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              messageType: 'image',
-              imageUrl: data.content,
-              roundNum: data.round_num,
-            };
-                    
-            setMessages(prevMessages => [...prevMessages, imageMessage]);
-            messageCacheRef.current.push(imageMessage); // ⭐ 添加到缓存
-            console.log('📝 收到图片消息，已缓存:', data.content);
-                    
-          } else if (data.type === 'score') {
-            // 评分消息 - 解析文本内容
-            const contentText = typeof data.content === 'string' ? data.content : '';
-            
-            // 解析评分内容
-            const parseScoreContent = (text: string): ScoreContent => {
-              const lines = text.split('\n');
-              const result: ScoreContent = { rawText: text };
-              
-              // 提取第一行维度分数
-              if (lines.length > 0) {
-                result.dimensionScores = lines[0];
-              }
-              
-              // 查找各部分
-              let currentSection = '';
-              let advantagesText = '';
-              let disadvantagesText = '';
-              let suggestionsText = '';
-              let improvedAnswerText = '';
+          const now = new Date();
 
-              
-              for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // 识别总分行
-                if (line.startsWith('总分：')) {
-                  result.totalScore = line;
-                  continue;
-                }
-                
-                // 识别章节标题
-                if (line === '详细评价：') {
-                  currentSection = 'detail';
-                  continue;
-                }
-                if (line === '优势：') {
-                  currentSection = 'advantages';
-                  continue;
-                }
-                if (line === '不足：') {
-                  currentSection = 'disadvantages';
-                  continue;
-                }
-                if (line === '改进建议：') {
-                  currentSection = 'suggestions';
-                  continue;
-                }
-                if (line === '改进的回答：') {
-                  currentSection = 'improved_answer';
-                  continue;
-                }
-                
-                // 收集各部分内容
-                if (currentSection === 'advantages' && line) {
-                  advantagesText += line + '\n';
-                } else if (currentSection === 'disadvantages' && line) {
-                  disadvantagesText += line + '\n';
-                } else if (currentSection === 'suggestions' && line) {
-                  suggestionsText += line + '\n';
-                }
-                else if (currentSection === 'improved_answer' && line) {
-                  improvedAnswerText += line + '\n';
-                }
-              }
-              
-              result.advantages = advantagesText.trim();
-              result.disadvantages = disadvantagesText.trim();
-              result.suggestions = suggestionsText.trim();
-              result.improvedAnswer = improvedAnswerText.trim();
-              
-              return result;
-            };
-            
-            const parsedContent = parseScoreContent(contentText);
-            
-            const now = new Date();
-            const scoreMessage: Message = {
-              id: messageId,
-              content: parsedContent,
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              messageType: 'score',
-              score: data.score,
-              roundNum: data.round_num,
-            };
-            
-            setMessages(prevMessages => [...prevMessages, scoreMessage]);
-            messageCacheRef.current.push(scoreMessage); // ⭐ 添加到缓存
-            console.log('📝 收到评分消息，已缓存, 总分:', data.score);
-          } else if (data.type === 'grammar_feedback') {
-            // 🆕 语法反馈消息（仅缓存，不显示）
-            handleGrammarFeedbackMessage(data, messageId);
-          } else if (data.type === 'loading') {
-            // 🔄 loading 消息（仅显示，不缓存）
-            const now = new Date();
-            const loadingMessage: Message = {
-              id: messageId,
-              content: typeof data.content === 'string' ? data.content : '正在分析您的答案，请稍后...',
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now,
-              messageType: 'text',
-            };
-            
-            setMessages(prevMessages => [...prevMessages, loadingMessage]);
-            // ⚠️ 不添加到缓存！loading 消息不保存到数据库
-            console.log('🔄 收到 loading 消息，仅显示不缓存');
-          } else {
-            // 文本/音频消息
-            console.log('📝 收到普通消息, type:', data.type, ', content:', data.content?.substring(0, 50));
-            
-            // 构建完整音频URL
-            let fullAudioUrl: string | undefined;
-            if (data.audio_url) {
-              fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
-              console.log('AI音频URL:', fullAudioUrl);
-            }
-            
-            // 创建AI回复消息
-            const now = new Date();
-            const aiMessage: Message = {
-              id: messageId,
-              content: typeof data.content === 'string' ? data.content : '我收到了你的消息！',
-              sender: 'ai',
-              timestamp: now.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              fullTimestamp: now, // ⭐ 保存完整时间戳
-              audioUrl: fullAudioUrl,
-              audioLoaded: false,
-              roundNum: data.round_num,
-              messageType: 'text',
-            };
-            
-            setMessages(prevMessages => [...prevMessages, aiMessage]);
-            messageCacheRef.current.push(aiMessage); // ⭐ 添加到缓存
-            console.log('📝 收到文本消息，已缓存, messageId:', messageId, ', round_num:', data.round_num);
-            
-            // 预加载并自动播放音频
-            if (fullAudioUrl) {
-              preloadAndPlayAiAudio(messageId, fullAudioUrl);
-            }
+          const loadingMessage: Message = {
+            id: messageId,
+            content: typeof data.content === 'string' ? data.content : '正在分析您的答案，请稍后...',
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: now,
+            messageType: 'text',
+          };
+
+          setMessages(prevMessages => [...prevMessages, loadingMessage]);
+          console.log('🔄 收到 loading 消息，仅显示不缓存');
+        };
+
+        /**
+         * 💬 处理普通文本/音频消息
+         */
+        const handleTextAudioMessage = (data: WebSocketMessageData) => {
+          const messageId = generateMessageId();
+          console.log('📝 收到普通消息, type:', data.type, ', content:', data.content?.substring(0, 50));
+
+          // 构建完整音频URL
+          let fullAudioUrl: string | undefined;
+          if (data.audio_url) {
+            fullAudioUrl = `${AI_AUDIO_BASE_URL}${data.audio_url}`;
+            console.log('AI音频URL:', fullAudioUrl);
           }
-        });
+
+          const now = new Date();
+          const aiMessage: Message = {
+            id: messageId,
+            content: typeof data.content === 'string' ? data.content : '我收到了你的消息！',
+            sender: 'ai',
+            timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: now,
+            audioUrl: fullAudioUrl,
+            audioLoaded: false,
+            roundNum: data.round_num,
+            messageType: 'text',
+          };
+
+          setMessages(prevMessages => [...prevMessages, aiMessage]);
+          messageCacheRef.current.push(aiMessage);
+          console.log('📝 收到文本消息，已缓存, messageId:', messageId, ', round_num:', data.round_num);
+
+          // 预加载并自动播放音频
+          if (fullAudioUrl) {
+            preloadAndPlayAiAudio(messageId, fullAudioUrl);
+          }
+        };
+
+        /**
+         * 📨 主消息处理器 - 根据 type 分发到对应的处理函数
+         */
+        const processWebSocketMessage = async (data: WebSocketMessageData) => {
+          console.log('📨 收到 WebSocket 消息:', data);
+
+          switch (data.type) {
+            case 'finish':
+              await handleFinishMessage();
+              break;
+            case 'image_url':
+              handleImageMessage(data);
+              break;
+            case 'score':
+              handleScoreMessage(data);
+              break;
+            case 'grammar_feedback':
+              handleGrammarFeedbackMessage(data);
+              break;
+            case 'loading':
+              handleLoadingMessage(data);
+              break;
+            default:
+              handleTextAudioMessage(data);
+              break;
+          }
+        };
+
+        // 监听接收消息事件
+        wsSocket.on('receive_message', processWebSocketMessage);
         
         // 监听错误事件
         wsSocket.on('error', (error: any) => {

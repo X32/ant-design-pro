@@ -1,0 +1,31 @@
+{
+  "assets": {
+    "src/components/CoinDropAnimation/corns.mp3": "/static/corns.260e2c47.mp3",
+    "src/components/fireworkAnimation/win.mp3": "/static/win.bd17cfe8.mp3",
+    "src/components/fireworkAnimation/cup_1.png": "/static/cup_1.c3994924.png",
+    "src/img/icon_200.png": "/static/icon_200.e18c8b03.png",
+    "public/CNAME": "/CNAME",
+    "public/favicon.ico": "/favicon.ico",
+    "public/llms-full.txt": "/llms-full.txt",
+    "public/llms.txt": "/llms.txt",
+    "public/logo.svg": "/logo.svg",
+    "public/logo_1024.png": "/logo_1024.png",
+    "public/og-image.jpg": "/og-image.jpg",
+    "public/pro_icon.svg": "/pro_icon.svg",
+    "public/robots.txt": "/robots.txt",
+    "public/simple-test.html": "/simple-test.html",
+    "public/sitemap.xml": "/sitemap.xml",
+    "public/test.html": "/test.html",
+    "public/test.wav": "/test.wav",
+    "public/downloads/fce-materials.zip": "/downloads/fce-materials.zip",
+    "public/downloads/ket-materials.zip": "/downloads/ket-materials.zip",
+    "public/downloads/pet-materials.zip": "/downloads/pet-materials.zip",
+    "public/icons/icon-128x128.png": "/icons/icon-128x128.png",
+    "public/icons/icon-192x192.png": "/icons/icon-192x192.png",
+    "public/icons/icon-512x512.png": "/icons/icon-512x512.png",
+    "public/scripts/loading.js": "/scripts/loading.js",
+    "public/test/index.html": "/test/index.html",
+    "umi.css": "/umi.f02f28af.css",
+    "umi.js": "/umi.d7ab2253.server.js"
+  }
+}

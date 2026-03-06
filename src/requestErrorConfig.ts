@@ -100,8 +100,8 @@ export const errorConfig: RequestConfig = {
       // 这样可以确保所有请求都走 webpack proxy
       if (config.url && typeof config.url === 'string') {
         config.url = config.url
-          .replace('https://api.qtoplay.com', '')
-          // .replace('http://localhost:9002', '');
+          // .replace('https://api.qtoplay.com', '')
+          .replace('http://localhost:9002', '');
       }
       return config;
     },

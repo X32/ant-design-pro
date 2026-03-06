@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, history, useModel } from '@umijs/max';
-import { Input, Select, Spin, Empty, message, Tag, Button } from 'antd';
-import { EyeOutlined, HeartOutlined, LikeOutlined } from '@ant-design/icons';
+import { Input, Select, Spin, Empty, message, Tag, Button, Drawer } from 'antd';
+import { EyeOutlined, HeartOutlined, LikeOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { getArticles, getArticleCategories } from '@/services/ant-design-pro/api';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
 import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
@@ -25,6 +25,9 @@ const ArticlesPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 12 });
+
+  // Mobile menu drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Article type config (用于显示文章类型标签)
   const ARTICLE_TYPES = [
@@ -145,6 +148,7 @@ const ArticlesPage: React.FC = () => {
             />
             <span className="logo-text">口语魔方SpeakCube</span>
           </div>
+          {/* Desktop navigation */}
           <ul className="nav-links">
             <li>
               <a href="/home">首页</a>
@@ -168,6 +172,7 @@ const ArticlesPage: React.FC = () => {
               <a href="/fce-speaking">FCE专区</a>
             </li>
           </ul>
+          {/* Desktop CTA button */}
           {isLoggedIn ? (
             <Button
               className="cta-button"
@@ -183,8 +188,56 @@ const ArticlesPage: React.FC = () => {
               立即开始
             </Button>
           )}
+          {/* Mobile menu button */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="打开菜单"
+          >
+            <MenuOutlined />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile menu drawer */}
+      <Drawer
+        placement="right"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        className="mobile-menu-drawer"
+        width={280}
+        closeIcon={<CloseOutlined />}
+        title={
+          <div className="drawer-header">
+            <img src={logoIcon} alt="口语魔方" className="drawer-logo" />
+            <span>导航菜单</span>
+          </div>
+        }
+      >
+        <ul className="mobile-nav-links">
+          <li>
+            <a href="/home" onClick={() => setMobileMenuOpen(false)}>首页</a>
+          </li>
+          <li>
+            <a href="/about" onClick={() => setMobileMenuOpen(false)}>品牌</a>
+          </li>
+          <li>
+            <a href="/downloads" onClick={() => setMobileMenuOpen(false)}>资料</a>
+          </li>
+          <li>
+            <a href="/articles" className="active" onClick={() => setMobileMenuOpen(false)}>文章</a>
+          </li>
+          <li>
+            <a href="/ket-speaking" onClick={() => setMobileMenuOpen(false)}>KET专区</a>
+          </li>
+          <li>
+            <a href="/pet-speaking" onClick={() => setMobileMenuOpen(false)}>PET专区</a>
+          </li>
+          <li>
+            <a href="/fce-speaking" onClick={() => setMobileMenuOpen(false)}>FCE专区</a>
+          </li>
+        </ul>
+      </Drawer>
 
       {/* Breadcrumb navigation */}
       <BreadcrumbNav items={breadcrumbItems} />
