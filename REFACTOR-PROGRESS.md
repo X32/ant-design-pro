@@ -1,9 +1,9 @@
 # 口语项目前端重构进度报告
 
 > 重构启动日期：2026-03-06  
-> 当前阶段：Phase 1 - 基础组件提取 ✅ **已完成并推送**  
+> 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中**  
 > 报告生成时间：2026-03-06 18:35  
-> 最后更新：2026-03-06 18:35 (添加测试验证和推送记录)
+> 最后更新：2026-03-06 18:45 (Phase 2 任务 1 完成)
 
 ---
 
@@ -280,15 +280,39 @@ describe('useAudioPlayer', () => {
 
 ---
 
+## ✅ Phase 2 已完成任务
+
+### 任务 1：GrammarFeedbackModal 语法反馈弹窗组件
+
+**文件**：
+- `src/components/Spoken/GrammarFeedbackModal/index.tsx` (6,836 字节)
+- `src/components/Spoken/GrammarFeedbackModal/index.less` (3,872 字节)
+
+**功能**：
+| 功能模块 | 描述 |
+|----------|------|
+| 整体质量 | 优秀/良好/一般/较差（带颜色标签） |
+| 相关性评估 | 切题/部分切题/离题（带分数和理由） |
+| 错误列表 | 严重/轻微错误（原文/修正/解释） |
+| 改进版本 | 改进后的完整句子 |
+| 学习建议 | 3 条学习建议列表 |
+| 维度评估 | A2/B1/B2 语法/词汇/连贯性评估 |
+
+**复用度**：100%（spokenPages 和 spokenExamPage 通用）
+
+**测试状态**：✅ 构建成功，无错误
+
+---
+
 ## 📋 下一步行动
 
 ### 立即执行
-- [ ] 运行 `npm run tsc` 检查类型错误
-- [ ] 运行 `npm run biome:lint` 检查代码规范
+- [x] 运行 `npm run build` 测试构建
+- [x] 修复 Biome lint 错误
 - [ ] 运行 `npm run start:dev` 测试编译
 
 ### 短期计划
-- [ ] 完成 Phase 2 组件提取
+- [ ] 完成 Phase 2 组件提取（4/6 剩余）
 - [ ] 完成 Phase 3 Hooks 提取
 - [ ] 开始 Phase 4 主组件重构
 
@@ -345,14 +369,15 @@ git commit -m "refactor(spoken): 提取基础组件和 Hooks (Phase 1)
 
 > **重构原则**：小步快跑，每次只改动一个模块，确保功能正常后再继续。
 > 
-> **当前状态**：Phase 1 完成，已提交并推送到远程仓库。
+> **当前状态**：Phase 2 任务 1 完成，已提交并推送到远程仓库。
 
 ---
 
-## 🧪 测试验证记录（2026-03-06 18:35）
+## 🧪 测试验证记录
 
-### 构建测试
+### Phase 1（2026-03-06 18:35）
 
+**构建测试**：
 ```bash
 ✅ npm run build - 构建成功，无错误
 ✅ 生成 50+ 页面 HTML 文件
@@ -360,19 +385,36 @@ git commit -m "refactor(spoken): 提取基础组件和 Hooks (Phase 1)
 ✅ 无 Biome lint 错误
 ```
 
-### 修复记录
-
+**修复记录**：
 | 文件 | 问题 | 修复 |
 |------|------|------|
 | `InputArea/index.tsx` | `KeyboardOutlined` 不存在 | 改为 `KeyOutlined` |
 
-### Git 提交记录
-
+**Git 提交记录**：
 | Commit | 信息 | 状态 |
 |--------|------|------|
 | `fe5697bf` | fix: 修复 InputArea 组件图标导入 | ✅ 已推送 |
 | `ed0df494` | docs: 添加重构进度报告 (Phase 1) | ✅ 已推送 |
 | `e9aee727` | refactor(spoken): 提取基础组件和 Hooks (Phase 1) | ✅ 已推送 |
+
+### Phase 2 任务 1（2026-03-06 18:45）
+
+**构建测试**：
+```bash
+✅ npm run build - 构建成功，无错误
+✅ 生成 50+ 页面 HTML 文件
+✅ Biome lint 修复 2 个 key 警告
+```
+
+**修复记录**：
+| 文件 | 问题 | 修复 |
+|------|------|------|
+| `GrammarFeedbackModal/index.tsx` | 数组索引作为 key | 使用内容哈希作为 key |
+
+**Git 提交记录**：
+| Commit | 信息 | 状态 |
+|--------|------|------|
+| `2af59f2a` | feat(spoken): 新增 GrammarFeedbackModal 语法反馈弹窗组件 | ✅ 已推送 |
 
 ### 远程仓库
 
