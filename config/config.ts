@@ -197,6 +197,23 @@ var _hmt = _hmt || [];
   esbuildMinifyIIFE: true,
   requestRecord: {},
   exportStatic: {},
+
+  // ========== GEO 优化：静态导出配置 ==========
+  /**
+   * @name exportStatic 静态导出
+   * @description 生成静态 HTML 文件，优化 AI 爬虫抓取
+   * @doc https://umijs.org/docs/api/config#exportstatic
+   * 
+   * 优势:
+   * - 关键内容在初始 HTML 中直接交付（AI 爬虫友好）
+   * - 页面加载时间 < 2 秒（Copilot 阈值）
+   * - SEO 优化（搜索引擎可直接抓取内容）
+   * - 无需 Node.js 服务器，部署简单
+   */
+  exportStatic: {
+    // 导出所有路由
+    ignoreFiles: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+  },
   define: {
     'process.env.CI': process.env.CI,
   },
