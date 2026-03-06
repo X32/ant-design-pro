@@ -1,0 +1,177 @@
+# SpeakCube 技术文档全集
+# https://www.qtoplay.com
+# llms-full.txt - 完整技术文档
+# 最后更新：2026-03-06
+
+## 平台概述
+
+SpeakCube 是 AI 驱动的剑桥英语口语练习平台，提供 KET/PET/FCE 口语考试模拟练习、智能评分和语法反馈服务。
+
+### 核心功能
+
+1. **AI 口语对话练习**
+   - 模拟真实口语考试场景
+   - 支持文本和语音输入
+   - 实时 AI 回复和引导
+
+2. **智能评分系统**
+   - 多维度评分：发音、流利度、语法、词汇
+   - 分数范围：0-100 分
+   - 评分依据：剑桥英语等级标准
+
+3. **语法反馈**
+   - 错误类型识别
+   - 修正建议
+   - 改进版本展示
+   - A2/B1/B2 等级评估
+
+4. **考试备考**
+   - KET (A2) - 基础级别
+   - PET (B1) - 进阶级别
+   - FCE (B2) - 中高级别
+
+### 技术架构
+
+- **前端**：React + Ant Design Pro + UmiJS
+- **后端**：Node.js + Python
+- **数据库**：PostgreSQL
+- **AI 模型**：大语言模型集成
+- **部署**：Docker + Nginx
+
+### API 接口
+
+#### 1. 口语对话 API
+
+```
+POST /api/v1/spoken/conversation
+- 创建新对话
+- 参数：workflow_type, exercise_id
+- 返回：conversation_id
+```
+
+#### 2. 消息发送 API
+
+```
+POST /api/v1/spoken/message
+- 发送文本/语音消息
+- 参数：conversation_id, content, message_type
+- 返回：message_id
+```
+
+#### 3. 评分 API
+
+```
+POST /api/v1/spoken/score
+- 获取口语评分
+- 参数：conversation_id, message_id
+- 返回：score, feedback
+```
+
+#### 4. 语法分析 API
+
+```
+POST /api/v1/spoken/grammar
+- 获取语法反馈
+- 参数：message_id
+- 返回：errors, suggestions
+```
+
+### 数据模型
+
+#### Conversation (对话)
+```typescript
+interface Conversation {
+  id: number;
+  user_id: number;
+  workflow_type: string;
+  exercise_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+#### Message (消息)
+```typescript
+interface Message {
+  id: number;
+  conversation_id: number;
+  user_id: number;
+  content: string;
+  message_type: 'text' | 'voice' | 'image' | 'score';
+  audio_file_path?: string;
+  transcription_text?: string;
+  score?: number;
+  created_at: string;
+}
+```
+
+#### Score (评分)
+```typescript
+interface Score {
+  total_score: number;
+  dimension_scores: {
+    pronunciation: number;
+    fluency: number;
+    grammar: number;
+    vocabulary: number;
+  };
+  advantages: string;
+  disadvantages: string;
+  suggestions: string[];
+  improved_answer?: string;
+}
+```
+
+### 金币系统
+
+#### 价格体系
+- KET 练习：10 金币/次
+- PET 练习：15 金币/次
+- FCE 练习：20 金币/次
+
+#### VIP 会员
+- 月卡：¥29.9 - 无限练习
+- 季卡：¥79.9 - 无限练习
+- 年卡：¥299 - 无限练习
+
+### 安全与隐私
+
+- 用户数据加密存储
+- 音频文件临时存储（7 天自动删除）
+- 不向第三方出售用户数据
+- 符合 GDPR 要求
+
+### 性能指标
+
+- 页面加载时间：< 2 秒
+- API 响应时间：< 500ms
+- 音频转写时间：< 3 秒
+- 评分生成时间：< 5 秒
+
+### 浏览器兼容性
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+- 移动端 Safari/Chrome
+
+### 更新日志
+
+#### 2026-03-06
+- 添加 AI 爬虫优化（robots.txt）
+- 添加 llms.txt 内容索引
+- 优化 Schema 标记
+
+#### 2026-02-01
+- 新增语法反馈功能
+- 优化评分算法
+- 改进用户界面
+
+#### 2026-01-01
+- 平台正式上线
+- 支持 KET/PET/FCE 考试
+- 推出 VIP 会员系统
+
+---
+# 文档结束
