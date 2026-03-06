@@ -1,0 +1,225 @@
+// MessageBubble 组件样式
+
+.message-bubble {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  max-width: 80%;
+
+  &.user {
+    align-self: flex-end;
+    margin-left: auto;
+
+    .message-content-wrapper {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      border-radius: 16px 16px 0 16px;
+    }
+
+    .message-time {
+      text-align: right;
+    }
+  }
+
+  &.ai {
+    align-self: flex-start;
+
+    .message-content-wrapper {
+      background-color: #ffffff;
+      color: #333333;
+      border-radius: 16px 16px 16px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-time {
+      text-align: left;
+    }
+  }
+
+  .message-content-wrapper {
+    padding: 12px 16px;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .message-time {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+}
+
+// 文本内容
+.text-content {
+  font-size: 15px;
+}
+
+// 语音消息
+.voice-message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .transcription-text {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+// 图片消息
+.image-message-content {
+  img {
+    width: 300px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    display: block;
+    object-fit: contain;
+    transition: width 0.3s ease;
+  }
+
+  div {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+  }
+}
+
+// 评分消息
+.score-message-content {
+  padding: 16px;
+  background-color: #f6ffed;
+  border-radius: 12px;
+  border: 2px solid #b7eb8f;
+  max-width: 600px;
+
+  .score-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #52c41a;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-total {
+    font-size: 32px;
+    font-weight: bold;
+    color: #52c41a;
+    margin-bottom: 16px;
+    text-align: center;
+    padding: 12px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #d9f7be;
+  }
+
+  .score-details {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .score-section {
+    margin-bottom: 16px;
+
+    .score-section-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &.success {
+        color: #52c41a;
+      }
+
+      &.warning {
+        color: #fa8c16;
+      }
+
+      &.info {
+        color: #1890ff;
+      }
+
+      &.primary {
+        color: #1890ff;
+      }
+    }
+
+    .score-section-content {
+      color: #595959;
+      white-space: pre-wrap;
+
+      &.highlight {
+        padding-left: 12px;
+        color: #262626;
+        white-space: pre-wrap;
+        background-color: #ffffff;
+        padding: 12px;
+        border-radius: 6px;
+        border-left: 3px solid currentColor;
+      }
+    }
+  }
+
+  .score-total-row {
+    margin-bottom: 16px;
+    padding: 10px;
+    background-color: #e6f7ff;
+    border-radius: 6px;
+    color: #0050b3;
+    font-weight: 500;
+  }
+}
+
+// 语法反馈消息
+.grammar-feedback-message-content {
+  padding: 12px;
+  background-color: #f6ffed;
+  border-radius: 8px;
+  border: 1px solid #b7eb8f;
+
+  button {
+    background-color: #52c41a;
+    border-color: #52c41a;
+    font-size: 12px;
+  }
+}
+
+// 结束消息
+.finish-message-content {
+  padding: 16px;
+  background-color: #fff7e6;
+  border-radius: 12px;
+  border: 1px solid #ffd591;
+  text-align: center;
+
+  div:first-child {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fa8c16;
+  }
+
+  div:last-child {
+    margin-top: 8px;
+    color: #666;
+  }
+}
+
+// 未知消息类型
+.unknown-message-content {
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  color: #999;
+  font-size: 13px;
+}
