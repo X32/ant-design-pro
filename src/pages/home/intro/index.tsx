@@ -38,6 +38,74 @@ const ExamIntro: React.FC = () => {
         <meta property="og:description" content="详细介绍KET、PET、FCE口语考试流程、评分标准、题型结构" />
         <meta property="og:url" content="https://www.qtoplay.com/home/intro" />
         <meta property="og:image" content="https://www.qtoplay.com/og-image-exam-intro.jpg" />
+
+        {/* Schema.org 结构化数据 - Article */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": "KET/PET/FCE 口语考试介绍 - 考试流程与评分标准",
+            "description": "详细介绍 KET、PET、FCE 口语考试流程、评分标准、题型结构。了解剑桥英语口语考试评分维度，掌握考试要点，助你顺利通关！",
+            "author": {
+              "@type": "Organization",
+              "name": "SpeakCube",
+              "url": "https://www.qtoplay.com"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "SpeakCube",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.qtoplay.com/logo.png"
+              }
+            },
+            "datePublished": "2024-01-01",
+            "dateModified": "2026-03-06",
+            "url": "https://www.qtoplay.com/home/intro",
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://www.qtoplay.com/home/intro"
+            },
+            "articleSection": "考试介绍",
+            "keywords": ["KET 口语考试", "PET 口语考试", "FCE 口语考试", "剑桥英语", "口语评分标准"],
+            "wordCount": 2500,
+            "inLanguage": "zh-CN"
+          })}
+        </script>
+
+        {/* Schema.org 结构化数据 - FAQPage */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "KET 口语考试难吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "KET 口语考试是剑桥英语 A2 级别考试，难度适中。考试分为两个部分：自我介绍和问答环节。只要平时多练习，掌握基本口语表达，通过考试并不困难。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "PET 口语考试评分标准是什么？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "PET 口语考试从语法与词汇、话语组织、发音、互动交流四个维度进行评分，每个维度满分 5 分，总分 20 分。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "FCE 口语考试有哪些题型？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "FCE 口语考试包含 4 个部分：面试问答、个人陈述、双向协作任务、深入讨论。考试时长约 14 分钟。"
+                }
+              }
+            ]
+          })}
+        </script>
       </Helmet>
 
       {/* 顶部导航栏 */}
