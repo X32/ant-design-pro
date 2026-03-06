@@ -3,6 +3,7 @@ import { Button } from 'antd';
 import React, { useState, useEffect } from 'react';
 import LoginModal from '@/components/LoginModal';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
+import TLDRSummary from '@/components/TLDRSummary';
 import {
   RobotIcon,
   TargetIcon,
@@ -315,6 +316,13 @@ const HomePage: React.FC = () => {
             <span className="highlight">真题模拟！</span>
           </h1>
           <p className="hero-subtitle">KET · PET · FCE 口语真题模拟考试</p>
+          
+          {/* TL;DR 摘要块 - GEO 优化：结论前置（44.2% 引用来自前 1/3） */}
+          <TLDRSummary
+            content="<strong>口语魔方 SpeakCube</strong>是 AI 驱动的剑桥英语口语练习平台，提供<strong>KET/PET/FCE 口语真题模拟考试</strong>。AI 智能评分系统从发音、流利度、语法、词汇四个维度即时反馈，每天 10 分钟练习，已有 10,000+ 学员使用，95% 家长好评。"
+            title="快速了解"
+            badgeIcon="📌"
+          />
           <p className="hero-description">
             AI智能评分，即时反馈<br/>
             每天10分钟，轻松提升口语成绩！
