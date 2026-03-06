@@ -283,9 +283,6 @@ const HomePage: React.FC = () => {
             <li>
               <a href="#stats">数据</a>
             </li>
-            <li>
-              <a href="/articles">文章</a>
-            </li>
           </ul>
           {isLoggedIn ? (
             <Button className="cta-button" onClick={handleProfile}>

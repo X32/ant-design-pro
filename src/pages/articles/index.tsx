@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet, history, useModel } from '@umijs/max';
-import { Input, Select, Spin, Empty, message, Tag } from 'antd';
+import { Input, Select, Spin, Empty, message, Tag, Button } from 'antd';
 import { EyeOutlined, HeartOutlined, LikeOutlined } from '@ant-design/icons';
 import { getArticles, getArticleCategories } from '@/services/ant-design-pro/api';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
@@ -168,6 +168,21 @@ const ArticlesPage: React.FC = () => {
               <a href="/fce-speaking">FCE专区</a>
             </li>
           </ul>
+          {isLoggedIn ? (
+            <Button
+              className="cta-button"
+              onClick={() => history.push('/user/profile')}
+            >
+              个人中心
+            </Button>
+          ) : (
+            <Button
+              className="cta-button"
+              onClick={() => history.push('/user/login')}
+            >
+              立即开始
+            </Button>
+          )}
         </div>
       </nav>
 
