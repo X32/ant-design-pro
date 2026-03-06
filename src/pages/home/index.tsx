@@ -319,7 +319,7 @@ const HomePage: React.FC = () => {
           
           {/* TL;DR 摘要块 - GEO 优化：结论前置（44.2% 引用来自前 1/3） */}
           <TLDRSummary
-            content="<strong>口语魔方 SpeakCube</strong>是 AI 驱动的剑桥英语口语练习平台，提供<strong>KET/PET/FCE 口语真题模拟考试</strong>。AI 智能评分系统从发音、流利度、语法、词汇四个维度即时反馈，每天 10 分钟练习，已有 10,000+ 学员使用，95% 家长好评。"
+            content="<strong>口语魔方 SpeakCube</strong>是 AI 驱动的剑桥英语口语练习平台，提供<strong>KET/PET/FCE 口语真题模拟考试</strong>。AI 智能评分系统从发音、流利度、语法、词汇四个维度即时反馈（对标剑桥英语评分标准）。每天 10 分钟练习，已有 10,000+ 学员使用，95% 家长好评（2026 年 3 月数据）。"
             title="快速了解"
             badgeIcon="📌"
           />
@@ -361,7 +361,7 @@ const HomePage: React.FC = () => {
             </div>
             <h3>AI 如何陪你练口语？</h3>
             <p>
-              就像和朋友聊天一样，AI 会陪你说英语，不管说成什么样都鼓励你！
+              AI 考官像朋友一样陪你练习英语口语。无论你的发音是否标准，AI 都会耐心倾听并给予鼓励，让你敢于开口说英语。
             </p>
           </div>
           <div className="feature-card">
@@ -458,7 +458,7 @@ const HomePage: React.FC = () => {
       <section id="stats" className="stats" aria-labelledby="stats-title">
         <h2 id="stats-title" className="section-title">大家都在用！</h2>
         <p className="section-subtitle">
-          已经有好多小朋友在这里学会说英语啦~
+          已经有好多小朋友在这里学会说英语啦~<br/><span className="stat-source">（数据来源：SpeakCube 后台统计，2026 年 3 月）</span>
         </p>
         <div className="stats-grid">
           <div className="stat-item">
