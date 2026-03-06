@@ -1,6 +1,39 @@
 # SpeakCube AI剑桥英语口语练习平台
 # https://www.qtoplay.com
-# robots.txt - SEO优化版本
+# robots.txt - SEO优化版本（包含 AI 爬虫优化）
+# 最后更新：2026-03-06
+
+# ========== AI 爬虫放行配置（GEO 优化）==========
+
+# ChatGPT 搜索（最重要）
+User-agent: OAI-SearchBot
+Allow: /
+
+# ChatGPT 浏览模式
+User-agent: ChatGPT-User
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Claude 用户请求抓取（保留）
+User-agent: Claude-User
+Allow: /
+
+# Claude 训练数据采集（可选拒绝）
+User-agent: ClaudeBot
+Disallow: /
+
+# Gemini / AI Overview
+User-agent: Google-Extended
+Allow: /
+
+# Copilot
+User-agent: Bingbot
+Allow: /
+
+# ========== 传统搜索引擎爬虫配置 ==========
 
 # 允许所有搜索引擎爬虫访问
 User-agent: *
