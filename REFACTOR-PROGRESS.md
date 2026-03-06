@@ -1,9 +1,9 @@
 # 口语项目前端重构进度报告
 
 > 重构启动日期：2026-03-06  
-> 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中（67%）**  
+> 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中（83%）**  
 > 报告生成时间：2026-03-06 18:35  
-> 最后更新：2026-03-06 19:20 (Phase 2 任务 4 完成)
+> 最后更新：2026-03-06 19:25 (Phase 2 任务 5 完成)
 
 ---
 
@@ -368,6 +368,31 @@ describe('useAudioPlayer', () => {
 
 **测试状态**：✅ 构建成功，无错误
 
+### 任务 5：useConversationManager 会话管理 Hook
+
+**文件**：
+- `src/hooks/useConversationManager.ts` (5,902 字节)
+
+**功能**：
+| API | 描述 |
+|------|------|
+| `createConversation` | 创建新会话 |
+| `loadHistory` | 加载历史消息 |
+| `addMessage` | 添加消息到列表 |
+| `updateMessage` | 更新消息内容 |
+| `clearConversation` | 清除会话 |
+| `generateMessageId` | 生成消息 ID |
+
+**状态管理**：
+- `conversationId` - 当前会话 ID
+- `messages` - 消息列表
+- `loading` - 加载状态
+- `historyLoaded` - 历史加载状态
+
+**复用度**：100%（spokenPages 和 spokenExamPage 通用）
+
+**测试状态**：✅ 构建成功，无错误
+
 ---
 
 ## 📋 下一步行动
@@ -378,7 +403,7 @@ describe('useAudioPlayer', () => {
 - [ ] 运行 `npm run start:dev` 测试编译
 
 ### 短期计划
-- [ ] 完成 Phase 2 组件提取（4/6 剩余）
+- [ ] 完成 Phase 2 组件提取（1/6 剩余）
 - [ ] 完成 Phase 3 Hooks 提取
 - [ ] 开始 Phase 4 主组件重构
 
@@ -523,6 +548,20 @@ git commit -m "refactor(spoken): 提取基础组件和 Hooks (Phase 1)
 | Commit | 信息 | 状态 |
 |--------|------|------|
 | `8e5edd72` | feat(spoken): 新增 AudioRecorderWrapper 录音封装组件 | ✅ 已推送 |
+
+### Phase 2 任务 5（2026-03-06 19:25）
+
+**构建测试**：
+```bash
+✅ npm run build - 构建成功，无错误
+✅ 生成 50+ 页面 HTML 文件
+✅ Biome lint 自动修复通过
+```
+
+**Git 提交记录**：
+| Commit | 信息 | 状态 |
+|--------|------|------|
+| `01f3fddd` | feat(spoken): 新增 useConversationManager 会话管理 Hook | ✅ 已推送 |
 
 ### 远程仓库
 
