@@ -1,9 +1,9 @@
 # 口语项目前端重构进度报告
 
 > 重构启动日期：2026-03-06  
-> 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中（50%）**  
+> 当前阶段：Phase 2 - 核心组件提取 🔄 **进行中（67%）**  
 > 报告生成时间：2026-03-06 18:35  
-> 最后更新：2026-03-06 19:15 (Phase 2 任务 3 完成)
+> 最后更新：2026-03-06 19:20 (Phase 2 任务 4 完成)
 
 ---
 
@@ -347,6 +347,27 @@ describe('useAudioPlayer', () => {
 
 **测试状态**：✅ 构建成功，无错误
 
+### 任务 4：AudioRecorderWrapper 录音封装组件
+
+**文件**：
+- `src/components/Spoken/AudioRecorderWrapper/index.tsx` (3,992 字节)
+- `src/components/Spoken/AudioRecorderWrapper/index.less` (181 字节)
+
+**功能**：
+| 功能模块 | 描述 |
+|----------|------|
+| 录音集成 | 封装 AudioRecorderInline 组件 |
+| 余额检查 | 首次录音时自动检查余额 |
+| 消息添加 | 录音完成后自动添加消息到列表 |
+| 音频上传 | 自动上传音频到服务器 |
+| 路径更新 | 更新消息的服务器音频路径 |
+| 结束保护 | 对话结束后禁用录音 |
+| 错误提示 | 余额不足/上传失败等提示 |
+
+**复用度**：100%（spokenPages 和 spokenExamPage 通用）
+
+**测试状态**：✅ 构建成功，无错误
+
 ---
 
 ## 📋 下一步行动
@@ -488,6 +509,20 @@ git commit -m "refactor(spoken): 提取基础组件和 Hooks (Phase 1)
 | Commit | 信息 | 状态 |
 |--------|------|------|
 | `36416c1f` | feat(spoken): 新增 MessageList 消息列表组件 | ✅ 已推送 |
+
+### Phase 2 任务 4（2026-03-06 19:20）
+
+**构建测试**：
+```bash
+✅ npm run build - 构建成功，无错误
+✅ 生成 50+ 页面 HTML 文件
+✅ Biome lint 自动修复通过
+```
+
+**Git 提交记录**：
+| Commit | 信息 | 状态 |
+|--------|------|------|
+| `8e5edd72` | feat(spoken): 新增 AudioRecorderWrapper 录音封装组件 | ✅ 已推送 |
 
 ### 远程仓库
 
