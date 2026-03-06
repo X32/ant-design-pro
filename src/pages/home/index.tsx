@@ -359,7 +359,7 @@ const HomePage: React.FC = () => {
             <div className="feature-icon">
               <RobotIcon size={72} />
             </div>
-            <h3>AI 陪你聊天</h3>
+            <h3>AI 如何陪你练口语？</h3>
             <p>
               就像和朋友聊天一样，AI 会陪你说英语，不管说成什么样都鼓励你！
             </p>
@@ -368,7 +368,7 @@ const HomePage: React.FC = () => {
             <div className="feature-icon">
               <TargetIcon size={72} />
             </div>
-            <h3>马上告诉你对不对</h3>
+            <h3>如何即时获得发音反馈？</h3>
             <p>
               说完立刻知道哪里好、哪里要改进，还有小星星奖励哦~
             </p>
@@ -377,28 +377,28 @@ const HomePage: React.FC = () => {
             <div className="feature-icon">
               <GameIcon size={72} />
             </div>
-            <h3>像游戏一样好玩</h3>
+            <h3>学习像玩游戏一样有趣吗？</h3>
             <p>完成任务有金币，升级打怪，不知不觉就把英语学会了！</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
               <MicIcon size={72} />
             </div>
-            <h3>听懂你的每一句话</h3>
+            <h3>AI 能准确识别发音吗？</h3>
             <p>超厉害的语音识别，连小小的发音问题都能发现！</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
               <PhoneIcon size={72} />
             </div>
-            <h3>随时都能练</h3>
+            <h3>随时随地都能练习吗？</h3>
             <p>手机、平板都能用，坐车、睡前都可以说几句~</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
               <CoinIcon size={72} />
             </div>
-            <h3>超划算</h3>
+            <h3>价格实惠吗？</h3>
             <p>比外教课便宜多了，想练多久练多久，再也不用约时间！</p>
           </div>
         </div>
@@ -415,7 +415,7 @@ const HomePage: React.FC = () => {
                   <LightningIcon size={48} />
                 </div>
                 <div className="advantage-content">
-                  <h3>立刻就能看到进步</h3>
+                  <h3>如何追踪学习进度？</h3>
                   <p>
                     每次练完马上就知道结果，孩子看到自己进步超有成就感！
                   </p>
@@ -426,7 +426,7 @@ const HomePage: React.FC = () => {
                   <StarIcon size={48} />
                 </div>
                 <div className="advantage-content">
-                  <h3>说错了也不怕</h3>
+                  <h3>说错了怎么办？</h3>
                   <p>AI 超级有耐心，永远不会批评孩子，越说越有自信！</p>
                 </div>
               </li>
@@ -435,7 +435,7 @@ const HomePage: React.FC = () => {
                   <GraduationIcon size={48} />
                 </div>
                 <div className="advantage-content">
-                  <h3>科学的方法</h3>
+                  <h3>采用什么科学方法？</h3>
                   <p>专业的教学设计，从简单到难，一步步提升口语能力</p>
                 </div>
               </li>
@@ -444,7 +444,7 @@ const HomePage: React.FC = () => {
                   <LockIcon size={48} />
                 </div>
                 <div className="advantage-content">
-                  <h3>安全可靠</h3>
+                  <h3>平台安全可靠吗？</h3>
                   <p>所有数据都保护得很好，孩子可以放心使用~</p>
                 </div>
               </li>
