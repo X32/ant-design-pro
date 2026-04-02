@@ -4,6 +4,7 @@ export default {
   'menu.home': '首页',
   'menu.admin': '管理页',
   'menu.admin.sub-page': '二级管理页',
+  'menu.admin.new-sub-page': '新二级管理页',
   'menu.login': '登录',
   'menu.register': '注册',
   'menu.register-result': '注册结果',
@@ -49,4 +50,5 @@ export default {
   'menu.editor.flow': '流程编辑器',
   'menu.editor.mind': '脑图编辑器',
   'menu.editor.koni': '拓扑编辑器',
+  'menu.manager.userRole': '用户角色管理',
 };

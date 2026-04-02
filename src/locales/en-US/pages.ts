@@ -73,4 +73,12 @@ export default {
   'pages.searchTable.tenThousand': '0000',
   'pages.searchTable.batchDeletion': 'batch deletion',
   'pages.searchTable.batchApproval': 'batch approval',
+  // 创建或更新此文件，添加页面标题和内容
+  'pages.admin.newSubPage.title': 'New Admin Sub Page',
+  'pages.admin.newSubPage.content': 'This is a newly added admin sub page.',
+  'userRole.assignFunction': 'Assign Function',
+  'userRole.assignButton': 'Assign Button',
+  'userRole.roleName': 'Role Name',
+  'userRole.dataType': 'Data Type',
+  'userRole.priceShield': 'Price Shield',
 };
