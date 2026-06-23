@@ -1,0 +1,31 @@
+# 依赖与构建产物(builder 阶段会重新生成)
+node_modules
+dist
+
+# VCS & IDE
+.git
+.github
+.vscode
+.idea
+
+# 密钥/证书(绝不烤进镜像)
+.env
+.env.local
+.env.development
+https/*.pem
+
+# 日志与测试覆盖率
+*.log
+coverage
+
+# 文档与本地 nginx 参考(不影响构建)
+*.md
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+nginx-bt.conf
+nginx-local.conf
+nginx.conf.example
+
+# mock(build 时 MOCK=none,不打进镜像)
+mock

@@ -1,0 +1,84 @@
+# 本地开发版 Docker 编排(UmiJS Max dev server + HMR)
+#
+# 特点(跟后端 docker-compose.dev.yml 一个套路):
+#   - node:20-alpine 直接跑 max dev,bind mount ./src 等源码,fastRefresh 改代码即时生效
+#   - 通过 sp-dev-net 网络连后端容器,API/WS 走服务名 (backend/spoken-flow),不用走宿主端口
+#   - 8001 端口暴露到宿主,浏览器直接访问
+#
+# 启动(首次/改了依赖): docker compose -f docker-compose.dev.yml up -d --build
+# 重启(只改代码,fastRefresh 自动生效,不需要重启): docker compose -f docker-compose.dev.yml restart
+# 看日志: docker compose -f docker-compose.dev.yml logs -f
+# 停: docker compose -f docker-compose.dev.yml down
+#
+# ⚠️ 前置条件:
+#   1. 后端 docker-compose.dev.yml 已经起来(sp-dev-net 网络存在,backend/spoken-flow 容器在跑)
+#      cd ../../backend/rag_spoken && docker compose -f docker-compose.dev.yml up -d
+#   2. config/proxy.ts 已改成读 env (MAIN_API_TARGET/CONVERSATION_API_TARGET/WS_TARGET)
+#
+# 生产部署请改用 docker-compose.prod.yml(nginx 静态 serve + ACR 镜像)
+
+name: spokenpro-frontend-dev
+
+services:
+  frontend:
+    image: node:20-alpine
+    container_name: sp-dev-frontend
+    restart: unless-stopped
+    working_dir: /app
+
+    # 后端容器在 sp-dev-net 上(必须先起后端 dev compose,网络才能 external 引用)
+    networks: [sp-dev-net]
+
+    ports:
+      # 宿主 8001 → 容器 8001(跟 npm run start 默认端口一致)
+      - "8001:8001"
+
+    volumes:
+      # 整个项目 bind mount,fastRefresh 改 .tsx/.ts 即时生效
+      # ⚠️ 不用 anonymous volume 覆盖 .umi/.cache/node_modules:
+      #    Mako(Rust bundler)用文件锁 + mmap,anonymous volume 跟 bind mount 叠加时
+      #    触发 "Resource busy (os error 16)" 导致构建挂掉
+      #    host 上本来就有 node_modules 和 .umi(npm run start 裸跑生成的),直接共用即可
+      - ./:/app
+
+    environment:
+      # ⚠️ Docker 内文件监听必须用轮询,否则 fastRefresh 不工作
+      # (VirtualBox/WSL2/Mac/Win 都需要,Linux 原生 Docker 可以关掉但保留更稳)
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+      WATCHPACK_POLLING: "true"
+
+      # 覆盖 config/proxy.ts 里的 localhost,改成后端容器服务名
+      # (容器内的 localhost 是容器自己,得用同一 docker 网络的服务名)
+      MAIN_API_TARGET: http://backend:9002
+      # 对话服务 9019 未容器化,先用 backend 兜底;后端补上后改成 http://conversation:9019
+      CONVERSATION_API_TARGET: http://backend:9002
+      WS_TARGET: ws://spoken-flow:9001
+
+      # UmiJS dev server 配置
+      HOST: 0.0.0.0         # 监听全网卡,允许宿主/局域网访问
+      PORT: "8001"
+      UMI_ENV: dev
+      # HTTPS: 需要麦克风 getUserMedia 时,改成 "true",并保证 https/cert.pem + cert.key 存在(用 scripts/setup-https.sh 生成)
+      # 默认 HTTP — 从宿主 localhost 访问已经是安全上下文,麦克风能用
+      HTTPS: "false"
+
+    # 启动:先装 deps(走 npmmirror 镜像加速),再起 dev server
+    # npm run start = cross-env UMI_ENV=dev PORT=${PORT:-8001} max dev
+    command: sh -c "npm config set registry https://registry.npmmirror.com && npm install --legacy-peer-deps --no-audit --no-fund && npm run start"
+
+    # 健康检查:max dev 首启较慢(编译要 30-60s),start_period 给足
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8001/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+networks:
+  sp-dev-net:
+    # ⚠️ Docker 会给 compose 自创的网络加 project 前缀,所以实际名字是 spokenpro-dev_sp-dev-net
+    #    (后端 docker-compose.dev.yml 的 name: spokenpro-dev + 网络名 sp-dev-net)
+    #    用 name: 字段让本 compose 引用真实网络名,服务内部仍可用 sp-dev-net 这个别名
+    name: spokenpro-dev_sp-dev-net
+    external: true

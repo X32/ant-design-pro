@@ -13,15 +13,17 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // ============ 后端服务地址配置 ============
 // 主后端服务（业务API、认证、考试等）
-// 根据环境自动切换：开发环境使用本地服务，生产环境使用线上API
-// const MAIN_API_TARGET = 'http://localhost:9002'; // ⚠️ 连接本地后端（HTTP协议）
-const MAIN_API_TARGET = 'https://api.qtoplay.com'; // ⚠️ 连接本地后端（HTTP协议）
+// 优先读 env:Docker dev compose 注入 http://backend:9002 / ws://spoken-flow:9001
+// 裸跑默认回落到 localhost
+const MAIN_API_TARGET = process.env.MAIN_API_TARGET || 'http://localhost:9002';
+// const MAIN_API_TARGET = 'https://api.qtoplay.com';
 // 对话服务（AI 对话相关）
-const CONVERSATION_API_TARGET = 'http://localhost:9019';
+const CONVERSATION_API_TARGET =
+  process.env.CONVERSATION_API_TARGET || 'http://localhost:9019';
 // WebSocket 服务
-const WS_TARGET = 'ws://localhost:9001';
+const WS_TARGET = process.env.WS_TARGET || 'ws://localhost:9001';
 // 局域网调试地址（备用）
-const LAN_WS_TARGET = 'ws://192.168.4.30:9001';
+const LAN_WS_TARGET = process.env.LAN_WS_TARGET || 'ws://192.168.4.30:9001';
 
 // 获取当前端口，默认8001
 const getCurrentPort = () => {
