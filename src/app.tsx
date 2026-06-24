@@ -4,7 +4,6 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import React from 'react';
-import { TOKEN_KEY } from '@/config/apiConfig';
 import {
   AvatarDropdown,
   AvatarName,
@@ -12,6 +11,7 @@ import {
   Question,
   SelectLang,
 } from '@/components';
+import { TOKEN_KEY } from '@/config/apiConfig';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
@@ -47,7 +47,7 @@ export async function getInitialState(): Promise<{
         } else if (user.email) {
           displayName = user.email.split('@')[0];
         }
-        
+
         return {
           ...user,
           name: displayName,
@@ -63,13 +63,13 @@ export async function getInitialState(): Promise<{
   };
   // 如果不是登录页面，执行
   const { location } = history;
-  
+
   console.log('[getInitialState] 当前路径:', location.pathname);
-  
+
   // 为测试路由添加白名单，允许未登录访问
   const testRoutes = [
     loginPath,
-    '/user/admin/login',      // 后台管理员登录页
+    '/user/admin/login', // 后台管理员登录页
     '/user/register',
     '/user/register-result',
     '/user/forgetpsw',
@@ -81,13 +81,31 @@ export async function getInitialState(): Promise<{
 
   // 公开页面：允许匿名访问，但如果有token也尝试加载用户信息
   // 注意：使用 startsWith 匹配，支持带斜杠和不带斜杠的路径
-  const publicRoutes = ['/home', '/about', '/downloads', '/articles', '/articles/:id', '/exam-catalog', '/ket-speaking', '/pet-speaking', '/fce-speaking', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
-  
+  const publicRoutes = [
+    '/home',
+    '/about',
+    '/downloads',
+    '/articles',
+    '/articles/:id',
+    '/exam-catalog',
+    '/ket-speaking',
+    '/pet-speaking',
+    '/fce-speaking',
+    '/home/intro',
+    '/home/proto/user-agreement',
+    '/home/proto/privacy-policy',
+    '/',
+  ];
+
   // 检查是否为公开路由（支持末尾斜杠）
   const isPublicRoute = (pathname: string) => {
-    return publicRoutes.some(route => {
+    return publicRoutes.some((route) => {
       if (route === '/') return pathname === '/';
-      return pathname === route || pathname === route + '/' || pathname.startsWith(route + '/');
+      return (
+        pathname === route ||
+        pathname === route + '/' ||
+        pathname.startsWith(route + '/')
+      );
     });
   };
 
@@ -95,7 +113,7 @@ export async function getInitialState(): Promise<{
   const isTestRoute = (pathname: string) => {
     // 移除末尾的斜杠进行比较
     const normalizedPath = pathname.replace(/\/$/, '');
-    return testRoutes.some(route => {
+    return testRoutes.some((route) => {
       const normalizedRoute = route.replace(/\/$/, '');
       return normalizedPath === normalizedRoute;
     });
@@ -115,13 +133,13 @@ export async function getInitialState(): Promise<{
     const token = localStorage.getItem(TOKEN_KEY);
     console.log('[getInitialState] 公开页面，token存在:', !!token);
     console.log('[getInitialState] 公开页面路径:', location.pathname);
-    
+
     if (token) {
       // 有token，尝试加载用户信息
       try {
         const currentUser = await fetchUserInfo();
         console.log('[getInitialState] 用户信息加载成功:', !!currentUser);
-        
+
         // 如果加载成功，返回用户信息
         if (currentUser) {
           return {
@@ -130,16 +148,20 @@ export async function getInitialState(): Promise<{
             settings: defaultSettings as Partial<LayoutSettings>,
           };
         }
-        
+
         // 如果加载失败（返回 undefined），清除无效 token，但仍允许访问公开页面
-        console.log('[getInitialState] token可能已失效，清除token，但允许访问公开页面');
+        console.log(
+          '[getInitialState] token可能已失效，清除token，但允许访问公开页面',
+        );
         localStorage.removeItem(TOKEN_KEY);
         return {
           fetchUserInfo,
           settings: defaultSettings as Partial<LayoutSettings>,
         };
       } catch (error) {
-        console.log('[getInitialState] 用户信息加载失败，清除无效token，但允许访问公开页面');
+        console.log(
+          '[getInitialState] 用户信息加载失败，清除无效token，但允许访问公开页面',
+        );
         // 加载失败，清除可能无效的 token，但仍允许访问公开页面
         localStorage.removeItem(TOKEN_KEY);
         return {
@@ -160,13 +182,13 @@ export async function getInitialState(): Promise<{
   // 非公开页面，必须登录
   console.log('[getInitialState] 非公开页面，需要登录');
   const currentUser = await fetchUserInfo();
-  
+
   // 如果获取用户信息失败，跳转到登录页
   if (!currentUser) {
     console.log('[getInitialState] 未登录，跳转到登录页');
     history.push(loginPath);
   }
-  
+
   return {
     fetchUserInfo,
     currentUser,
@@ -197,11 +219,11 @@ export const layout: RunTimeLayoutConfig = ({
     footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
-      
+
       // 为测试路由添加白名单，允许未登录访问
       const testRoutes = [
         loginPath,
-        '/user/admin/login',      // 后台管理员登录页
+        '/user/admin/login', // 后台管理员登录页
         '/user/register',
         '/user/register-result',
         '/user/forgetpsw',
@@ -210,51 +232,69 @@ export const layout: RunTimeLayoutConfig = ({
         '/audio',
         '/audio-recorder',
       ];
-      
+
       // 公开页面：允许匿名访问（必须与 getInitialState 中的 publicRoutes 保持一致）
-      const publicRoutes = ['/home', '/about', '/downloads', '/articles', '/articles/:id', '/exam-catalog', '/ket-speaking', '/pet-speaking', '/fce-speaking', '/home/intro', '/home/proto/user-agreement', '/home/proto/privacy-policy', '/'];
-      
+      const publicRoutes = [
+        '/home',
+        '/about',
+        '/downloads',
+        '/articles',
+        '/articles/:id',
+        '/exam-catalog',
+        '/ket-speaking',
+        '/pet-speaking',
+        '/fce-speaking',
+        '/home/intro',
+        '/home/proto/user-agreement',
+        '/home/proto/privacy-policy',
+        '/',
+      ];
+
       // 检查是否为公开路由（支持末尾斜杠）
       const isPublicRoute = (pathname: string) => {
-        return publicRoutes.some(route => {
+        return publicRoutes.some((route) => {
           if (route === '/') return pathname === '/';
-          return pathname === route || pathname === route + '/' || pathname.startsWith(route + '/');
+          return (
+            pathname === route ||
+            pathname === route + '/' ||
+            pathname.startsWith(route + '/')
+          );
         });
       };
-      
+
       // 检查是否为测试路由（支持末尾斜杠）
       const isTestRoute = (pathname: string) => {
         // 移除末尾的斜杠进行比较
         const normalizedPath = pathname.replace(/\/$/, '');
-        return testRoutes.some(route => {
+        return testRoutes.some((route) => {
           const normalizedRoute = route.replace(/\/$/, '');
           return normalizedPath === normalizedRoute;
         });
       };
-      
+
       console.log('[路由守卫] 当前路径:', location.pathname);
       console.log('[路由守卫] 是否登录:', !!initialState?.currentUser);
       console.log('[路由守卫] 是否公开路由:', isPublicRoute(location.pathname));
       console.log('[路由守卫] 是否测试路由:', isTestRoute(location.pathname));
-      
+
       // 特殊处理：如果是根路径 '/'，不进行任何拦截，让路由配置的 redirect 生效
       if (location.pathname === '/') {
         console.log('[路由守卫] 根路径，跳过拦截');
         return;
       }
-      
+
       // 如果是公开页面，无论是否登录都允许访问（支持末尾斜杠）
       if (isPublicRoute(location.pathname)) {
         console.log('[路由守卫] 公开页面，允许访问');
         return;
       }
-      
+
       // 如果是测试路由，允许访问（支持末尾斜杠）
       if (isTestRoute(location.pathname)) {
         console.log('[路由守卫] 测试路由，允许访问');
         return;
       }
-      
+
       // 如果没有登录且路径不在白名单中，重定向到 login
       if (!initialState?.currentUser) {
         console.log('[路由守卫] 需要登录，重定向到登录页');
@@ -324,9 +364,11 @@ export const layout: RunTimeLayoutConfig = ({
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const request: RequestConfig = {
-  // 开发环境：不设置 baseURL 和 prefix，确保走 webpack proxy 代理
-  // 生产环境：设置完整的 API 地址
-  ...(isDev ? { prefix: '', baseURL: '' } : { baseURL: 'https://api.qtoplay.com' }),
+  // dev: 走 UmiJS dev server proxy
+  // prod: 走边缘 nginx 同域反代 (容器内 nginx /api/ → backend:9002)
+  // 两种都用相对路径,避免跨域 + 不依赖外部硬编码域名
+  prefix: '',
+  baseURL: '',
   timeout: 60000,
   ...errorConfig,
 };
