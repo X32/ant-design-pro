@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Helmet, useModel, history } from '@umijs/max';
+import { Helmet, history, useModel } from '@umijs/max';
 import { createStyles } from 'antd-style';
+import React, { useEffect, useState } from 'react';
 import LoginModal from '@/components/LoginModal';
 import Settings from '../../../../config/defaultSettings';
 
@@ -27,21 +27,13 @@ const Login: React.FC = () => {
 
   // 记录是否是微信登录（组件挂载时检查一次，之后不变）
   const isWechatLoginRef = React.useRef(
-    new URLSearchParams(window.location.search).has('code')
+    new URLSearchParams(window.location.search).has('code'),
   );
 
-  // 如果已登录，直接跳转（微信登录时不执行，完全由 LoginModal 处理）
+  // 如果已登录，直接跳转（不管登录方式，避免 LoginModal 跳转失败时卡住）
   useEffect(() => {
     console.log('[登录页] currentUser 状态变化:', initialState?.currentUser);
-    console.log('[登录页] 是否微信登录:', isWechatLoginRef.current);
-    
-    // 微信登录时，完全跳过登录页的跳转逻辑，由 LoginModal 统一处理
-    if (isWechatLoginRef.current) {
-      console.log('[登录页] 微信登录模式，跳过登录页跳转逻辑');
-      return;
-    }
-    
-    // 只处理非微信登录的情况
+
     if (initialState?.currentUser) {
       const urlParams = new URL(window.location.href).searchParams;
       const redirect = urlParams.get('redirect');
@@ -49,10 +41,12 @@ const Login: React.FC = () => {
       if (initialState.currentUser.is_superuser) {
         defaultPath = '/back/welcome';
       }
-      
-      console.log('[登录页] 检测到已登录（非微信），准备跳转到:', redirect || defaultPath);
-      
-      // 延迟跳转，确保登录状态已完全更新
+
+      console.log(
+        '[登录页] 检测到已登录，准备跳转到:',
+        redirect || defaultPath,
+      );
+
       setTimeout(() => {
         console.log('[登录页] 执行跳转到:', redirect || defaultPath);
         history.push(redirect || defaultPath);
@@ -63,7 +57,7 @@ const Login: React.FC = () => {
   const handleLoginSuccess = () => {
     console.log('[登录页] handleLoginSuccess 被调用');
     setModalVisible(false);
-    
+
     // 注意：微信登录的跳转由 LoginModal 内部处理
     // 这里只处理手机号登录等其他方式的跳转
     if (!isWechatLoginRef.current) {
@@ -74,7 +68,9 @@ const Login: React.FC = () => {
         history.push(redirect || '/home');
       }, 300);
     } else {
-      console.log('[登录页] 微信登录，跳转由 LoginModal 处理，登录页不执行任何操作');
+      console.log(
+        '[登录页] 微信登录，跳转由 LoginModal 处理，登录页不执行任何操作',
+      );
     }
   };
 
@@ -91,7 +87,7 @@ const Login: React.FC = () => {
           {Settings.title && ` - ${Settings.title}`}
         </title>
       </Helmet>
-      
+
       <LoginModal
         visible={modalVisible}
         onCancel={handleCancel}
