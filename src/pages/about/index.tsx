@@ -1,25 +1,25 @@
-import React from 'react';
+import { Helmet, history, useModel } from '@umijs/max';
 import { Button } from 'antd';
+import React from 'react';
+import BreadcrumbNav from '@/components/BreadcrumbNav';
 import {
-  RobotIcon,
-  TargetIcon,
+  BookButtonIcon,
+  CoinIcon,
   GameIcon,
+  GamepadButtonIcon,
+  GraduationIcon,
+  LightningIcon,
+  LockIcon,
   MicIcon,
   PhoneIcon,
-  CoinIcon,
-  LightningIcon,
-  StarIcon,
-  GraduationIcon,
-  LockIcon,
-  GamepadButtonIcon,
-  BookButtonIcon,
+  RobotIcon,
   RocketButtonIcon,
+  StarIcon,
+  TargetIcon,
 } from '@/components/HandDrawnIcons';
-import { history, Helmet, useModel } from '@umijs/max';
-import BreadcrumbNav from '@/components/BreadcrumbNav';
-import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
 import LoginModal from '@/components/LoginModal';
 import logoIcon from '@/img/icon_200.png';
+import type { BreadcrumbItemProps } from '@/pages/exam-areas/types';
 import './index.less';
 
 /**
@@ -68,61 +68,83 @@ const BrandIntroduction: React.FC = () => {
           content="口语魔方,SpeakCube,关于我们,品牌故事,剑桥英语,口语练习,AI口语评分,KET口语,PET口语,FCE口语"
         />
         <meta name="author" content="SpeakCube" />
-        <link rel="canonical" href="https://www.qtoplay.com/about" />
+        <link rel="canonical" href="https://www.speakcube.cn/about" />
 
         {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SpeakCube" />
-        <meta property="og:title" content="关于我们 - 口语魔方SpeakCube | AI剑桥英语口语练习平台" />
-        <meta property="og:description" content="了解口语魔方SpeakCube品牌故事，专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。" />
-        <meta property="og:url" content="https://www.qtoplay.com/about" />
-        <meta property="og:image" content="https://www.qtoplay.com/og-image-1200x630.jpg" />
+        <meta
+          property="og:title"
+          content="关于我们 - 口语魔方SpeakCube | AI剑桥英语口语练习平台"
+        />
+        <meta
+          property="og:description"
+          content="了解口语魔方SpeakCube品牌故事，专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。"
+        />
+        <meta property="og:url" content="https://www.speakcube.cn/about" />
+        <meta
+          property="og:image"
+          content="https://www.speakcube.cn/og-image-1200x630.jpg"
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="SpeakCube AI剑桥英语口语练习平台" />
+        <meta
+          property="og:image:alt"
+          content="SpeakCube AI剑桥英语口语练习平台"
+        />
         <meta property="og:locale" content="zh_CN" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="关于我们 - 口语魔方SpeakCube | AI剑桥英语口语练习平台" />
-        <meta name="twitter:description" content="KET/PET/FCE口语真题模拟 - 口语魔方SpeakCube，AI陪练，每天10分钟提升口语能力" />
-        <meta name="twitter:image" content="https://www.qtoplay.com/twitter-card-1200x628.jpg" />
+        <meta
+          name="twitter:title"
+          content="关于我们 - 口语魔方SpeakCube | AI剑桥英语口语练习平台"
+        />
+        <meta
+          name="twitter:description"
+          content="KET/PET/FCE口语真题模拟 - 口语魔方SpeakCube，AI陪练，每天10分钟提升口语能力"
+        />
+        <meta
+          name="twitter:image"
+          content="https://www.speakcube.cn/twitter-card-1200x628.jpg"
+        />
         <meta name="twitter:image:alt" content="SpeakCube AI口语练习" />
 
         {/* 移动端优化 */}
         <meta name="theme-color" content="#1890ff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <meta name="apple-mobile-web-app-title" content="SpeakCube" />
 
         {/* 结构化数据 - Organization */}
         <script type="application/ld+json">
           {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "口语魔方SpeakCube",
-            "alternateName": ["口语魔方", "SpeakCube"],
-            "url": "https://www.qtoplay.com",
-            "logo": "https://www.qtoplay.com/logo.png",
-            "image": "https://www.qtoplay.com/og-image.jpg",
-            "sameAs": [
-              "https://www.zhihu.com/org/speakcube"
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: '口语魔方SpeakCube',
+            alternateName: ['口语魔方', 'SpeakCube'],
+            url: 'https://www.speakcube.cn',
+            logo: 'https://www.speakcube.cn/logo.png',
+            image: 'https://www.speakcube.cn/og-image.jpg',
+            sameAs: ['https://www.zhihu.com/org/speakcube'],
+            knowsAbout: [
+              'KET口语考试',
+              'PET口语考试',
+              'FCE口语考试',
+              '剑桥英语',
+              '英语口语练习',
+              'AI口语评分',
             ],
-            "knowsAbout": [
-              "KET口语考试",
-              "PET口语考试",
-              "FCE口语考试",
-              "剑桥英语",
-              "英语口语练习",
-              "AI口语评分"
-            ],
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "1520",
-              "bestRating": "5",
-              "worstRating": "1"
-            }
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.8',
+              reviewCount: '1520',
+              bestRating: '5',
+              worstRating: '1',
+            },
           })}
         </script>
       </Helmet>
@@ -151,7 +173,9 @@ const BrandIntroduction: React.FC = () => {
               <a href="/home">首页</a>
             </li>
             <li>
-              <a href="/about" className="active">品牌</a>
+              <a href="/about" className="active">
+                品牌
+              </a>
             </li>
             <li>
               <a href="/downloads">资料</a>
@@ -170,7 +194,10 @@ const BrandIntroduction: React.FC = () => {
             </li>
           </ul>
           {isLoggedIn ? (
-            <Button className="cta-button" onClick={() => history.push('/user/profile')}>
+            <Button
+              className="cta-button"
+              onClick={() => history.push('/user/profile')}
+            >
               个人中心
             </Button>
           ) : (
@@ -199,7 +226,8 @@ const BrandIntroduction: React.FC = () => {
           </h1>
           <p className="hero-subtitle">专业 · 智能 · 高效 · 有趣</p>
           <p className="hero-description">
-            基于先进的AI技术和丰富的剑桥英语考试经验<br/>
+            基于先进的AI技术和丰富的剑桥英语考试经验
+            <br />
             打造专业的口语练习平台，助力孩子轻松通关！
           </p>
           <div className="hero-buttons">
@@ -224,29 +252,29 @@ const BrandIntroduction: React.FC = () => {
       </section>
 
       {/* 特性区域 */}
-      <section id="features" className="features" aria-labelledby="features-title">
-        <h2 id="features-title" className="section-title">我们的核心优势</h2>
-        <p className="section-subtitle">
-          为什么选择口语魔方SpeakCube？
-        </p>
+      <section
+        id="features"
+        className="features"
+        aria-labelledby="features-title"
+      >
+        <h2 id="features-title" className="section-title">
+          我们的核心优势
+        </h2>
+        <p className="section-subtitle">为什么选择口语魔方SpeakCube？</p>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">
               <RobotIcon size={72} />
             </div>
             <h3>AI 陪你聊天</h3>
-            <p>
-              就像和朋友聊天一样，AI 会陪你说英语，不管说成什么样都鼓励你！
-            </p>
+            <p>就像和朋友聊天一样，AI 会陪你说英语，不管说成什么样都鼓励你！</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
               <TargetIcon size={72} />
             </div>
             <h3>马上告诉你对不对</h3>
-            <p>
-              说完立刻知道哪里好、哪里要改进，还有小星星奖励哦~
-            </p>
+            <p>说完立刻知道哪里好、哪里要改进，还有小星星奖励哦~</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">
@@ -280,10 +308,16 @@ const BrandIntroduction: React.FC = () => {
       </section>
 
       {/* 优势区域 */}
-      <section id="advantages" className="advantages" aria-labelledby="advantages-title">
+      <section
+        id="advantages"
+        className="advantages"
+        aria-labelledby="advantages-title"
+      >
         <div className="advantages-container">
           <div>
-            <h2 id="advantages-title" className="section-title">爸爸妈妈也放心！</h2>
+            <h2 id="advantages-title" className="section-title">
+              爸爸妈妈也放心！
+            </h2>
             <ul className="advantages-list">
               <li className="advantage-item">
                 <div className="advantage-icon">
@@ -291,9 +325,7 @@ const BrandIntroduction: React.FC = () => {
                 </div>
                 <div className="advantage-content">
                   <h3>立刻就能看到进步</h3>
-                  <p>
-                    每次练完马上就知道结果，孩子看到自己进步超有成就感！
-                  </p>
+                  <p>每次练完马上就知道结果，孩子看到自己进步超有成就感！</p>
                 </div>
               </li>
               <li className="advantage-item">
@@ -331,10 +363,10 @@ const BrandIntroduction: React.FC = () => {
 
       {/* 统计数据 */}
       <section id="stats" className="stats" aria-labelledby="stats-title">
-        <h2 id="stats-title" className="section-title">大家都在用！</h2>
-        <p className="section-subtitle">
-          已经有好多小朋友在这里学会说英语啦~
-        </p>
+        <h2 id="stats-title" className="section-title">
+          大家都在用！
+        </h2>
+        <p className="section-subtitle">已经有好多小朋友在这里学会说英语啦~</p>
         <div className="stats-grid">
           <div className="stat-item">
             <div className="stat-number">10K+</div>
@@ -363,7 +395,9 @@ const BrandIntroduction: React.FC = () => {
           <Button
             className="primary-button"
             size="large"
-            onClick={isLoggedIn ? handleStart : () => setLoginModalVisible(true)}
+            onClick={
+              isLoggedIn ? handleStart : () => setLoginModalVisible(true)
+            }
           >
             <RocketButtonIcon size={28} />
             {isLoggedIn ? '开始练习' : '立即出发'}
@@ -372,7 +406,7 @@ const BrandIntroduction: React.FC = () => {
       </section>
 
       {/* 页脚 */}
-      <footer className="footer" role="contentinfo">
+      <footer className="footer">
         <div className="footer-content">{/* 预留的页脚链接区域 */}</div>
         <div className="footer-bottom">
           <p>&copy; 2026 AI 口语练习平台. All rights reserved.</p>

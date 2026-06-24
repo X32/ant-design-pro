@@ -1,6 +1,6 @@
-import { history, Helmet } from '@umijs/max';
+import { BookOutlined, HomeOutlined, TrophyOutlined } from '@ant-design/icons';
+import { Helmet, history } from '@umijs/max';
 import { Button, Card, Result, Space } from 'antd';
-import { HomeOutlined, BookOutlined, TrophyOutlined } from '@ant-design/icons';
 import React from 'react';
 import './404.less';
 
@@ -42,39 +42,48 @@ const NoFoundPage: React.FC = () => {
           content="抱歉，您访问的页面不存在。口语魔方SpeakCube - 专业AI剑桥英语口语练习平台，提供KET、PET、FCE口语真题模拟考试、AI智能评分、实时反馈。"
         />
         <meta name="robots" content="noindex, follow" />
-        <link rel="canonical" href="https://www.qtoplay.com/404" />
+        <link rel="canonical" href="https://www.speakcube.cn/404" />
 
         {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="口语魔方SpeakCube" />
-        <meta property="og:title" content="404 - 页面未找到 | 口语魔方SpeakCube" />
-        <meta property="og:description" content="抱歉，您访问的页面不存在。返回首页继续您的口语练习之旅。" />
-        <meta property="og:url" content="https://www.qtoplay.com/404" />
+        <meta
+          property="og:title"
+          content="404 - 页面未找到 | 口语魔方SpeakCube"
+        />
+        <meta
+          property="og:description"
+          content="抱歉，您访问的页面不存在。返回首页继续您的口语练习之旅。"
+        />
+        <meta property="og:url" content="https://www.speakcube.cn/404" />
         <meta property="og:locale" content="zh_CN" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="404 - 页面未找到 | 口语魔方SpeakCube" />
+        <meta
+          name="twitter:title"
+          content="404 - 页面未找到 | 口语魔方SpeakCube"
+        />
         <meta name="twitter:description" content="抱歉，您访问的页面不存在。" />
 
         {/* 结构化数据 - Breadcrumb */}
         <script type="application/ld+json">
           {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
               {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "首页",
-                "item": "https://www.qtoplay.com/home"
+                '@type': 'ListItem',
+                position: 1,
+                name: '首页',
+                item: 'https://www.speakcube.cn/home',
               },
               {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "404页面"
-              }
-            ]
+                '@type': 'ListItem',
+                position: 2,
+                name: '404页面',
+              },
+            ],
           })}
         </script>
       </Helmet>
@@ -93,6 +102,7 @@ const NoFoundPage: React.FC = () => {
             <h3 className="popular-pages-title">热门页面推荐</h3>
             <div className="popular-pages-grid">
               {popularPages.map((page) => (
+                // biome-ignore lint/a11y/useSemanticElements: 卡片样式不能用 button
                 <div
                   key={page.path}
                   className="popular-page-item"
@@ -124,10 +134,7 @@ const NoFoundPage: React.FC = () => {
               >
                 返回首页
               </Button>
-              <Button
-                size="large"
-                onClick={() => history.push('/about')}
-              >
+              <Button size="large" onClick={() => history.push('/about')}>
                 了解品牌
               </Button>
               <Button

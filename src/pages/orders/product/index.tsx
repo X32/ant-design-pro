@@ -3,41 +3,40 @@
  * 管理金币套餐商品，支持增删改查和上下架操作
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Table,
+  DeleteOutlined,
+  EditOutlined,
+  GiftOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
+import { Helmet } from '@umijs/max';
+import {
   Button,
-  Tag,
-  message,
-  Space,
-  Modal,
   Card,
-  Tooltip,
   Form,
   Input,
   InputNumber,
-  Select,
+  Modal,
+  message,
   Popconfirm,
+  Select,
+  Space,
   Switch,
+  Table,
+  Tooltip,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  GiftOutlined,
-} from '@ant-design/icons';
-import { Helmet } from '@umijs/max';
 import dayjs from 'dayjs';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  getAdminItems,
   createAdminItem,
+  deleteAdminItem,
+  getAdminItems,
+  type ProductFormData,
+  type ProductItem,
   updateAdminItem,
   updateAdminItemStatus,
-  deleteAdminItem,
-  type ProductItem,
-  type ProductFormData,
 } from '@/services/ant-design-pro/api';
 import './index.less';
 
@@ -54,12 +53,16 @@ const ProductList: React.FC = () => {
   const [total, setTotal] = useState(0);
 
   // 筛选状态
-  const [statusFilter, setStatusFilter] = useState<number | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<number | undefined>(
+    undefined,
+  );
 
   // 弹窗状态
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('新建商品');
-  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(
+    null,
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const [form] = Form.useForm();
@@ -79,7 +82,7 @@ const ProductList: React.FC = () => {
 
       const response = await getAdminItems(params);
 
-      if (response && response.success) {
+      if (response?.success) {
         setProducts(response.data || []);
         setTotal(response.total || 0);
       } else {
@@ -165,7 +168,7 @@ const ProductList: React.FC = () => {
         status: values.status,
       };
 
-      let response;
+      let response: any;
       if (editingProduct) {
         response = await updateAdminItem(editingProduct.id, formData);
       } else {
@@ -257,9 +260,7 @@ const ProductList: React.FC = () => {
       key: 'coin_amount',
       width: 100,
       align: 'right',
-      render: (amount: number) => (
-        <span className="coin-amount">{amount}</span>
-      ),
+      render: (amount: number) => <span className="coin-amount">{amount}</span>,
     },
     {
       title: '价格',
@@ -344,153 +345,145 @@ const ProductList: React.FC = () => {
     <div className="product-list-container">
       <Helmet>
         <title>学习金币充值套餐 - SpeakCube口语练习</title>
-        <meta 
-          name="description" 
-          content="SpeakCube学习金币充值，用于解锁口语练习题目。多种充值套餐可选，充值越多越优惠，助力孩子英语口语学习！" 
+        <meta
+          name="description"
+          content="SpeakCube学习金币充值，用于解锁口语练习题目。多种充值套餐可选，充值越多越优惠，助力孩子英语口语学习！"
         />
-        <meta 
-          name="keywords" 
-          content="学习金币,口语练习充值,英语学习充值,金币套餐,口语练习费用" 
+        <meta
+          name="keywords"
+          content="学习金币,口语练习充值,英语学习充值,金币套餐,口语练习费用"
         />
-        <link rel="canonical" href="https://www.qtoplay.com/back/orders/product" />
+        <link
+          rel="canonical"
+          href="https://www.speakcube.cn/back/orders/product"
+        />
       </Helmet>
 
       <div className="product-list-page">
-      <Card className="page-card">
-        {/* 操作栏 */}
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <Select
-              placeholder="状态筛选"
-              value={statusFilter}
-              onChange={(value) => setStatusFilter(value)}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Option value={1}>上架中</Option>
-              <Option value={0}>已下架</Option>
-            </Select>
+        <Card className="page-card">
+          {/* 操作栏 */}
+          <div className="toolbar">
+            <div className="toolbar-left">
+              <Select
+                placeholder="状态筛选"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value)}
+                style={{ width: 120 }}
+                allowClear
+              >
+                <Option value={1}>上架中</Option>
+                <Option value={0}>已下架</Option>
+              </Select>
+            </div>
+            <div className="toolbar-right">
+              <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
+                刷新
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreate}
+              >
+                新建商品
+              </Button>
+            </div>
           </div>
-          <div className="toolbar-right">
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
-              刷新
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              新建商品
-            </Button>
-          </div>
-        </div>
 
-        {/* 表格 */}
-        <Table
-          className="product-table"
-          columns={columns}
-          dataSource={products}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (t) => `共 ${t} 个商品`,
-          }}
-          scroll={{ x: 1100 }}
-        />
-      </Card>
+          {/* 表格 */}
+          <Table
+            className="product-table"
+            columns={columns}
+            dataSource={products}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (t) => `共 ${t} 个商品`,
+            }}
+            scroll={{ x: 1100 }}
+          />
+        </Card>
 
-      {/* 新建/编辑弹窗 */}
-      <Modal
-        title={modalTitle}
-        open={modalVisible}
-        onOk={handleSubmit}
-        onCancel={handleModalCancel}
-        confirmLoading={submitting}
-        destroyOnClose
-        width={500}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          preserve={false}
+        {/* 新建/编辑弹窗 */}
+        <Modal
+          title={modalTitle}
+          open={modalVisible}
+          onOk={handleSubmit}
+          onCancel={handleModalCancel}
+          confirmLoading={submitting}
+          destroyOnClose
+          width={500}
         >
-          <Form.Item
-            name="name"
-            label="商品名称"
-            rules={[
-              { required: true, message: '请输入商品名称' },
-              { max: 100, message: '名称最长100个字符' },
-            ]}
-          >
-            <Input placeholder="例如：100金币" />
-          </Form.Item>
+          <Form form={form} layout="vertical" preserve={false}>
+            <Form.Item
+              name="name"
+              label="商品名称"
+              rules={[
+                { required: true, message: '请输入商品名称' },
+                { max: 100, message: '名称最长100个字符' },
+              ]}
+            >
+              <Input placeholder="例如：100金币" />
+            </Form.Item>
 
-          <Form.Item
-            name="description"
-            label="商品描述"
-            rules={[{ max: 500, message: '描述最长500个字符' }]}
-          >
-            <TextArea
-              placeholder="例如：新手优惠套餐"
-              rows={3}
-            />
-          </Form.Item>
+            <Form.Item
+              name="description"
+              label="商品描述"
+              rules={[{ max: 500, message: '描述最长500个字符' }]}
+            >
+              <TextArea placeholder="例如：新手优惠套餐" rows={3} />
+            </Form.Item>
 
-          <Form.Item
-            name="coin_amount"
-            label="金币数量"
-            rules={[
-              { required: true, message: '请输入金币数量' },
-              { type: 'number', min: 1, message: '金币数量必须大于0' },
-            ]}
-          >
-            <InputNumber
-              min={1}
-              style={{ width: '100%' }}
-              placeholder="充值可获得的金币数量"
-            />
-          </Form.Item>
+            <Form.Item
+              name="coin_amount"
+              label="金币数量"
+              rules={[
+                { required: true, message: '请输入金币数量' },
+                { type: 'number', min: 1, message: '金币数量必须大于0' },
+              ]}
+            >
+              <InputNumber
+                min={1}
+                style={{ width: '100%' }}
+                placeholder="充值可获得的金币数量"
+              />
+            </Form.Item>
 
-          <Form.Item
-            name="price"
-            label="价格（元）"
-            rules={[
-              { required: true, message: '请输入价格' },
-              { type: 'number', min: 0.01, message: '价格必须大于0' },
-            ]}
-          >
-            <InputNumber
-              min={0.01}
-              precision={2}
-              style={{ width: '100%' }}
-              placeholder="商品售价（单位：元）"
-              prefix="¥"
-            />
-          </Form.Item>
+            <Form.Item
+              name="price"
+              label="价格（元）"
+              rules={[
+                { required: true, message: '请输入价格' },
+                { type: 'number', min: 0.01, message: '价格必须大于0' },
+              ]}
+            >
+              <InputNumber
+                min={0.01}
+                precision={2}
+                style={{ width: '100%' }}
+                placeholder="商品售价（单位：元）"
+                prefix="¥"
+              />
+            </Form.Item>
 
-          <Form.Item
-            name="currency"
-            label="货币类型"
-            initialValue="CNY"
-          >
-            <Select>
-              <Option value="CNY">人民币 (CNY)</Option>
-              <Option value="USD">美元 (USD)</Option>
-            </Select>
-          </Form.Item>
+            <Form.Item name="currency" label="货币类型" initialValue="CNY">
+              <Select>
+                <Option value="CNY">人民币 (CNY)</Option>
+                <Option value="USD">美元 (USD)</Option>
+              </Select>
+            </Form.Item>
 
-          <Form.Item
-            name="status"
-            label="状态"
-            initialValue={1}
-          >
-            <Select>
-              <Option value={1}>上架</Option>
-              <Option value={0}>下架</Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
+            <Form.Item name="status" label="状态" initialValue={1}>
+              <Select>
+                <Option value={1}>上架</Option>
+                <Option value={0}>下架</Option>
+              </Select>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </div>
     </div>
   );
 };

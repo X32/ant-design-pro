@@ -1,5 +1,5 @@
-import React from 'react';
 import { Helmet } from '@umijs/max';
+import React from 'react';
 import type { SEOConfig } from '../types';
 
 interface PageSEOProps {
@@ -32,42 +32,42 @@ const PageSEO: React.FC<PageSEOProps> = ({ seo, examType, pageTitle }) => {
       {/* 结构化数据 - Article */}
       <script type="application/ld+json">
         {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          "headline": seo.h1Title,
-          "description": seo.description,
-          "keywords": seo.keywords.join(','),
-          "author": {
-            "@type": "Organization",
-            "name": "SpeakCube"
-          }
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: seo.h1Title,
+          description: seo.description,
+          keywords: seo.keywords.join(','),
+          author: {
+            '@type': 'Organization',
+            name: 'SpeakCube',
+          },
         })}
       </script>
 
       {/* 结构化数据 - Breadcrumb */}
       <script type="application/ld+json">
         {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
             {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "首页",
-              "item": "https://www.qtoplay.com/home"
+              '@type': 'ListItem',
+              position: 1,
+              name: '首页',
+              item: 'https://www.speakcube.cn/home',
             },
             {
-              "@type": "ListItem",
-              "position": 2,
-              "name": `${examType}口语专区`,
-              "item": `https://www.qtoplay.com/${examType.toLowerCase()}-speaking`
+              '@type': 'ListItem',
+              position: 2,
+              name: `${examType}口语专区`,
+              item: `https://www.speakcube.cn/${examType.toLowerCase()}-speaking`,
             },
             {
-              "@type": "ListItem",
-              "position": 3,
-              "name": seo.h1Title
-            }
-          ]
+              '@type': 'ListItem',
+              position: 3,
+              name: seo.h1Title,
+            },
+          ],
         })}
       </script>
     </Helmet>

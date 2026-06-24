@@ -1,44 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Modal, 
-  Form, 
-  Input, 
-  InputNumber, 
-  Select, 
-  Switch,
-  message,
-  Popconfirm,
-  App,
-  Divider,
-} from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  EyeOutlined,
-  CrownOutlined,
+import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  CrownOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { Helmet } from '@umijs/max';
-import type { ColumnsType } from 'antd/es/table';
 import {
-  adminGetVipPlans,
-  adminGetVipPlanDetail,
+  App,
+  Button,
+  Card,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  message,
+  Popconfirm,
+  Select,
+  Space,
+  Switch,
+  Table,
+  Tag,
+} from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import React, { useEffect, useState } from 'react';
+import {
+  type AdminCreateVipPlanRequest,
+  type AdminUpdateVipPlanRequest,
+  type AdminVipPlan,
   adminCreateVipPlan,
+  adminDeleteVipPlan,
+  adminGetVipPlanDetail,
+  adminGetVipPlans,
   adminUpdateVipPlan,
   adminUpdateVipPlanStatus,
-  adminDeleteVipPlan,
-  AdminVipPlan,
-  AdminCreateVipPlanRequest,
-  AdminUpdateVipPlanRequest,
-  ExamLevel,
+  type ExamLevel,
 } from '@/services/ant-design-pro/api/vipSubscription';
 import './index.less';
 
@@ -46,16 +46,19 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const VipPlanManagement: React.FC = () => {
-  const { modal } = App.useApp();
   const [loading, setLoading] = useState(false);
   const [dataSource, setDataSource] = useState<AdminVipPlan[]>([]);
   const [total, setTotal] = useState(0);
-  const [filterExamLevel, setFilterExamLevel] = useState<ExamLevel | undefined>();
+  const [filterExamLevel, setFilterExamLevel] = useState<
+    ExamLevel | undefined
+  >();
   const [filterStatus, setFilterStatus] = useState<number | undefined>();
-  
+
   // 弹窗相关
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>(
+    'create',
+  );
   const [currentPlan, setCurrentPlan] = useState<AdminVipPlan | null>(null);
   const [form] = Form.useForm();
 
@@ -103,7 +106,7 @@ const VipPlanManagement: React.FC = () => {
   const handleEdit = async (record: AdminVipPlan) => {
     setModalMode('edit');
     setCurrentPlan(record);
-    
+
     try {
       const response = await adminGetVipPlanDetail(record.id);
       if (response.success && response.data) {
@@ -121,7 +124,7 @@ const VipPlanManagement: React.FC = () => {
   const handleView = async (record: AdminVipPlan) => {
     setModalMode('view');
     setCurrentPlan(record);
-    
+
     try {
       const response = await adminGetVipPlanDetail(record.id);
       if (response.success && response.data) {
@@ -143,9 +146,14 @@ const VipPlanManagement: React.FC = () => {
 
       let response;
       if (modalMode === 'create') {
-        response = await adminCreateVipPlan(values as AdminCreateVipPlanRequest);
+        response = await adminCreateVipPlan(
+          values as AdminCreateVipPlanRequest,
+        );
       } else if (modalMode === 'edit' && currentPlan) {
-        response = await adminUpdateVipPlan(currentPlan.id, values as AdminUpdateVipPlanRequest);
+        response = await adminUpdateVipPlan(
+          currentPlan.id,
+          values as AdminUpdateVipPlanRequest,
+        );
       }
 
       if (response?.success) {
@@ -170,11 +178,13 @@ const VipPlanManagement: React.FC = () => {
   const handleToggleStatus = async (record: AdminVipPlan) => {
     const newStatus = record.status === 1 ? 0 : 1;
     const statusText = newStatus === 1 ? '上架' : '下架';
-    
+
     try {
       setLoading(true);
-      const response = await adminUpdateVipPlanStatus(record.id, { status: newStatus });
-      
+      const response = await adminUpdateVipPlanStatus(record.id, {
+        status: newStatus,
+      });
+
       if (response.success) {
         message.success(`${statusText}成功`);
         fetchPlans();
@@ -193,7 +203,7 @@ const VipPlanManagement: React.FC = () => {
     try {
       setLoading(true);
       const response = await adminDeleteVipPlan(record.id);
-      
+
       if (response.success) {
         message.success('删除成功');
         fetchPlans();
@@ -234,9 +244,7 @@ const VipPlanManagement: React.FC = () => {
       render: (text: string, record: AdminVipPlan) => (
         <Space>
           <span style={{ fontWeight: 'bold' }}>{text}</span>
-          {record.is_recommended === 1 && (
-            <Tag color="red">推荐</Tag>
-          )}
+          {record.is_recommended === 1 && <Tag color="red">推荐</Tag>}
         </Space>
       ),
     },
@@ -285,9 +293,7 @@ const VipPlanManagement: React.FC = () => {
       key: 'first_buy_price',
       width: 100,
       render: (price: number) => (
-        <span style={{ color: '#52c41a' }}>
-          ¥{(price / 100).toFixed(2)}
-        </span>
+        <span style={{ color: '#52c41a' }}>¥{(price / 100).toFixed(2)}</span>
       ),
     },
     {
@@ -301,13 +307,16 @@ const VipPlanManagement: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status: number) => (
+      render: (status: number) =>
         status === 1 ? (
-          <Tag color="success" icon={<CheckCircleOutlined />}>上架</Tag>
+          <Tag color="success" icon={<CheckCircleOutlined />}>
+            上架
+          </Tag>
         ) : (
-          <Tag color="default" icon={<CloseCircleOutlined />}>下架</Tag>
-        )
-      ),
+          <Tag color="default" icon={<CloseCircleOutlined />}>
+            下架
+          </Tag>
+        ),
     },
     {
       title: '操作',
@@ -316,17 +325,17 @@ const VipPlanManagement: React.FC = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button 
-            type="link" 
-            size="small" 
+          <Button
+            type="link"
+            size="small"
             icon={<EyeOutlined />}
             onClick={() => handleView(record)}
           >
             查看
           </Button>
-          <Button 
-            type="link" 
-            size="small" 
+          <Button
+            type="link"
+            size="small"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
@@ -346,12 +355,7 @@ const VipPlanManagement: React.FC = () => {
             okText="确定"
             cancelText="取消"
           >
-            <Button 
-              type="link" 
-              size="small" 
-              danger
-              icon={<DeleteOutlined />}
-            >
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
               删除
             </Button>
           </Popconfirm>
@@ -364,15 +368,18 @@ const VipPlanManagement: React.FC = () => {
     <>
       <Helmet>
         <title>VIP会员套餐 - 剑桥英语口语练习会员 | SpeakCube</title>
-        <meta 
-          name="description" 
-          content="SpeakCube VIP会员套餐，无限次KET/PET/FCE口语模拟考试，享受专属AI评分服务。月卡、季卡、年卡多种选择，助力孩子口语提升！" 
+        <meta
+          name="description"
+          content="SpeakCube VIP会员套餐，无限次KET/PET/FCE口语模拟考试，享受专属AI评分服务。月卡、季卡、年卡多种选择，助力孩子口语提升！"
         />
-        <meta 
-          name="keywords" 
-          content="KET口语VIP,PET口语会员,FCE口语套餐,剑桥英语会员,口语练习套餐,AI口语VIP" 
+        <meta
+          name="keywords"
+          content="KET口语VIP,PET口语会员,FCE口语套餐,剑桥英语会员,口语练习套餐,AI口语VIP"
         />
-        <link rel="canonical" href="https://www.qtoplay.com/back/orders/vip-plans" />
+        <link
+          rel="canonical"
+          href="https://www.speakcube.cn/back/orders/vip-plans"
+        />
       </Helmet>
 
       <PageContainer
@@ -381,209 +388,236 @@ const VipPlanManagement: React.FC = () => {
           breadcrumb: {},
         }}
       >
-      <Card>
-        {/* 筛选和操作栏 */}
-        <Space style={{ marginBottom: 16 }}>
-          <Select
-            placeholder="筛选考试级别"
-            style={{ width: 150 }}
-            allowClear
-            value={filterExamLevel}
-            onChange={setFilterExamLevel}
-          >
-            <Option value="KET">KET</Option>
-            <Option value="PET">PET</Option>
-            <Option value="FCE">FCE</Option>
-          </Select>
-          
-          <Select
-            placeholder="筛选状态"
-            style={{ width: 150 }}
-            allowClear
-            value={filterStatus}
-            onChange={setFilterStatus}
-          >
-            <Option value={1}>上架</Option>
-            <Option value={0}>下架</Option>
-          </Select>
-
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-          >
-            新建套餐
-          </Button>
-        </Space>
-
-        {/* 表格 */}
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1500 }}
-          pagination={false}
-        />
-
-        <div style={{ marginTop: 16, textAlign: 'right' }}>
-          <Space>
-            <span>共 {total} 个套餐</span>
-          </Space>
-        </div>
-      </Card>
-
-      {/* 创建/编辑/查看弹窗 */}
-      <Modal
-        title={
-          modalMode === 'create' ? '新建套餐' : 
-          modalMode === 'edit' ? '编辑套餐' : 
-          '套餐详情'
-        }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        onOk={modalMode === 'view' ? () => setModalVisible(false) : handleSubmit}
-        width={800}
-        okText={modalMode === 'view' ? '关闭' : '确定'}
-        cancelText={modalMode === 'view' ? undefined : '取消'}
-        confirmLoading={loading}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          disabled={modalMode === 'view'}
-        >
-          <Form.Item
-            label="考试分类ID"
-            name="exam_category_id"
-            rules={[{ required: true, message: '请输入考试分类ID' }]}
-            tooltip="必须是exam_category表中存在的ID"
-          >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="例如: 1" />
-          </Form.Item>
-
-          <Form.Item
-            label="考试级别"
-            name="exam_level"
-            rules={[{ required: true, message: '请选择考试级别' }]}
-          >
-            <Select placeholder="选择考试级别">
+        <Card>
+          {/* 筛选和操作栏 */}
+          <Space style={{ marginBottom: 16 }}>
+            <Select
+              placeholder="筛选考试级别"
+              style={{ width: 150 }}
+              allowClear
+              value={filterExamLevel}
+              onChange={setFilterExamLevel}
+            >
               <Option value="KET">KET</Option>
               <Option value="PET">PET</Option>
               <Option value="FCE">FCE</Option>
             </Select>
-          </Form.Item>
 
-          <Form.Item
-            label="套餐类型"
-            name="plan_type"
-            rules={[{ required: true, message: '请输入套餐类型' }]}
-            tooltip="例如: monthly, quarterly, yearly, weekly"
-          >
-            <Input placeholder="例如: monthly" />
-          </Form.Item>
+            <Select
+              placeholder="筛选状态"
+              style={{ width: 150 }}
+              allowClear
+              value={filterStatus}
+              onChange={setFilterStatus}
+            >
+              <Option value={1}>上架</Option>
+              <Option value={0}>下架</Option>
+            </Select>
 
-          <Form.Item
-            label="套餐名称"
-            name="plan_name"
-            rules={[{ required: true, message: '请输入套餐名称' }]}
-          >
-            <Input placeholder="例如: PET月卡" />
-          </Form.Item>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+            >
+              新建套餐
+            </Button>
+          </Space>
 
-          <Form.Item
-            label="时长(天)"
-            name="duration_days"
-            rules={[{ required: true, message: '请输入时长' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="例如: 30" />
-          </Form.Item>
+          {/* 表格 */}
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            rowKey="id"
+            loading={loading}
+            scroll={{ x: 1500 }}
+            pagination={false}
+          />
 
-          <Divider>价格设置（单位：分）</Divider>
+          <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <Space>
+              <span>共 {total} 个套餐</span>
+            </Space>
+          </div>
+        </Card>
 
-          <Form.Item
-            label="原价(分)"
-            name="original_price"
-            rules={[{ required: true, message: '请输入原价' }]}
-            tooltip="1元 = 100分，例如: 4900 表示 49.00元"
-          >
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="例如: 4900" />
-          </Form.Item>
+        {/* 创建/编辑/查看弹窗 */}
+        <Modal
+          title={
+            modalMode === 'create'
+              ? '新建套餐'
+              : modalMode === 'edit'
+                ? '编辑套餐'
+                : '套餐详情'
+          }
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          onOk={
+            modalMode === 'view' ? () => setModalVisible(false) : handleSubmit
+          }
+          width={800}
+          okText={modalMode === 'view' ? '关闭' : '确定'}
+          cancelText={modalMode === 'view' ? undefined : '取消'}
+          confirmLoading={loading}
+        >
+          <Form form={form} layout="vertical" disabled={modalMode === 'view'}>
+            <Form.Item
+              label="考试分类ID"
+              name="exam_category_id"
+              rules={[{ required: true, message: '请输入考试分类ID' }]}
+              tooltip="必须是exam_category表中存在的ID"
+            >
+              <InputNumber
+                min={1}
+                style={{ width: '100%' }}
+                placeholder="例如: 1"
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="售价(分)"
-            name="sale_price"
-            rules={[{ required: true, message: '请输入售价' }]}
-          >
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="例如: 4900" />
-          </Form.Item>
+            <Form.Item
+              label="考试级别"
+              name="exam_level"
+              rules={[{ required: true, message: '请选择考试级别' }]}
+            >
+              <Select placeholder="选择考试级别">
+                <Option value="KET">KET</Option>
+                <Option value="PET">PET</Option>
+                <Option value="FCE">FCE</Option>
+              </Select>
+            </Form.Item>
 
-          <Form.Item
-            label="首减金额(分)"
-            name="first_buy_discount"
-            rules={[{ required: true, message: '请输入首减金额' }]}
-            tooltip="首购优惠的减免金额"
-          >
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="例如: 2410" />
-          </Form.Item>
+            <Form.Item
+              label="套餐类型"
+              name="plan_type"
+              rules={[{ required: true, message: '请输入套餐类型' }]}
+              tooltip="例如: monthly, quarterly, yearly, weekly"
+            >
+              <Input placeholder="例如: monthly" />
+            </Form.Item>
 
-          <Form.Item
-            label="首购价(分)"
-            name="first_buy_price"
-            rules={[{ required: true, message: '请输入首购价' }]}
-            tooltip="首购价 = 原价 - 首减金额"
-          >
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="例如: 2490" />
-          </Form.Item>
+            <Form.Item
+              label="套餐名称"
+              name="plan_name"
+              rules={[{ required: true, message: '请输入套餐名称' }]}
+            >
+              <Input placeholder="例如: PET月卡" />
+            </Form.Item>
 
-          <Divider>其他设置</Divider>
+            <Form.Item
+              label="时长(天)"
+              name="duration_days"
+              rules={[{ required: true, message: '请输入时长' }]}
+            >
+              <InputNumber
+                min={1}
+                style={{ width: '100%' }}
+                placeholder="例如: 30"
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="套餐说明"
-            name="description"
-            rules={[{ required: true, message: '请输入套餐说明' }]}
-          >
-            <TextArea rows={3} placeholder="例如: PET考试1个月无限练习" />
-          </Form.Item>
+            <Divider>价格设置（单位：分）</Divider>
 
-          <Form.Item
-            label="套餐特权(JSON)"
-            name="features"
-            tooltip="可选，JSON格式字符串"
-          >
-            <TextArea rows={2} placeholder='例如: {"unlimited_practice": true}' />
-          </Form.Item>
+            <Form.Item
+              label="原价(分)"
+              name="original_price"
+              rules={[{ required: true, message: '请输入原价' }]}
+              tooltip="1元 = 100分，例如: 4900 表示 49.00元"
+            >
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="例如: 4900"
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="排序权重"
-            name="sort"
-            tooltip="数字越大越靠前"
-          >
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="例如: 100" />
-          </Form.Item>
+            <Form.Item
+              label="售价(分)"
+              name="sale_price"
+              rules={[{ required: true, message: '请输入售价' }]}
+            >
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="例如: 4900"
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="是否推荐"
-            name="is_recommended"
-            valuePropName="checked"
-            getValueFromEvent={(checked) => (checked ? 1 : 0)}
-            getValueProps={(value) => ({ checked: value === 1 })}
-          >
-            <Switch checkedChildren="推荐" unCheckedChildren="不推荐" />
-          </Form.Item>
+            <Form.Item
+              label="首减金额(分)"
+              name="first_buy_discount"
+              rules={[{ required: true, message: '请输入首减金额' }]}
+              tooltip="首购优惠的减免金额"
+            >
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="例如: 2410"
+              />
+            </Form.Item>
 
-          <Form.Item
-            label="状态"
-            name="status"
-            valuePropName="checked"
-            getValueFromEvent={(checked) => (checked ? 1 : 0)}
-            getValueProps={(value) => ({ checked: value === 1 })}
-          >
-            <Switch checkedChildren="上架" unCheckedChildren="下架" />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </PageContainer>
+            <Form.Item
+              label="首购价(分)"
+              name="first_buy_price"
+              rules={[{ required: true, message: '请输入首购价' }]}
+              tooltip="首购价 = 原价 - 首减金额"
+            >
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="例如: 2490"
+              />
+            </Form.Item>
+
+            <Divider>其他设置</Divider>
+
+            <Form.Item
+              label="套餐说明"
+              name="description"
+              rules={[{ required: true, message: '请输入套餐说明' }]}
+            >
+              <TextArea rows={3} placeholder="例如: PET考试1个月无限练习" />
+            </Form.Item>
+
+            <Form.Item
+              label="套餐特权(JSON)"
+              name="features"
+              tooltip="可选，JSON格式字符串"
+            >
+              <TextArea
+                rows={2}
+                placeholder='例如: {"unlimited_practice": true}'
+              />
+            </Form.Item>
+
+            <Form.Item label="排序权重" name="sort" tooltip="数字越大越靠前">
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="例如: 100"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="是否推荐"
+              name="is_recommended"
+              valuePropName="checked"
+              getValueFromEvent={(checked) => (checked ? 1 : 0)}
+              getValueProps={(value) => ({ checked: value === 1 })}
+            >
+              <Switch checkedChildren="推荐" unCheckedChildren="不推荐" />
+            </Form.Item>
+
+            <Form.Item
+              label="状态"
+              name="status"
+              valuePropName="checked"
+              getValueFromEvent={(checked) => (checked ? 1 : 0)}
+              getValueProps={(value) => ({ checked: value === 1 })}
+            >
+              <Switch checkedChildren="上架" unCheckedChildren="下架" />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </PageContainer>
     </>
   );
 };

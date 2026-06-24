@@ -100,7 +100,7 @@ export const errorConfig: RequestConfig = {
       // 这样可以确保所有请求都走 webpack proxy
       if (config.url && typeof config.url === 'string') {
         config.url = config.url
-          // .replace('https://api.qtoplay.com', '')
+          // .replace('https://www.speakcube.cn', '')
           .replace('http://localhost:9002', '');
       }
       return config;
@@ -108,7 +108,11 @@ export const errorConfig: RequestConfig = {
     // 第二个拦截器：URL 修正（仅在必要时输出警告）
     (config: RequestOptions) => {
       // 🔴 强制检查：如果 URL 被篡改成绝对路径，强制改回相对路径
-      if (config.url && typeof config.url === 'string' && config.url.startsWith('http://localhost:9002')) {
+      if (
+        config.url &&
+        typeof config.url === 'string' &&
+        config.url.startsWith('http://localhost:9002')
+      ) {
         console.warn('⚠️ 检测到 URL 被篡改为绝对路径，已自动修正:', config.url);
         config.url = config.url.replace('http://localhost:9002', '');
       }
@@ -118,7 +122,7 @@ export const errorConfig: RequestConfig = {
     (config: RequestOptions) => {
       // 从 localStorage 获取 token
       const token = localStorage.getItem(TOKEN_KEY);
-      
+
       // 如果有 token，添加到请求头
       if (token) {
         // 处理 umi-request 的 headers 结构
@@ -127,9 +131,9 @@ export const errorConfig: RequestConfig = {
         }
 
         // 直接设置 Authorization，umi-request 会正确处理
-        (config.headers as any)['Authorization'] = `Bearer ${token}`;
+        (config.headers as any).Authorization = `Bearer ${token}`;
       }
-      
+
       return config;
     },
   ],

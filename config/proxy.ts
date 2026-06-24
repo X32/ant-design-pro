@@ -9,24 +9,24 @@
  *
  * @doc https://umijs.org/docs/guides/proxy
  */
-const isDev = process.env.NODE_ENV === 'development';
+const _isDev = process.env.NODE_ENV === 'development';
 
 // ============ 后端服务地址配置 ============
 // 主后端服务（业务API、认证、考试等）
 // 优先读 env:Docker dev compose 注入 http://backend:9002 / ws://spoken-flow:9001
 // 裸跑默认回落到 localhost
 const MAIN_API_TARGET = process.env.MAIN_API_TARGET || 'http://localhost:9002';
-// const MAIN_API_TARGET = 'https://api.qtoplay.com';
+// const MAIN_API_TARGET = 'https://www.speakcube.cn';
 // 对话服务（AI 对话相关）
 const CONVERSATION_API_TARGET =
   process.env.CONVERSATION_API_TARGET || 'http://localhost:9019';
 // WebSocket 服务
-const WS_TARGET = process.env.WS_TARGET || 'ws://localhost:9001';
+const _WS_TARGET = process.env.WS_TARGET || 'ws://localhost:9001';
 // 局域网调试地址（备用）
-const LAN_WS_TARGET = process.env.LAN_WS_TARGET || 'ws://192.168.4.30:9001';
+const _LAN_WS_TARGET = process.env.LAN_WS_TARGET || 'ws://192.168.4.30:9001';
 
 // 获取当前端口，默认8001
-const getCurrentPort = () => {
+const _getCurrentPort = () => {
   return process.env.PORT || '8001';
 };
 
@@ -40,17 +40,17 @@ export default {
       target: MAIN_API_TARGET,
       changeOrigin: true,
       pathRewrite: { '^/api/workflowtypes': '/api/workflowtypes' },
-      onProxyReq: (proxyReq: any, req: any, res: any) => {
+      onProxyReq: (proxyReq: any, req: any, _res: any) => {
         console.log('\n=== Workflow Types Proxy ===');
         console.log('[Proxy] 请求:', req.method, req.url);
         console.log('[Proxy] 代理到:', proxyReq.path);
         console.log('[Proxy] Target:', MAIN_API_TARGET);
         console.log('===========================\n');
       },
-      onProxyRes: (proxyRes: any, req: any, res: any) => {
+      onProxyRes: (proxyRes: any, _req: any, _res: any) => {
         console.log('[Proxy Response] Status:', proxyRes.statusCode);
       },
-      onError: (err: any, req: any, res: any) => {
+      onError: (err: any, _req: any, _res: any) => {
         console.error('[Proxy Error]:', err.message);
       },
     },
@@ -59,17 +59,17 @@ export default {
     '/api/spoken/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      onProxyReq: (proxyReq: any, req: any, res: any) => {
+      onProxyReq: (proxyReq: any, req: any, _res: any) => {
         console.log('\n=== spoken Types Proxy ===');
         console.log('[Proxy] 请求:', req.method, req.url);
         console.log('[Proxy] 代理到:', proxyReq.path);
         console.log('[Proxy] Target:', MAIN_API_TARGET);
         console.log('===========================\n');
       },
-      onProxyRes: (proxyRes: any, req: any, res: any) => {
+      onProxyRes: (proxyRes: any, _req: any, _res: any) => {
         console.log('[Proxy Response] Status:', proxyRes.statusCode);
       },
-      onError: (err: any, req: any, res: any) => {
+      onError: (err: any, _req: any, _res: any) => {
         console.error('[Proxy Error]:', err.message);
       },
     },
@@ -77,7 +77,7 @@ export default {
     '/api/articles/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      onProxyReq: (proxyReq: any, req: any) => {
+      onProxyReq: (_proxyReq: any, req: any) => {
         console.log('[Order Proxy]', req.method, req.url);
       },
     },
@@ -86,7 +86,7 @@ export default {
     '/api/order/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      onProxyReq: (proxyReq: any, req: any) => {
+      onProxyReq: (_proxyReq: any, req: any) => {
         console.log('[Order Proxy]', req.method, req.url);
       },
     },
@@ -95,7 +95,7 @@ export default {
     '/api/exam/**': {
       target: MAIN_API_TARGET,
       changeOrigin: true,
-      onProxyReq: (proxyReq: any, req: any) => {
+      onProxyReq: (_proxyReq: any, req: any) => {
         console.log('[Exam Proxy]', req.method, req.url);
       },
     },

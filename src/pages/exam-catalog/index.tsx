@@ -1,9 +1,17 @@
-import { ArrowLeftOutlined, DownOutlined, FileTextOutlined, FolderOpenOutlined, InboxOutlined, PlayCircleOutlined, TrophyOutlined } from '@ant-design/icons';
-import { App, Button, Card, Spin, Tag } from 'antd';
+import {
+  ArrowLeftOutlined,
+  DownOutlined,
+  FileTextOutlined,
+  FolderOpenOutlined,
+  InboxOutlined,
+  PlayCircleOutlined,
+  TrophyOutlined,
+} from '@ant-design/icons';
+import { Helmet, history, useModel } from '@umijs/max';
+import { App, Button, Spin, Tag } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { history, useModel, Helmet } from '@umijs/max';
-import UserAvatar from '@/components/UserAvatar';
 import LoginModal from '@/components/LoginModal';
+import UserAvatar from '@/components/UserAvatar';
 import {
   getPublicExamCategories,
   getPublicExamPaperQuestions,
@@ -25,7 +33,9 @@ const ExamCatalog: React.FC = () => {
   const isLoggedIn = !!currentUser;
 
   const [categories, setCategories] = useState<ExamCategoryWithPapers[]>([]);
-  const [examCategories, setExamCategories] = useState<ExamCategoryWithPapers[]>([]);
+  const [examCategories, setExamCategories] = useState<
+    ExamCategoryWithPapers[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
 
@@ -61,12 +71,14 @@ const ExamCatalog: React.FC = () => {
       setLoading(true);
       const response = await getPublicExamCategories();
       if (response.success && response.data) {
-        const categoriesData: ExamCategoryWithPapers[] = response.data.map((cat: ExamCategory) => ({
-          ...cat,
-          papers: [],
-          loading: false,
-          expanded: false,
-        }));
+        const categoriesData: ExamCategoryWithPapers[] = response.data.map(
+          (cat: ExamCategory) => ({
+            ...cat,
+            papers: [],
+            loading: false,
+            expanded: false,
+          }),
+        );
         setCategories(categoriesData);
         // 复制相同数据给考试部分
         setExamCategories(categoriesData);
@@ -95,7 +107,9 @@ const ExamCatalog: React.FC = () => {
     // 如果是第一次展开，需要加载试卷数据
     if (!category.papers || category.papers.length === 0) {
       setCategories((prev) =>
-        prev.map((c) => (c.id === categoryId ? { ...c, loading: true, expanded: true } : c)),
+        prev.map((c) =>
+          c.id === categoryId ? { ...c, loading: true, expanded: true } : c,
+        ),
       );
 
       try {
@@ -106,12 +120,14 @@ const ExamCatalog: React.FC = () => {
         });
 
         if (response.success && response.data) {
-          const papersData: ExamPaperWithQuestions[] = response.data.map((paper: ExamPaper) => ({
-            ...paper,
-            questions: [],
-            loading: false,
-            expanded: false,
-          }));
+          const papersData: ExamPaperWithQuestions[] = response.data.map(
+            (paper: ExamPaper) => ({
+              ...paper,
+              questions: [],
+              loading: false,
+              expanded: false,
+            }),
+          );
 
           setCategories((prev) =>
             prev.map((c) =>
@@ -125,7 +141,9 @@ const ExamCatalog: React.FC = () => {
         message.error('加载试卷列表失败');
         console.error('加载试卷失败:', error);
         setCategories((prev) =>
-          prev.map((c) => (c.id === categoryId ? { ...c, loading: false, expanded: false } : c)),
+          prev.map((c) =>
+            c.id === categoryId ? { ...c, loading: false, expanded: false } : c,
+          ),
         );
       }
     } else {
@@ -141,7 +159,9 @@ const ExamCatalog: React.FC = () => {
     const category = categories.find((c) => c.id === categoryId);
     if (!category || !category.papers) return;
 
-    const paper = category.papers.find((p) => p.id === paperId) as ExamPaperWithQuestions | undefined;
+    const paper = category.papers.find((p) => p.id === paperId) as
+      | ExamPaperWithQuestions
+      | undefined;
     if (!paper) return;
 
     // 如果已经展开，则折叠
@@ -151,7 +171,9 @@ const ExamCatalog: React.FC = () => {
           c.id === categoryId
             ? {
                 ...c,
-                papers: c.papers?.map((p) => (p.id === paperId ? { ...p, expanded: false } : p)),
+                papers: c.papers?.map((p) =>
+                  p.id === paperId ? { ...p, expanded: false } : p,
+                ),
               }
             : c,
         ),
@@ -167,7 +189,9 @@ const ExamCatalog: React.FC = () => {
             ? {
                 ...c,
                 papers: c.papers?.map((p) =>
-                  p.id === paperId ? { ...p, loading: true, expanded: true } : p,
+                  p.id === paperId
+                    ? { ...p, loading: true, expanded: true }
+                    : p,
                 ),
               }
             : c,
@@ -192,7 +216,12 @@ const ExamCatalog: React.FC = () => {
                     ...c,
                     papers: c.papers?.map((p) =>
                       p.id === paperId
-                        ? { ...p, questions: sortedQuestions, loading: false, expanded: true }
+                        ? {
+                            ...p,
+                            questions: sortedQuestions,
+                            loading: false,
+                            expanded: true,
+                          }
                         : p,
                     ),
                   }
@@ -209,7 +238,9 @@ const ExamCatalog: React.FC = () => {
               ? {
                   ...c,
                   papers: c.papers?.map((p) =>
-                    p.id === paperId ? { ...p, loading: false, expanded: false } : p,
+                    p.id === paperId
+                      ? { ...p, loading: false, expanded: false }
+                      : p,
                   ),
                 }
               : c,
@@ -223,7 +254,9 @@ const ExamCatalog: React.FC = () => {
           c.id === categoryId
             ? {
                 ...c,
-                papers: c.papers?.map((p) => (p.id === paperId ? { ...p, expanded: true } : p)),
+                papers: c.papers?.map((p) =>
+                  p.id === paperId ? { ...p, expanded: true } : p,
+                ),
               }
             : c,
         ),
@@ -245,7 +278,9 @@ const ExamCatalog: React.FC = () => {
 
     if (!category.papers || category.papers.length === 0) {
       setExamCategories((prev) =>
-        prev.map((c) => (c.id === categoryId ? { ...c, loading: true, expanded: true } : c)),
+        prev.map((c) =>
+          c.id === categoryId ? { ...c, loading: true, expanded: true } : c,
+        ),
       );
 
       try {
@@ -256,12 +291,14 @@ const ExamCatalog: React.FC = () => {
         });
 
         if (response.success && response.data) {
-          const papersData: ExamPaperWithQuestions[] = response.data.map((paper: ExamPaper) => ({
-            ...paper,
-            questions: [],
-            loading: false,
-            expanded: false,
-          }));
+          const papersData: ExamPaperWithQuestions[] = response.data.map(
+            (paper: ExamPaper) => ({
+              ...paper,
+              questions: [],
+              loading: false,
+              expanded: false,
+            }),
+          );
 
           setExamCategories((prev) =>
             prev.map((c) =>
@@ -275,7 +312,9 @@ const ExamCatalog: React.FC = () => {
         message.error('加载试卷列表失败');
         console.error('加载试卷失败:', error);
         setExamCategories((prev) =>
-          prev.map((c) => (c.id === categoryId ? { ...c, loading: false, expanded: false } : c)),
+          prev.map((c) =>
+            c.id === categoryId ? { ...c, loading: false, expanded: false } : c,
+          ),
         );
       }
     } else {
@@ -310,7 +349,7 @@ const ExamCatalog: React.FC = () => {
    */
   const handlePractice = (question: ExamPaperQuestion, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // 检查是否已登录
     if (!isLoggedIn) {
       message.warning('请先登录后再开始练习');
@@ -318,10 +357,13 @@ const ExamCatalog: React.FC = () => {
       return;
     }
 
-    const workflowType = question.exercise?.workflow_type || question.workflow_type || 'fce_part1';
+    const workflowType =
+      question.exercise?.workflow_type || question.workflow_type || 'fce_part1';
     const exerciseId = question.exercise?.id;
     if (exerciseId) {
-      history.push(`/spoken-practice?workflow_type=${workflowType}&exercise_id=${exerciseId}`);
+      history.push(
+        `/spoken-practice?workflow_type=${workflowType}&exercise_id=${exerciseId}`,
+      );
     } else {
       message.warning('缺少练习题ID');
     }
@@ -343,21 +385,30 @@ const ExamCatalog: React.FC = () => {
         {questions.map((question, index) => {
           // 限制内容显示最多50个字
           const content = question.exercise?.content || '';
-          const displayContent = content.length > 50 ? `${content.substring(0, 50)}...` : content;
+          const displayContent =
+            content.length > 50 ? `${content.substring(0, 50)}...` : content;
 
           return (
             <div key={question.id} className="question-item">
               <div className="question-header">
                 <div className="question-number">{index + 1}</div>
-                <div className="question-title">{question.exercise?.title || '无标题'}</div>
+                <div className="question-title">
+                  {question.exercise?.title || '无标题'}
+                </div>
               </div>
               {displayContent && (
                 <div className="question-content">{displayContent}</div>
               )}
               <div className="question-footer">
-                <span className="question-tag">分值: {question.question_score}分</span>
-                <span className="question-tag">难度: {question.exercise?.difficulty || '-'}</span>
-                <span className="question-tag">类型: {question.workflow_type}</span>
+                <span className="question-tag">
+                  分值: {question.question_score}分
+                </span>
+                <span className="question-tag">
+                  难度: {question.exercise?.difficulty || '-'}
+                </span>
+                <span className="question-tag">
+                  类型: {question.workflow_type}
+                </span>
                 <Button
                   type="primary"
                   size="small"
@@ -375,7 +426,7 @@ const ExamCatalog: React.FC = () => {
   };
 
   // 渲染考试题目列表（不显示练习按钮和类型）
-  const renderExamQuestions = (questions: ExamPaperQuestion[]) => {
+  const _renderExamQuestions = (questions: ExamPaperQuestion[]) => {
     if (!questions || questions.length === 0) {
       return (
         <div className="empty-container">
@@ -389,20 +440,27 @@ const ExamCatalog: React.FC = () => {
       <div className="questions-container">
         {questions.map((question, index) => {
           const content = question.exercise?.content || '';
-          const displayContent = content.length > 50 ? `${content.substring(0, 50)}...` : content;
+          const displayContent =
+            content.length > 50 ? `${content.substring(0, 50)}...` : content;
 
           return (
             <div key={question.id} className="question-item">
               <div className="question-header">
                 <div className="question-number">{index + 1}</div>
-                <div className="question-title">{question.exercise?.title || '无标题'}</div>
+                <div className="question-title">
+                  {question.exercise?.title || '无标题'}
+                </div>
               </div>
               {displayContent && (
                 <div className="question-content">{displayContent}</div>
               )}
               <div className="question-footer">
-                <span className="question-tag">分值: {question.question_score}分</span>
-                <span className="question-tag">难度: {question.exercise?.difficulty || '-'}</span>
+                <span className="question-tag">
+                  分值: {question.question_score}分
+                </span>
+                <span className="question-tag">
+                  难度: {question.exercise?.difficulty || '-'}
+                </span>
               </div>
             </div>
           );
@@ -412,7 +470,10 @@ const ExamCatalog: React.FC = () => {
   };
 
   // 渲染试卷列表
-  const renderPapers = (papers: ExamPaperWithQuestions[], categoryId: number) => {
+  const renderPapers = (
+    papers: ExamPaperWithQuestions[],
+    categoryId: number,
+  ) => {
     if (!papers || papers.length === 0) {
       return (
         <div className="empty-container">
@@ -426,7 +487,10 @@ const ExamCatalog: React.FC = () => {
       <div className="papers-container">
         {papers.map((paper) => (
           <div key={paper.id} className="paper-item">
-            <div className="paper-header" onClick={() => togglePaper(categoryId, paper.id)}>
+            <div
+              className="paper-header"
+              onClick={() => togglePaper(categoryId, paper.id)}
+            >
               <div className="paper-header-left">
                 <FileTextOutlined className="paper-icon" />
                 <div className="paper-info">
@@ -435,7 +499,8 @@ const ExamCatalog: React.FC = () => {
                     <span>试卷编号: {paper.paper_code}</span>
                     <span>总分: {paper.total_score}分</span>
                     <span>
-                      状态: <Tag color={paper.is_active ? 'green' : 'default'}>
+                      状态:{' '}
+                      <Tag color={paper.is_active ? 'green' : 'default'}>
                         {paper.is_active ? '启用' : '禁用'}
                       </Tag>
                     </span>
@@ -446,17 +511,14 @@ const ExamCatalog: React.FC = () => {
                 className={`paper-expand-icon ${paper.expanded ? 'expanded' : ''}`}
               />
             </div>
-            {paper.expanded && (
-              <>
-                {paper.loading ? (
-                  <div className="loading-container">
-                    <Spin tip="加载题目中..." />
-                  </div>
-                ) : (
-                  renderQuestions(paper.questions || [])
-                )}
-              </>
-            )}
+            {paper.expanded &&
+              (paper.loading ? (
+                <div className="loading-container">
+                  <Spin tip="加载题目中..." />
+                </div>
+              ) : (
+                renderQuestions(paper.questions || [])
+              ))}
           </div>
         ))}
       </div>
@@ -487,7 +549,8 @@ const ExamCatalog: React.FC = () => {
                     <span>试卷编号: {paper.paper_code}</span>
                     <span>总分: {paper.total_score}分</span>
                     <span>
-                      状态: <Tag color={paper.is_active ? 'green' : 'default'}>
+                      状态:{' '}
+                      <Tag color={paper.is_active ? 'green' : 'default'}>
                         {paper.is_active ? '启用' : '禁用'}
                       </Tag>
                     </span>
@@ -504,7 +567,8 @@ const ExamCatalog: React.FC = () => {
                   borderRadius: '20px 15px 25px 18px',
                   boxShadow: '4px 4px 0px #000',
                   fontWeight: '900',
-                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%)',
+                  background:
+                    'linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%)',
                   color: '#FFF',
                   fontSize: '16px',
                   padding: '8px 24px',
@@ -535,29 +599,38 @@ const ExamCatalog: React.FC = () => {
       {/* SEO优化 - Meta标签 */}
       <Helmet>
         <title>KET/PET/FCE口语真题库 - AI模拟考试 | SpeakCube</title>
-        <meta 
-          name="description" 
-          content="剑桥英语KET、PET、FCE口语真题模拟考试，覆盖所有官方考试话题。AI智能评分，即时反馈，帮助孩子快速提升口语成绩。选择适合的考试级别，开始练习！" 
+        <meta
+          name="description"
+          content="剑桥英语KET、PET、FCE口语真题模拟考试，覆盖所有官方考试话题。AI智能评分，即时反馈，帮助孩子快速提升口语成绩。选择适合的考试级别，开始练习！"
         />
-        <meta 
-          name="keywords" 
-          content="KET口语真题,PET口语真题,FCE口语真题,剑桥英语口语考试,口语模拟考试,AI口语评分,KET口语练习,PET口语模拟,FCE口语练习" 
+        <meta
+          name="keywords"
+          content="KET口语真题,PET口语真题,FCE口语真题,剑桥英语口语考试,口语模拟考试,AI口语评分,KET口语练习,PET口语模拟,FCE口语练习"
         />
-        <link rel="canonical" href="https://www.qtoplay.com/exam-catalog" />
-        
+        <link rel="canonical" href="https://www.speakcube.cn/exam-catalog" />
+
         {/* Open Graph */}
-        <meta property="og:title" content="KET/PET/FCE口语真题库 - AI模拟考试" />
-        <meta property="og:description" content="剑桥英语口语真题模拟考试，AI智能评分，即时反馈" />
-        <meta property="og:url" content="https://www.qtoplay.com/exam-catalog" />
+        <meta
+          property="og:title"
+          content="KET/PET/FCE口语真题库 - AI模拟考试"
+        />
+        <meta
+          property="og:description"
+          content="剑桥英语口语真题模拟考试，AI智能评分，即时反馈"
+        />
+        <meta
+          property="og:url"
+          content="https://www.speakcube.cn/exam-catalog"
+        />
         <meta property="og:type" content="website" />
       </Helmet>
 
       {/* 顶部导航栏 */}
       <div className="exam-catalog-nav">
         <div className="nav-left">
-          <Button 
-            type="text" 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
             onClick={handleBackToHome}
             size="large"
           >
@@ -566,8 +639,8 @@ const ExamCatalog: React.FC = () => {
         </div>
         <div className="nav-right">
           {isLoggedIn && (
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               icon={<TrophyOutlined />}
               onClick={handleMyPracticeRecords}
               style={{ marginRight: 12 }}
@@ -601,13 +674,18 @@ const ExamCatalog: React.FC = () => {
         ) : (
           categories.map((category) => (
             <div key={category.id} className="category-item">
-              <div className="category-header" onClick={() => toggleCategory(category.id)}>
+              <div
+                className="category-header"
+                onClick={() => toggleCategory(category.id)}
+              >
                 <div className="category-header-left">
                   <FolderOpenOutlined className="category-icon" />
                   <div className="category-info">
                     <h3 className="category-name">{category.name}</h3>
                     {category.description && (
-                      <p className="category-description">{category.description}</p>
+                      <p className="category-description">
+                        {category.description}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -615,17 +693,14 @@ const ExamCatalog: React.FC = () => {
                   className={`category-expand-icon ${category.expanded ? 'expanded' : ''}`}
                 />
               </div>
-              {category.expanded && (
-                <>
-                  {category.loading ? (
-                    <div className="loading-container">
-                      <Spin tip="加载试卷中..." />
-                    </div>
-                  ) : (
-                    renderPapers(category.papers || [], category.id)
-                  )}
-                </>
-              )}
+              {category.expanded &&
+                (category.loading ? (
+                  <div className="loading-container">
+                    <Spin tip="加载试卷中..." />
+                  </div>
+                ) : (
+                  renderPapers(category.papers || [], category.id)
+                ))}
             </div>
           ))
         )}
@@ -648,13 +723,18 @@ const ExamCatalog: React.FC = () => {
         ) : (
           examCategories.map((category) => (
             <div key={`exam-${category.id}`} className="category-item">
-              <div className="category-header" onClick={() => toggleExamCategory(category.id)}>
+              <div
+                className="category-header"
+                onClick={() => toggleExamCategory(category.id)}
+              >
                 <div className="category-header-left">
                   <FolderOpenOutlined className="category-icon" />
                   <div className="category-info">
                     <h3 className="category-name">{category.name}</h3>
                     {category.description && (
-                      <p className="category-description">{category.description}</p>
+                      <p className="category-description">
+                        {category.description}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -662,17 +742,14 @@ const ExamCatalog: React.FC = () => {
                   className={`category-expand-icon ${category.expanded ? 'expanded' : ''}`}
                 />
               </div>
-              {category.expanded && (
-                <>
-                  {category.loading ? (
-                    <div className="loading-container">
-                      <Spin tip="加载试卷和题目中..." />
-                    </div>
-                  ) : (
-                    renderExamPapers(category.papers || [])
-                  )}
-                </>
-              )}
+              {category.expanded &&
+                (category.loading ? (
+                  <div className="loading-container">
+                    <Spin tip="加载试卷和题目中..." />
+                  </div>
+                ) : (
+                  renderExamPapers(category.papers || [])
+                ))}
             </div>
           ))
         )}
