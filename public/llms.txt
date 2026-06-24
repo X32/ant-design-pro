@@ -1,5 +1,5 @@
 # SpeakCube - AI 剑桥英语口语练习平台
-# https://www.qtoplay.com
+# https://www.speakcube.cn
 # llms.txt - AI 优化内容索引
 # 最后更新：2026-03-06
 
@@ -35,8 +35,8 @@ SpeakCube 是 AI 驱动的剑桥英语口语练习平台，提供 KET/PET/FCE �
 - SSR 渲染 - 优化搜索引擎和 AI 爬取
 
 ## 联系方式
-- 官网：https://www.qtoplay.com
-- 邮箱：support@qtoplay.com
+- 官网：https://www.speakcube.cn
+- 邮箱：support@speakcube.cn
 - 地址：中国
 
 ## API 文档

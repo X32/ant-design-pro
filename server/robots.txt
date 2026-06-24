@@ -1,5 +1,5 @@
 # SpeakCube AI剑桥英语口语练习平台
-# https://www.qtoplay.com
+# https://www.speakcube.cn
 # robots.txt - SEO优化版本（包含 AI 爬虫优化）
 # 最后更新：2026-03-06
 
@@ -78,7 +78,7 @@ Disallow: /api/
 Disallow: /user/
 
 # 站点地图
-Sitemap: https://www.qtoplay.com/sitemap.xml
+Sitemap: https://www.speakcube.cn/sitemap.xml
 
 # 爬虫访问频率（建议）
 Crawl-delay: 1

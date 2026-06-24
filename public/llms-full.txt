@@ -1,5 +1,5 @@
 # SpeakCube 技术文档全集
-# https://www.qtoplay.com
+# https://www.speakcube.cn
 # llms-full.txt - 完整技术文档
 # 最后更新：2026-03-06
 
