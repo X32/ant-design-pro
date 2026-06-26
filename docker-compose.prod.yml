@@ -9,7 +9,7 @@
 #   2. 后端 docker-compose.prod.yml 已经起过(创建了 sp-net 网络)
 #      或手动 docker network create sp-net
 #   3. .env 里 CORS_ALLOWED_ORIGINS 已包含本前端域名(后端校验跨域)
-#
+#crpi-40lskgiwx94n8wwz.cn-beijing.personal.cr.aliyuncs.com/speakcube/front
 # 本地开发请改用 docker-compose.dev.yml(node + max dev + fastRefresh HMR)
 
 name: spokenpro-frontend
@@ -20,9 +20,7 @@ services:
     container_name: sp-frontend
     restart: unless-stopped
     ports:
-      # ⚠️ 服务器 80 端口被宝塔 nginx 占用(边缘 SSL 终止层),
-      #    前端容器走 8088,由宝塔站点反代 HTTPS → http://127.0.0.1:8088
-      - "8088:80"
+      - "80:80"
     networks: [sp-net]
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
@@ -30,6 +28,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    # 资源限制(nginx 静态服务:idle 30M / peak 80M)
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
 networks:
   sp-net:
