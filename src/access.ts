@@ -6,7 +6,6 @@ export default function access(
 ) {
   const { currentUser } = initialState ?? {};
   return {
-    // 正式环境需要删除此行，恢复为 is_superuser 判断
-    canAdmin: !!currentUser,
+    canAdmin: !!currentUser && currentUser.access === 'admin',
   };
 }
