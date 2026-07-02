@@ -4,6 +4,7 @@ import {
   FileTextOutlined,
   FolderOpenOutlined,
   InboxOutlined,
+  MessageOutlined,
   PlayCircleOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
@@ -340,6 +341,18 @@ const ExamCatalog: React.FC = () => {
     history.push(`/spoken-exam-practice?paper_id=${paperId}`);
   };
 
+  /**
+   * 跳转到自由对话页面(不限主题,跟 AI 自由聊天)
+   */
+  const handleFreeChat = () => {
+    if (!isLoggedIn) {
+      message.warning('请先登录后再开始自由对话');
+      setLoginModalVisible(true);
+      return;
+    }
+    history.push('/free-chat');
+  };
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -666,6 +679,33 @@ const ExamCatalog: React.FC = () => {
       </div>
 
       <div className="exam-catalog-content">
+        {/* 自由对话入口(独立于 KET/PET/FCE 真题,自由聊天模式) */}
+        <div
+          className="category-item"
+          onClick={handleFreeChat}
+          style={{
+            cursor: 'pointer',
+            background:
+              'linear-gradient(135deg, rgba(24,144,255,0.06) 0%, rgba(114,46,209,0.06) 100%)',
+          }}
+        >
+          <div className="category-header">
+            <div className="category-header-left">
+              <MessageOutlined className="category-icon" />
+              <div className="category-info">
+                <h3 className="category-name">💬 自由对话 Free Chat</h3>
+                <p className="category-description">
+                  不限主题,跟 AI
+                  自由聊天练口语,边聊边获得语法改错,结束自动生成对话总结。
+                </p>
+              </div>
+            </div>
+            <Button type="primary" icon={<MessageOutlined />} size="large">
+              开始聊天
+            </Button>
+          </div>
+        </div>
+
         {categories.length === 0 ? (
           <div className="empty-container" style={{ padding: '80px 0' }}>
             <InboxOutlined className="empty-icon" style={{ fontSize: 64 }} />

@@ -5,6 +5,7 @@ export default {
   'menu.exam-catalog': 'Exam Catalog',
   'menu.messages': 'Messages',
   'menu.spoken-practice': 'Spoken Practice',
+  'menu.free-chat': 'Free Chat',
   'menu.back': 'Backend',
   'menu.back.welcome': 'Dashboard',
   'menu.back.user-manager': 'User Manager',

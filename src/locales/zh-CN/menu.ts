@@ -5,6 +5,7 @@ export default {
   'menu.exam-catalog': '考试目录',
   'menu.messages': '消息',
   'menu.spoken-practice': '口语练习',
+  'menu.free-chat': '自由对话',
   'menu.back': '后台管理',
   'menu.back.welcome': '工作台',
   'menu.back.user-manager': '用户管理',

@@ -1,5 +1,6 @@
 // https://umijs.org/config/
 
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineConfig } from '@umijs/max';
 import defaultSettings from './defaultSettings';
@@ -16,6 +17,12 @@ const { UMI_ENV = 'dev' } = process.env;
  */
 const PUBLIC_PATH: string = '/';
 
+// HTTPS 证书：优先用 https/cert.pem + https/cert.key（mkcert 生成）
+// 没装证书时回退到 UmiJS 内置自签，浏览器会警告但能跑
+const CERT_FILE = join(__dirname, '..', 'https', 'cert.pem');
+const KEY_FILE = join(__dirname, '..', 'https', 'cert.key');
+const hasLocalCert = existsSync(CERT_FILE) && existsSync(KEY_FILE);
+
 export default defineConfig({
   /**
    * @name 开启 hash 模式
@@ -29,9 +36,18 @@ export default defineConfig({
   /**
    * @name HTTPS 开发服务器配置
    * @description 启用 HTTPS 开发服务器，支持局域网访问时使用麦克风等功能
+   * 优先加载 https/ 目录下 mkcert 生成的可信证书；若不存在则回退到 UmiJS 内置自签证书。
    * @doc https://umijs.org/docs/api/config#https
    */
-  https: process.env.HTTPS === 'true' ? {} : undefined,
+  https:
+    process.env.HTTPS === 'true'
+      ? hasLocalCert
+        ? {
+            cert: readFileSync(CERT_FILE),
+            key: readFileSync(KEY_FILE),
+          }
+        : {}
+      : undefined,
 
   /**
    * @name 兼容性设置
@@ -196,14 +212,13 @@ var _hmt = _hmt || [];
   mako: {},
   esbuildMinifyIIFE: true,
   requestRecord: {},
-  exportStatic: {},
 
   // ========== GEO 优化：静态导出配置 ==========
   /**
    * @name exportStatic 静态导出
    * @description 生成静态 HTML 文件，优化 AI 爬虫抓取
    * @doc https://umijs.org/docs/api/config#exportstatic
-   * 
+   *
    * 优势:
    * - 关键内容在初始 HTML 中直接交付（AI 爬虫友好）
    * - 页面加载时间 < 2 秒（Copilot 阈值）
@@ -212,7 +227,12 @@ var _hmt = _hmt || [];
    */
   exportStatic: {
     // 导出所有路由
-    ignoreFiles: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    ignoreFiles: [
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+    ],
   },
   define: {
     'process.env.CI': process.env.CI,

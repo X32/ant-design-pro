@@ -1,0 +1,2 @@
+# 此目录存放本地 HTTPS 证书（mkcert 生成），用于 H5 录音权限等开发调试
+# 证书私钥不入库，请运行 ../scripts/setup-https.sh 生成

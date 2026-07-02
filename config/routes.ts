@@ -25,7 +25,7 @@ export default [
         name: 'admin-login',
         path: '/user/admin/login',
         component: './user/admin/login',
-        layout: false,  // 显式禁用布局
+        layout: false, // 显式禁用布局
       },
       {
         name: 'profile',
@@ -149,7 +149,7 @@ export default [
     path: '/exam-catalog',
     name: 'exam-catalog',
     component: './exam-catalog',
-    layout: false,  // 不显示左侧菜单和顶部导航
+    layout: false, // 不显示左侧菜单和顶部导航
   },
 
   // ========== KET/PET/FCE口语考试专区（公开访问，无需登录）==========
@@ -398,12 +398,12 @@ export default [
       },
     ],
   },
-  
+
   // ========== 用户充值页面（普通用户，不显示侧边栏）==========
   {
     path: '/orders/recharge',
     component: './orders/recharge',
-    layout: false,  // 不显示侧边栏
+    layout: false, // 不显示侧边栏
   },
 
   // ========== 前台功能页面（保留左侧菜单）==========
@@ -412,66 +412,75 @@ export default [
     component: './tts_mobile_pro',
     layout: false,
   },
-  
+
   // ========== 组件演示页面（开发测试）==========
   {
     path: '/demo/coin-drop',
     name: 'coin-drop-demo',
     component: '@/components/CoinDropAnimation/demo',
-    layout: false,  // 不显示侧边栏，全屏演示
+    layout: false, // 不显示侧边栏，全屏演示
   },
   {
     path: '/demo/firework',
     name: 'firework-demo',
     component: '@/components/fireworkAnimation/demo',
-    layout: false,  // 不显示侧边栏，全屏演示
+    layout: false, // 不显示侧边栏，全屏演示
   },
-   {
+  {
     path: '/demo/loginmodel',
     name: 'login-demo',
     component: '@/components/LoginModal/demo',
-    layout: false,  // 不显示侧边栏，全屏演示
-  }, 
+    layout: false, // 不显示侧边栏，全屏演示
+  },
   // ========== 口语练习页面（普通用户，不显示侧边栏）==========
   {
     name: 'spoken-practice',
     icon: 'sound',
     path: '/spoken-practice',
     component: './spokenPages',
-    layout: false,  // 普通用户不显示侧边栏
+    layout: false, // 普通用户不显示侧边栏
   },
-  
+
+  // ========== 自由对话页面（不限主题，跟 AI 自由聊天）==========
+  {
+    name: 'free-chat',
+    icon: 'message',
+    path: '/free-chat',
+    component: './freeChat/FreeChat',
+    layout: false,
+  },
+
   // ========== 口语考试练习页面（普通用户，不显示侧边栏）==========
   {
     name: 'spoken-exam-practice',
     icon: 'sound',
     path: '/spoken-exam-practice',
     component: './spokenExamPage/SpokenPractice',
-    layout: false,  // 普通用户不显示侧边栏
+    layout: false, // 普通用户不显示侧边栏
   },
-  
+
   // ========== 用户练习记录页面（不显示侧边栏）==========
   {
     path: '/messages/userpractice',
     name: 'user-practice',
     component: './messages/userpractice',
-    layout: false,  // 不显示侧边栏
+    layout: false, // 不显示侧边栏
   },
-  
+
   // ========== 练习记录查看页面（不显示侧边栏）==========
   {
     path: '/messages/viewpractice',
     name: 'view-practice',
     component: './messages/viewpractice',
-    layout: false,  // 不显示侧边栏
+    layout: false, // 不显示侧边栏
   },
- 
+
   // ========== 根路径重定向到首页 ==========
   {
     path: '/',
     redirect: '/home',
   },
-  
+
   // ========== 404 页面 ==========
   {
     component: './404',

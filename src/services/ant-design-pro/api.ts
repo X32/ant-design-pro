@@ -3609,7 +3609,7 @@ export async function getWorkflowTypes(
 ) {
   const token = localStorage.getItem(TOKEN_KEY);
 
-  return request<API.WorkflowTypeListResponse>(`${API_ENDPOINTS.WORKFLOW_TYPES}/`, {
+  return request<API.WorkflowTypeListResponse>(API_ENDPOINTS.WORKFLOW_TYPES, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -3631,7 +3631,7 @@ export async function getWorkflowTypeDetail(
   const token = localStorage.getItem(TOKEN_KEY);
 
   return request<API.WorkflowTypeDetailResponse>(
-    `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
+    `${API_ENDPOINTS.WORKFLOW_TYPES}${optionId}`,
     {
       method: 'GET',
       headers: {
@@ -3688,7 +3688,7 @@ export async function updateWorkflowType(
   const token = localStorage.getItem(TOKEN_KEY);
 
   return request<API.WorkflowTypeDetailResponse>(
-    `${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`,
+    `${API_ENDPOINTS.WORKFLOW_TYPES}${optionId}`,
     {
       method: 'PUT',
       headers: {
@@ -3715,7 +3715,7 @@ export async function deleteWorkflowType(
     success: boolean;
     message?: string;
     data: null;
-  }>(`${API_ENDPOINTS.WORKFLOW_TYPES}/${optionId}`, {
+  }>(`${API_ENDPOINTS.WORKFLOW_TYPES}${optionId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,

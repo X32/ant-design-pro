@@ -1,5 +1,6 @@
+import { MessageOutlined } from '@ant-design/icons';
 import { Helmet, history, useModel } from '@umijs/max';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import React, { useState } from 'react';
 import BreadcrumbNav from '@/components/BreadcrumbNav';
 import {
@@ -44,6 +45,15 @@ const HomePage: React.FC = () => {
 
   const handleStart = () => {
     history.push('/exam-catalog');
+  };
+
+  const handleFreeChat = () => {
+    if (!isLoggedIn) {
+      message.warning('请先登录后再开始自由对话');
+      setLoginModalVisible(true);
+      return;
+    }
+    history.push('/free-chat');
   };
 
   const handleLearnMore = () => {
@@ -356,6 +366,14 @@ const HomePage: React.FC = () => {
             >
               <GamepadButtonIcon size={28} />
               开始练习
+            </Button>
+            <Button
+              className="secondary-button"
+              size="large"
+              icon={<MessageOutlined />}
+              onClick={handleFreeChat}
+            >
+              自由对话
             </Button>
             <Button
               className="secondary-button"

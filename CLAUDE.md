@@ -12,7 +12,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development
 npm run start          # 开发模式 (默认端口 8000)
 npm run start:dev      # 开发模式，不使用 mock
-npm run start:https    # HTTPS 开发模式
+npm run start:https    # HTTPS 开发模式（监听 0.0.0.0:8001，支持局域网访问）
+
+# HTTPS 证书（首次或换机/换 IP 时执行一次）
+./scripts/setup-https.sh            # 生成 mkcert 可信证书
+./scripts/setup-https.sh --trust    # 同上，并打印手机信任 CA 的步骤
 
 # Build
 npm run build          # 生产构建
@@ -27,6 +31,16 @@ npm run tsc            # 仅运行 TypeScript 类型检查
 npm run test           # 运行 Jest 测试
 npm run test:coverage  # 测试覆盖率报告
 ```
+
+### HTTPS 调试（录音权限）
+
+浏览器要求 `getUserMedia` 必须在安全上下文（HTTPS 或 localhost）下使用。手机/平板通过局域网 IP 访问开发服务器时，必须用 HTTPS：
+
+1. **首次配置**：运行 `./scripts/setup-https.sh`，用 mkcert 生成可信证书（`https/cert.pem` + `cert.key`）。
+2. **启动 HTTPS dev server**：`npm run start:https`，监听 `0.0.0.0:8001`。
+3. **手机访问**：浏览器打开 `https://<开发机IP>:8001`，首次会有警告 → 按 `--trust` 步骤把 mkcert 的 `rootCA.pem` 装到手机即可消除警告。
+4. **后端 API 透传**：`config/proxy.ts` 已将所有 `/api/*` 走 dev server 代理到本地后端，避免浏览器混合内容拦截，手机无需关心后端协议。
+5. **证书不入库**：`.gitignore` 已忽略 `https/*.pem` 等私钥文件；每台机器需各自运行 `setup-https.sh` 生成自己的证书。
 
 ## Architecture
 
